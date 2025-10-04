@@ -1,11 +1,17 @@
+package com.isi.Appel_classe.models;
+
 
 import java.io.*;
 import java.util.*;
 
 /**
- * 
+ *
  */
 public class Parent extends Utilisateur {
+
+    {
+        // TODO implement here
+    }
 
     /**
      * Default constructor
@@ -14,26 +20,22 @@ public class Parent extends Utilisateur {
     }
 
     /**
-     * 
+     *
      */
-    public string lienParental (père, mère, tuteur);
+    public string lienParental(père, mère, tuteur);
 
     /**
-     * 
+     *
      */
-    public void enfantsAssociés (liste d’étudiants);
+    public void enfantsAssociés(liste d’étudiants);()
 
-
+/**
+     *
+     */
+    public void consulterHistoriqueEnfant()
 
     /**
-     * 
-     */
-    public void consulterHistoriqueEnfant()() {
-        // TODO implement here
-    }
-
-    /**
-     * 
+     *
      */
     public void soumettreJustificatifEnfant() {
         // TODO implement here

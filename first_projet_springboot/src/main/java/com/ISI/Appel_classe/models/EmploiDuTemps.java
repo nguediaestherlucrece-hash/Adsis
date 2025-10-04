@@ -1,11 +1,18 @@
+package com.isi.Appel_classe.models;
+
 
 import java.io.*;
 import java.util.*;
 
 /**
- * 
+ *
  */
 public class EmploiDuTemps {
+
+    /**
+     *
+     */
+    public string idEmploi;
 
     /**
      * Default constructor
@@ -14,30 +21,25 @@ public class EmploiDuTemps {
     }
 
     /**
-     * 
+     *
      */
-    public string idEmploi;
+    public string période(semaine, semestre);
 
     /**
-     * 
+     *
      */
-    public string période (semaine, semestre);
-
-    /**
-     * 
-     */
-    public string créneaux (liste de séances);
+    public string créneaux(liste de séances);
 
 
     /**
-     * 
+     *
      */
     public void planifierSéance() {
         // TODO implement here
     }
 
     /**
-     * 
+     *
      */
     public void modifierSéance() {
         // TODO implement here

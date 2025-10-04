@@ -1,11 +1,49 @@
+package com.isi.Appel_classe.models;
+
 
 import java.io.*;
 import java.util.*;
 
 /**
- * 
+ *
  */
 public class Utilisateur {
+
+    /**
+     *
+     */
+    public string Id
+    /**
+     *
+     */
+    public string Nom;
+    Utilisateur;
+    /**
+     *
+     */
+    public string Prénom;
+    /**
+     *
+     */
+    public string Email;
+    /**
+     *
+     */
+    public string password;
+    /**
+     *
+     */
+    public string Rôle;
+    /**
+     *
+     */
+    public string statu
+    /**
+     *
+     */
+    public void Modifier
+    compte;
+
 
     /**
      * Default constructor
@@ -13,61 +51,21 @@ public class Utilisateur {
     public Utilisateur() {
     }
 
-    /**
-     * 
-     */
-    public string Id Utilisateur;
-
-    /**
-     * 
-     */
-    public string Nom;
-
-    /**
-     * 
-     */
-    public string Prénom ;
-
-    /**
-     * 
-     */
-    public string Email ;
-
-    /**
-     * 
-     */
-    public string password;
-
-    /**
-     * 
-     */
-    public string Rôle ;
-
-    /**
-     * 
-     */
-    public  string statu compte;
-
-
-
-    /**
-     * 
-     */
-    public void SeConnecter () {
+    Profil() {
         // TODO implement here
     }
 
     /**
-     * 
+     *
+     */
+    public void SeConnecter() {
+        // TODO implement here
+    }
+
+    /**
+     *
      */
     public void SeDéconnecter() {
-        // TODO implement here
-    }
-
-    /**
-     * 
-     */
-    public void Modifier Profil() {
         // TODO implement here
     }
 
