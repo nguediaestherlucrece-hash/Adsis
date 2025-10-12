@@ -1,48 +1,68 @@
-package com.isi.Appel_classe.models;
+package com.ISI.Appel_classe.models;
 
+import jakarta.persistence.*;
 
-import java.io.*;
-import java.util.*;
-
-/**
- *
- */
+@Entity
+@Table(name = "emploi_du_temps")
 public class EmploiDuTemps {
 
-    /**
-     *
-     */
-    public string idEmploi;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    /**
-     * Default constructor
-     */
+    private String idEmploi;
+    private String periode; // "semaine", "semestre"
+    private String creneaux; // Liste des séances
+
+    // 🔹 Constructeurs
     public EmploiDuTemps() {
     }
 
-    /**
-     *
-     */
-    public string période(semaine, semestre);
-
-    /**
-     *
-     */
-    public string créneaux(liste de séances);
-
-
-    /**
-     *
-     */
-    public void planifierSéance() {
-        // TODO implement here
+    public EmploiDuTemps(String idEmploi, String periode, String creneaux) {
+        this.idEmploi = idEmploi;
+        this.periode = periode;
+        this.creneaux = creneaux;
     }
 
-    /**
-     *
-     */
-    public void modifierSéance() {
-        // TODO implement here
+    // 🔹 Getters et setters
+    public Long getId() {
+        return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getIdEmploi() {
+        return idEmploi;
+    }
+
+    public void setIdEmploi(String idEmploi) {
+        this.idEmploi = idEmploi;
+    }
+
+    public String getPeriode() {
+        return periode;
+    }
+
+    public void setPeriode(String periode) {
+        this.periode = periode;
+    }
+
+    public String getCreneaux() {
+        return creneaux;
+    }
+
+    public void setCreneaux(String creneaux) {
+        this.creneaux = creneaux;
+    }
+
+    // 🔹 Méthodes de logique métier
+    public void planifierSeance() {
+        // TODO: logique de planification de séance
+    }
+
+    public void modifierSeance() {
+        // TODO: logique de modification de séance
+    }
 }

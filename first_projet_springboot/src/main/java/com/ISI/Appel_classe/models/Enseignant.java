@@ -1,48 +1,54 @@
-package com.isi.Appel_classe.models;
+package com.ISI.Appel_classe.models;
 
+import jakarta.persistence.*;
 
-import java.io.*;
-import java.util.*;
-
-/**
- *
- */
+@Entity
+@Table(name = "enseignant")
+@DiscriminatorValue("ENSEIGNANT")
+@PrimaryKeyJoinColumn(name = "utilisateur_id")
 public class Enseignant extends Utilisateur {
 
-    /**
-     *
-     */
-    public string spécialité;
-    /**
-     *
-     */
-    public string grade;
+    private String specialite;
+    private String grade;
 
-    /**
-     * Default constructor
-     */
+    // 🔹 Constructeurs
     public Enseignant() {
     }
 
-    /**
-     *
-     */
-    public void lancerSéance() {
-        // TODO implement here
+    public Enseignant(String nom, String prenom, String email, String password, 
+                     String statut, String specialite, String grade) {
+        super(nom, prenom, email, password, "ENSEIGNANT", statut);
+        this.specialite = specialite;
+        this.grade = grade;
     }
 
-    /**
-     *
-     */
-    public void enregistrerPrésence() {
-        // TODO implement here
+    // 🔹 Getters et setters
+    public String getSpecialite() {
+        return specialite;
     }
 
-    /**
-     *
-     */
+    public void setSpecialite(String specialite) {
+        this.specialite = specialite;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    // 🔹 Méthodes de logique métier
+    public void lancerSeance() {
+        // TODO: logique de lancement de séance
+    }
+
+    public void enregistrerPresence() {
+        // TODO: logique d'enregistrement de présence
+    }
+
     public void consulterStatistiquesCours() {
-        // TODO implement here
+        // TODO: logique de consultation des statistiques
     }
-
 }

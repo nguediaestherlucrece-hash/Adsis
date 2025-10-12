@@ -1,72 +1,104 @@
-package com.isi.Appel_classe.models;
+package com.ISI.Appel_classe.models;
 
+import jakarta.persistence.*;
 
-import java.io.*;
-import java.util.*;
-
-/**
- *
- */
+@Entity
+@Table(name = "utilisateur")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "type_utilisateur", discriminatorType = DiscriminatorType.STRING)
 public class Utilisateur {
 
-    /**
-     *
-     */
-    public string Id
-    /**
-     *
-     */
-    public string Nom;
-    Utilisateur;
-    /**
-     *
-     */
-    public string Prénom;
-    /**
-     *
-     */
-    public string Email;
-    /**
-     *
-     */
-    public string password;
-    /**
-     *
-     */
-    public string Rôle;
-    /**
-     *
-     */
-    public string statu
-    /**
-     *
-     */
-    public void Modifier
-    compte;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    private String nom;
+    private String prenom;
+    private String email;
+    private String password;
+    private String role;
+    private String statut;
 
-    /**
-     * Default constructor
-     */
+    // 🔹 Constructeurs
     public Utilisateur() {
     }
 
-    Profil() {
-        // TODO implement here
+    public Utilisateur(String nom, String prenom, String email, String password, String role, String statut) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.statut = statut;
     }
 
-    /**
-     *
-     */
-    public void SeConnecter() {
-        // TODO implement here
+    // 🔹 Getters et setters
+    public Long getId() {
+        return id;
     }
 
-    /**
-     *
-     */
-    public void SeDéconnecter() {
-        // TODO implement here
+    public void setId(Long id) {
+        this.id = id;
     }
 
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public String getPrenom() {
+        return prenom;
+    }
+
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getStatut() {
+        return statut;
+    }
+
+    public void setStatut(String statut) {
+        this.statut = statut;
+    }
+
+    // 🔹 Méthodes de logique métier
+    public void seConnecter() {
+        // TODO: logique de connexion
+    }
+
+    public void seDeconnecter() {
+        // TODO: logique de déconnexion
+    }
+
+    public void modifierCompte() {
+        // TODO: logique de modification
+    }
 }
