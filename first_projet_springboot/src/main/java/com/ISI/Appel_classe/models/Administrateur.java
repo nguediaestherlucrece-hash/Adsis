@@ -1,33 +1,22 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "administrateur")
 @DiscriminatorValue("ADMIN")
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class Administrateur extends Utilisateur {
 
     private String niveauAcces; // "super-admin", "admin-local"
-
-    // 🔹 Constructeurs
-    public Administrateur() {
-    }
-
-    public Administrateur(String nom, String prenom, String email, String password, 
-                         String statut, String niveauAcces) {
-        super(nom, prenom, email, password, "ADMIN", statut);
-        this.niveauAcces = niveauAcces;
-    }
-
-    // 🔹 Getters et setters
-    public String getNiveauAcces() {
-        return niveauAcces;
-    }
-
-    public void setNiveauAcces(String niveauAcces) {
-        this.niveauAcces = niveauAcces;
-    }
 
     // 🔹 Méthodes de logique métier
     public void gererUtilisateurs() {

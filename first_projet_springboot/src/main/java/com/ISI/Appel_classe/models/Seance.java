@@ -1,9 +1,20 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "seance")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Seance {
 
     @Id
@@ -11,72 +22,33 @@ public class Seance {
     private Long id;
 
     private String idSeance;
-    private String date;
-    private String heureDebut;
-    private String heureFin;
+    private LocalDate date; // Changé de String à LocalDate
+    private LocalTime heureDebut; // Changé de String à LocalTime
+    private LocalTime heureFin; // Changé de String à LocalTime
     private String statut; // "ouverte", "clôturée"
 
-    // 🔹 Constructeurs
-    public Seance() {
-    }
+    // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "cours_id")
+    private CoursUE cours;
 
-    public Seance(String idSeance, String date, String heureDebut, 
-                 String heureFin, String statut) {
-        this.idSeance = idSeance;
-        this.date = date;
-        this.heureDebut = heureDebut;
-        this.heureFin = heureFin;
-        this.statut = statut;
-    }
+    @ManyToOne
+    @JoinColumn(name = "enseignant_id")
+    private Enseignant enseignant;
 
-    // 🔹 Getters et setters
-    public Long getId() {
-        return id;
-    }
+    @ManyToMany
+    @JoinTable(name = "seance_surveillant", joinColumns = @JoinColumn(name = "seance_id"), inverseJoinColumns = @JoinColumn(name = "surveillant_id"))
+    private List<Surveillant> surveillants = new ArrayList<>();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL)
+    private List<Appel> appels = new ArrayList<>();
 
-    public String getIdSeance() {
-        return idSeance;
-    }
+    @OneToMany(mappedBy = "seance")
+    private List<Presence> presences = new ArrayList<>();
 
-    public void setIdSeance(String idSeance) {
-        this.idSeance = idSeance;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public String getHeureDebut() {
-        return heureDebut;
-    }
-
-    public void setHeureDebut(String heureDebut) {
-        this.heureDebut = heureDebut;
-    }
-
-    public String getHeureFin() {
-        return heureFin;
-    }
-
-    public void setHeureFin(String heureFin) {
-        this.heureFin = heureFin;
-    }
-
-    public String getStatut() {
-        return statut;
-    }
-
-    public void setStatut(String statut) {
-        this.statut = statut;
-    }
+    @ManyToOne
+    @JoinColumn(name = "emploi_du_temps_id")
+    private EmploiDuTemps emploiDuTemps;
 
     // 🔹 Méthodes de logique métier
     public void ouvrirSeance() {

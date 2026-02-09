@@ -1,9 +1,18 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "etablissement")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Etablissement {
 
     @Id
@@ -16,67 +25,12 @@ public class Etablissement {
     private String emailContact;
     private String anneeAcademiqueCourante;
 
-    // 🔹 Constructeurs
-    public Etablissement() {
-    }
+    // 🔹 Relations JPA
+    @OneToMany(mappedBy = "etablissement", cascade = CascadeType.ALL)
+    private List<Filiere> filieres = new ArrayList<>();
 
-    public Etablissement(String idEtablissement, String nomEtablissement, String telephone, 
-                        String emailContact, String anneeAcademiqueCourante) {
-        this.idEtablissement = idEtablissement;
-        this.nomEtablissement = nomEtablissement;
-        this.telephone = telephone;
-        this.emailContact = emailContact;
-        this.anneeAcademiqueCourante = anneeAcademiqueCourante;
-    }
-
-    // 🔹 Getters et setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getIdEtablissement() {
-        return idEtablissement;
-    }
-
-    public void setIdEtablissement(String idEtablissement) {
-        this.idEtablissement = idEtablissement;
-    }
-
-    public String getNomEtablissement() {
-        return nomEtablissement;
-    }
-
-    public void setNomEtablissement(String nomEtablissement) {
-        this.nomEtablissement = nomEtablissement;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
-
-    public String getEmailContact() {
-        return emailContact;
-    }
-
-    public void setEmailContact(String emailContact) {
-        this.emailContact = emailContact;
-    }
-
-    public String getAnneeAcademiqueCourante() {
-        return anneeAcademiqueCourante;
-    }
-
-    public void setAnneeAcademiqueCourante(String anneeAcademiqueCourante) {
-        this.anneeAcademiqueCourante = anneeAcademiqueCourante;
-    }
+    @OneToMany(mappedBy = "etablissement", cascade = CascadeType.ALL)
+    private List<Classe> classes = new ArrayList<>();
 
     // 🔹 Méthodes de logique métier
     public void creerClasse() {

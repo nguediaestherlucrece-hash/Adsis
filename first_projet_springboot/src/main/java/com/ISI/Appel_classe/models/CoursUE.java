@@ -1,9 +1,18 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "cours_ue")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CoursUE {
 
     @Id
@@ -13,59 +22,17 @@ public class CoursUE {
     private String idCours;
     private String codeUE;
     private String intitule;
-    private String volumeHoraire;
+    private Integer volumeHoraire;
 
-    // 🔹 Constructeurs
-    public CoursUE() {
-    }
+    // 🔹 Relations JPA
+    @ManyToMany(mappedBy = "cours")
+    private List<Classe> classes = new ArrayList<>();
 
-    public CoursUE(String idCours, String codeUE, String intitule, String volumeHoraire) {
-        this.idCours = idCours;
-        this.codeUE = codeUE;
-        this.intitule = intitule;
-        this.volumeHoraire = volumeHoraire;
-    }
+    @ManyToMany(mappedBy = "coursEnseignes")
+    private List<Enseignant> enseignants = new ArrayList<>();
 
-    // 🔹 Getters et setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getIdCours() {
-        return idCours;
-    }
-
-    public void setIdCours(String idCours) {
-        this.idCours = idCours;
-    }
-
-    public String getCodeUE() {
-        return codeUE;
-    }
-
-    public void setCodeUE(String codeUE) {
-        this.codeUE = codeUE;
-    }
-
-    public String getIntitule() {
-        return intitule;
-    }
-
-    public void setIntitule(String intitule) {
-        this.intitule = intitule;
-    }
-
-    public String getVolumeHoraire() {
-        return volumeHoraire;
-    }
-
-    public void setVolumeHoraire(String volumeHoraire) {
-        this.volumeHoraire = volumeHoraire;
-    }
+    @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL)
+    private List<Seance> seances = new ArrayList<>();
 
     // 🔹 Méthodes de logique métier
     public void associerClasse() {

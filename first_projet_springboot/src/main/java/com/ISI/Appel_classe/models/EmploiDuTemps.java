@@ -1,9 +1,18 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "emploi_du_temps")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmploiDuTemps {
 
     @Id
@@ -11,51 +20,19 @@ public class EmploiDuTemps {
     private Long id;
 
     private String idEmploi;
-    private String periode; // "semaine", "semestre"
-    private String creneaux; // Liste des séances
+    private String periode; // Ex: "Semestre 1 2023-2024"
+    private String creneaux; // JSON ou texte structuré
 
-    // 🔹 Constructeurs
-    public EmploiDuTemps() {
-    }
+    // 🔹 Relations JPA
+    @OneToOne(mappedBy = "emploiDuTemps") // Classe reference EmploiDuTemps via emploiDuTemps
+    private Classe classe;
 
-    public EmploiDuTemps(String idEmploi, String periode, String creneaux) {
-        this.idEmploi = idEmploi;
-        this.periode = periode;
-        this.creneaux = creneaux;
-    }
+    @ManyToOne
+    @JoinColumn(name = "gestionnaire_id")
+    private AssistantPedagogique gestionnaire;
 
-    // 🔹 Getters et setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getIdEmploi() {
-        return idEmploi;
-    }
-
-    public void setIdEmploi(String idEmploi) {
-        this.idEmploi = idEmploi;
-    }
-
-    public String getPeriode() {
-        return periode;
-    }
-
-    public void setPeriode(String periode) {
-        this.periode = periode;
-    }
-
-    public String getCreneaux() {
-        return creneaux;
-    }
-
-    public void setCreneaux(String creneaux) {
-        this.creneaux = creneaux;
-    }
+    @OneToMany(mappedBy = "emploiDuTemps")
+    private List<Seance> seances = new ArrayList<>();
 
     // 🔹 Méthodes de logique métier
     public void planifierSeance() {

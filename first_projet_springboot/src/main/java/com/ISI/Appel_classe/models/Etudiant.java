@@ -1,57 +1,42 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "etudiant")
 @DiscriminatorValue("ETUDIANT")
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class Etudiant extends Utilisateur {
 
     private String matricule;
-    private String dateNaissance;
+    private String dateNaissance; // À convertir en LocalDate plus tard si nécessaire
     private String telephone;
 
-    // 🔹 Constructeurs
-    public Etudiant() {
-    }
+    // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 
-    public Etudiant(String nom, String prenom, String email, String password, 
-                   String statut, String matricule, String dateNaissance, String telephone) {
-        super(nom, prenom, email, password, "ETUDIANT", statut);
-        this.matricule = matricule;
-        this.dateNaissance = dateNaissance;
-        this.telephone = telephone;
-    }
+    @ManyToMany(mappedBy = "etudiants")
+    private List<Parent> parents = new ArrayList<>();
 
-    // 🔹 Getters et setters
-    public String getMatricule() {
-        return matricule;
-    }
+    @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
+    private List<Presence> presences = new ArrayList<>();
 
-    public void setMatricule(String matricule) {
-        this.matricule = matricule;
-    }
-
-    public String getDateNaissance() {
-        return dateNaissance;
-    }
-
-    public void setDateNaissance(String dateNaissance) {
-        this.dateNaissance = dateNaissance;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
-
-    // 🔹 Méthodes de logique métier
+    // 🔹 Méthodes de logique métier (conservées)
     public void consulterHistorique() {
-        // TODO: logique de consultation de l'historique
+        // TODO: logique de consultation d'historique
     }
 
     public void soumettreJustificatif() {

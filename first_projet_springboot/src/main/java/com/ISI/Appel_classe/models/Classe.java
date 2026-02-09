@@ -1,9 +1,18 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "classe")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Classe {
 
     @Id
@@ -15,64 +24,29 @@ public class Classe {
     private String niveau;
     private String anneeAcademique;
 
-    // 🔹 Constructeurs
-    public Classe() {
-    }
+    // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "filiere_id")
+    private Filiere filiere;
 
-    public Classe(String idClasse, String nomClasse, String niveau, String anneeAcademique) {
-        this.idClasse = idClasse;
-        this.nomClasse = nomClasse;
-        this.niveau = niveau;
-        this.anneeAcademique = anneeAcademique;
-    }
+    @ManyToOne
+    @JoinColumn(name = "etablissement")
+    private Etablissement etablissement;
 
-    // 🔹 Getters et setters
-    public Long getId() {
-        return id;
-    }
+    @OneToMany(mappedBy = "classe", cascade =CascadeType.ALL)
+    private List<Etudiant> etudiants = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(name = "classe_cours", joinColumns = @JoinColumn(name = "classe_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))
+    private List<CoursUE> cours = new ArrayList<>();
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "emploi_du_temps_id", referencedColumnName = "id")
+    private EmploiDuTemps emploiDuTemps;
+    // 🔹 Méthodes métier (conservées)
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getIdClasse() {
-        return idClasse;
-    }
-
-    public void setIdClasse(String idClasse) {
-        this.idClasse = idClasse;
-    }
-
-    public String getNomClasse() {
-        return nomClasse;
-    }
-
-    public void setNomClasse(String nomClasse) {
-        this.nomClasse = nomClasse;
-    }
-
-    public String getNiveau() {
-        return niveau;
-    }
-
-    public void setNiveau(String niveau) {
-        this.niveau = niveau;
-    }
-
-    public String getAnneeAcademique() {
-        return anneeAcademique;
-    }
-
-    public void setAnneeAcademique(String anneeAcademique) {
-        this.anneeAcademique = anneeAcademique;
-    }
-
-    // 🔹 Méthodes de logique métier
-    public void ajouterEtudiant() {
-        // TODO: logique d'ajout d'étudiant
-    }
-
-    public void affecterEnseignant() {
-        // TODO: logique d'affectation d'enseignant
+    public void ajouterEtudiant(Etudiant etudiant) {
+        if (etudiants == null)
+            etudiants = new ArrayList<>();
+        etudiants.add(etudiant);
+        etudiant.setClasse(this);
     }
 }

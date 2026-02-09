@@ -1,44 +1,30 @@
 package com.ISI.Appel_classe.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "assistant_pedagogique")
-@DiscriminatorValue("ASSISTANT")
+@DiscriminatorValue("ASSISTANT_PEDAGOGIQUE")
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class AssistantPedagogique extends Utilisateur {
 
     private String departement;
 
-    // 🔹 Constructeurs
-    public AssistantPedagogique() {
-    }
+    // 🔹 Relations JPA
+    @OneToMany(mappedBy = "validateur") // Nécessite que le champ 'validateur' existe dans Justificatif
+    private List<Justificatif> justificatifsValides = new ArrayList<>();
 
-    public AssistantPedagogique(String nom, String prenom, String email, String password, 
-                               String statut, String departement) {
-        super(nom, prenom, email, password, "ASSISTANT", statut);
-        this.departement = departement;
-    }
-
-    // 🔹 Getters et setters
-    public String getDepartement() {
-        return departement;
-    }
-
-    public void setDepartement(String departement) {
-        this.departement = departement;
-    }
-
-    // 🔹 Méthodes de logique métier
-    public void gererEmploiDuTemps() {
-        // TODO: logique de gestion d'emploi du temps
-    }
-
-    public void validerJustificatif() {
-        // TODO: logique de validation de justificatif
-    }
-
-    public void genererRapport() {
-        // TODO: logique de génération de rapport
-    }
+    @OneToMany(mappedBy = "gestionnaire") // Nécessite que le champ 'gestionnaire' existe dans EmploiDuTemps
+    private List<EmploiDuTemps> emploisDuTemps = new ArrayList<>();
 }

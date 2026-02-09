@@ -42,6 +42,35 @@ LOCK TABLES `administrateur` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `appel`
+--
+
+DROP TABLE IF EXISTS `appel`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `appel` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `date_heure_debut` datetime(6) DEFAULT NULL,
+  `date_heure_fin` datetime(6) DEFAULT NULL,
+  `id_appel` varchar(255) DEFAULT NULL,
+  `statut` varchar(255) DEFAULT NULL,
+  `seance_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKck1atj7mjv6hotaq2jw21bogl` (`seance_id`),
+  CONSTRAINT `FKck1atj7mjv6hotaq2jw21bogl` FOREIGN KEY (`seance_id`) REFERENCES `seance` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `appel`
+--
+
+LOCK TABLES `appel` WRITE;
+/*!40000 ALTER TABLE `appel` DISABLE KEYS */;
+/*!40000 ALTER TABLE `appel` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `assistant_pedagogique`
 --
 
@@ -78,7 +107,16 @@ CREATE TABLE `classe` (
   `id_classe` varchar(255) DEFAULT NULL,
   `niveau` varchar(255) DEFAULT NULL,
   `nom_classe` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `emploi_du_temps_id` bigint DEFAULT NULL,
+  `etablissement` bigint DEFAULT NULL,
+  `filiere_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UKm5j80kxclcjkyko2pf2j8s594` (`emploi_du_temps_id`),
+  KEY `FK6wfy7wfb6nxr3abenj5d0kuwg` (`etablissement`),
+  KEY `FK5dlr7nj4ia58qex7s483y59l6` (`filiere_id`),
+  CONSTRAINT `FK5dlr7nj4ia58qex7s483y59l6` FOREIGN KEY (`filiere_id`) REFERENCES `filiere` (`id`),
+  CONSTRAINT `FK6wfy7wfb6nxr3abenj5d0kuwg` FOREIGN KEY (`etablissement`) REFERENCES `etablissement` (`id`),
+  CONSTRAINT `FKcy4aok5e2jg9mq7uayl69948e` FOREIGN KEY (`emploi_du_temps_id`) REFERENCES `emploi_du_temps` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -89,6 +127,32 @@ CREATE TABLE `classe` (
 LOCK TABLES `classe` WRITE;
 /*!40000 ALTER TABLE `classe` DISABLE KEYS */;
 /*!40000 ALTER TABLE `classe` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `classe_cours`
+--
+
+DROP TABLE IF EXISTS `classe_cours`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `classe_cours` (
+  `classe_id` bigint NOT NULL,
+  `cours_id` bigint NOT NULL,
+  KEY `FKgmdswbv88tbkhblsdcjpiidio` (`cours_id`),
+  KEY `FKp3dop16rbl46nfarunijty274` (`classe_id`),
+  CONSTRAINT `FKgmdswbv88tbkhblsdcjpiidio` FOREIGN KEY (`cours_id`) REFERENCES `cours_ue` (`id`),
+  CONSTRAINT `FKp3dop16rbl46nfarunijty274` FOREIGN KEY (`classe_id`) REFERENCES `classe` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `classe_cours`
+--
+
+LOCK TABLES `classe_cours` WRITE;
+/*!40000 ALTER TABLE `classe_cours` DISABLE KEYS */;
+/*!40000 ALTER TABLE `classe_cours` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -103,7 +167,7 @@ CREATE TABLE `cours_ue` (
   `codeue` varchar(255) DEFAULT NULL,
   `id_cours` varchar(255) DEFAULT NULL,
   `intitule` varchar(255) DEFAULT NULL,
-  `volume_horaire` varchar(255) DEFAULT NULL,
+  `volume_horaire` int DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -129,7 +193,10 @@ CREATE TABLE `emploi_du_temps` (
   `creneaux` varchar(255) DEFAULT NULL,
   `id_emploi` varchar(255) DEFAULT NULL,
   `periode` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `gestionnaire_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKaabqxmnsvcfowv50gcqygr0o3` (`gestionnaire_id`),
+  CONSTRAINT `FKaabqxmnsvcfowv50gcqygr0o3` FOREIGN KEY (`gestionnaire_id`) REFERENCES `assistant_pedagogique` (`utilisateur_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -165,6 +232,32 @@ CREATE TABLE `enseignant` (
 LOCK TABLES `enseignant` WRITE;
 /*!40000 ALTER TABLE `enseignant` DISABLE KEYS */;
 /*!40000 ALTER TABLE `enseignant` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `enseignant_cours`
+--
+
+DROP TABLE IF EXISTS `enseignant_cours`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `enseignant_cours` (
+  `enseignant_id` bigint NOT NULL,
+  `cours_id` bigint NOT NULL,
+  KEY `FKo1w2i2py52wq7m9o7h4psgu9d` (`cours_id`),
+  KEY `FK4i3ubyyl4kla67crl1e8p1dol` (`enseignant_id`),
+  CONSTRAINT `FK4i3ubyyl4kla67crl1e8p1dol` FOREIGN KEY (`enseignant_id`) REFERENCES `enseignant` (`utilisateur_id`),
+  CONSTRAINT `FKo1w2i2py52wq7m9o7h4psgu9d` FOREIGN KEY (`cours_id`) REFERENCES `cours_ue` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `enseignant_cours`
+--
+
+LOCK TABLES `enseignant_cours` WRITE;
+/*!40000 ALTER TABLE `enseignant_cours` DISABLE KEYS */;
+/*!40000 ALTER TABLE `enseignant_cours` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -206,7 +299,10 @@ CREATE TABLE `etudiant` (
   `matricule` varchar(255) DEFAULT NULL,
   `telephone` varchar(255) DEFAULT NULL,
   `utilisateur_id` bigint NOT NULL,
+  `classe_id` bigint DEFAULT NULL,
   PRIMARY KEY (`utilisateur_id`),
+  KEY `FK4f9xvhnh2rx4gl5l1sbrtflmh` (`classe_id`),
+  CONSTRAINT `FK4f9xvhnh2rx4gl5l1sbrtflmh` FOREIGN KEY (`classe_id`) REFERENCES `classe` (`id`),
   CONSTRAINT `FKk1k5fhsjak7v0uk031i5geqj9` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -221,6 +317,34 @@ LOCK TABLES `etudiant` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `filiere`
+--
+
+DROP TABLE IF EXISTS `filiere`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `filiere` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) DEFAULT NULL,
+  `id_filiere` varchar(255) DEFAULT NULL,
+  `nom_filiere` varchar(255) DEFAULT NULL,
+  `etablissement_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK18y5i45gjdm02dha3vwutfgv3` (`etablissement_id`),
+  CONSTRAINT `FK18y5i45gjdm02dha3vwutfgv3` FOREIGN KEY (`etablissement_id`) REFERENCES `etablissement` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `filiere`
+--
+
+LOCK TABLES `filiere` WRITE;
+/*!40000 ALTER TABLE `filiere` DISABLE KEYS */;
+/*!40000 ALTER TABLE `filiere` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `justificatif`
 --
 
@@ -229,12 +353,20 @@ DROP TABLE IF EXISTS `justificatif`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `justificatif` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `date_soumission` varchar(255) DEFAULT NULL,
+  `date_soumission` date DEFAULT NULL,
   `fichier` varchar(255) DEFAULT NULL,
   `id_justificatif` varchar(255) DEFAULT NULL,
   `motif` varchar(255) DEFAULT NULL,
   `statut` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `document_url` varchar(255) DEFAULT NULL,
+  `statut_validation` varchar(255) DEFAULT NULL,
+  `presence_id` bigint DEFAULT NULL,
+  `validateur_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UKs4ap2phtkkge6u50qxstjhyo4` (`presence_id`),
+  KEY `FK2p2n02vurr6pbh1cd5dwj3k2t` (`validateur_id`),
+  CONSTRAINT `FK2p2n02vurr6pbh1cd5dwj3k2t` FOREIGN KEY (`validateur_id`) REFERENCES `assistant_pedagogique` (`utilisateur_id`),
+  CONSTRAINT `FK7ymewtadw0iyekb78x0emhdch` FOREIGN KEY (`presence_id`) REFERENCES `presence` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -300,6 +432,32 @@ LOCK TABLES `parent` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `parent_etudiant`
+--
+
+DROP TABLE IF EXISTS `parent_etudiant`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `parent_etudiant` (
+  `parent_id` bigint NOT NULL,
+  `etudiant_id` bigint NOT NULL,
+  KEY `FK4gix4k8pcbsfyet4b0fbv9bio` (`etudiant_id`),
+  KEY `FKseul2ypm9yfubbwrptjff49mq` (`parent_id`),
+  CONSTRAINT `FK4gix4k8pcbsfyet4b0fbv9bio` FOREIGN KEY (`etudiant_id`) REFERENCES `etudiant` (`utilisateur_id`),
+  CONSTRAINT `FKseul2ypm9yfubbwrptjff49mq` FOREIGN KEY (`parent_id`) REFERENCES `parent` (`utilisateur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `parent_etudiant`
+--
+
+LOCK TABLES `parent_etudiant` WRITE;
+/*!40000 ALTER TABLE `parent_etudiant` DISABLE KEYS */;
+/*!40000 ALTER TABLE `parent_etudiant` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `presence`
 --
 
@@ -308,12 +466,21 @@ DROP TABLE IF EXISTS `presence`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `presence` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `horodatage` varchar(255) DEFAULT NULL,
+  `horodatage` datetime(6) DEFAULT NULL,
   `id_presence` varchar(255) DEFAULT NULL,
   `localisation` varchar(255) DEFAULT NULL,
   `mode_enregistrement` varchar(255) DEFAULT NULL,
   `statut` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `appel_id` bigint DEFAULT NULL,
+  `etudiant_id` bigint DEFAULT NULL,
+  `seance_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKga6h3ww1n2pts9o7e64g2udg6` (`appel_id`),
+  KEY `FKksx89i2kcy5ydha9cl7jgovbs` (`etudiant_id`),
+  KEY `FKrilwqu23ivg6slm088wnmqbvh` (`seance_id`),
+  CONSTRAINT `FKga6h3ww1n2pts9o7e64g2udg6` FOREIGN KEY (`appel_id`) REFERENCES `appel` (`id`),
+  CONSTRAINT `FKksx89i2kcy5ydha9cl7jgovbs` FOREIGN KEY (`etudiant_id`) REFERENCES `etudiant` (`utilisateur_id`),
+  CONSTRAINT `FKrilwqu23ivg6slm088wnmqbvh` FOREIGN KEY (`seance_id`) REFERENCES `seance` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -335,12 +502,21 @@ DROP TABLE IF EXISTS `seance`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `seance` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `date` varchar(255) DEFAULT NULL,
-  `heure_debut` varchar(255) DEFAULT NULL,
-  `heure_fin` varchar(255) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `heure_debut` time(6) DEFAULT NULL,
+  `heure_fin` time(6) DEFAULT NULL,
   `id_seance` varchar(255) DEFAULT NULL,
   `statut` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `cours_id` bigint DEFAULT NULL,
+  `emploi_du_temps_id` bigint DEFAULT NULL,
+  `enseignant_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKrfxjmrcsbq5xs26jdghgywmp0` (`cours_id`),
+  KEY `FKc7wj666ypniqwg385sq9mxv6f` (`emploi_du_temps_id`),
+  KEY `FK2o5dfw98jhfa4jcarkc6apqh2` (`enseignant_id`),
+  CONSTRAINT `FK2o5dfw98jhfa4jcarkc6apqh2` FOREIGN KEY (`enseignant_id`) REFERENCES `enseignant` (`utilisateur_id`),
+  CONSTRAINT `FKc7wj666ypniqwg385sq9mxv6f` FOREIGN KEY (`emploi_du_temps_id`) REFERENCES `emploi_du_temps` (`id`),
+  CONSTRAINT `FKrfxjmrcsbq5xs26jdghgywmp0` FOREIGN KEY (`cours_id`) REFERENCES `cours_ue` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -351,6 +527,32 @@ CREATE TABLE `seance` (
 LOCK TABLES `seance` WRITE;
 /*!40000 ALTER TABLE `seance` DISABLE KEYS */;
 /*!40000 ALTER TABLE `seance` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `seance_surveillant`
+--
+
+DROP TABLE IF EXISTS `seance_surveillant`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `seance_surveillant` (
+  `seance_id` bigint NOT NULL,
+  `surveillant_id` bigint NOT NULL,
+  KEY `FK4jj412ulrc3y8ja3ip5wj5ab` (`surveillant_id`),
+  KEY `FK9nackreu8fr0d8o4bp5vfo3qx` (`seance_id`),
+  CONSTRAINT `FK4jj412ulrc3y8ja3ip5wj5ab` FOREIGN KEY (`surveillant_id`) REFERENCES `surveillant` (`utilisateur_id`),
+  CONSTRAINT `FK9nackreu8fr0d8o4bp5vfo3qx` FOREIGN KEY (`seance_id`) REFERENCES `seance` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `seance_surveillant`
+--
+
+LOCK TABLES `seance_surveillant` WRITE;
+/*!40000 ALTER TABLE `seance_surveillant` DISABLE KEYS */;
+/*!40000 ALTER TABLE `seance_surveillant` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -415,4 +617,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-11 16:26:44
+-- Dump completed on 2026-02-09 18:05:34
