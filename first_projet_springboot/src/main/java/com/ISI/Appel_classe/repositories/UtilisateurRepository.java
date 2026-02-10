@@ -1,4 +1,4 @@
-package repositories;
+package com.ISI.Appel_classe.repositories;
 
 import com.ISI.Appel_classe.models.Utilisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
