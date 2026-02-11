@@ -1,6 +1,7 @@
 package com.ISI.Appel_classe.controllers;
 
 import com.ISI.Appel_classe.models.Utilisateur;
+import com.ISI.Appel_classe.models.Statut;
 import com.ISI.Appel_classe.repositories.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,13 +43,30 @@ public class UtilisateurController {
     }
 
     /**
+     * Récupérer un utilisateur par son email
+     */
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Utilisateur> getUtilisateurByEmail(@PathVariable String email) {
+        log.info("Récupération de l'utilisateur avec email={}", email);
+        Utilisateur u = utilisateurRepository.findByEmail(email);
+        Optional<Utilisateur> utilisateurOpt = Optional.ofNullable(u);
+        return utilisateurOpt
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
      * Créer un nouvel utilisateur
      */
     @PostMapping
     public ResponseEntity<Utilisateur> createUtilisateur(@RequestBody Utilisateur utilisateur) {
-        log.info("Création d'un nouvel utilisateur: {}", utilisateur.getEmail());
-        Utilisateur saved = utilisateurRepository.save(utilisateur);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        if (utilisateurRepository.findByEmail(utilisateur.getEmail()) == null) {
+            log.info("Création d'un nouvel utilisateur: {}", utilisateur.getEmail());
+            Utilisateur saved = utilisateurRepository.save(utilisateur);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } else  {
+            return ResponseEntity.status(400).build();
+        }
     }
 
     /**
@@ -87,6 +105,27 @@ public class UtilisateurController {
 
         utilisateurRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Changer le statut utilisateur existant
+     */
+    @PutMapping("/statut/{email}")
+    public ResponseEntity<Utilisateur> BloquerUtilisateur(@PathVariable String email) {
+        log.info("Mise à jour de l'utilisateur email={}", email);
+
+        Utilisateur user = utilisateurRepository.findByEmail(email);
+        if (user.getStatut() == Statut.INACTIF) {
+            user.setStatut(Statut.ACTIF);
+        } else {
+            user.setStatut(Statut.INACTIF);
+        }
+
+        utilisateurRepository.save(user);
+
+        return Optional.of(user)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
 

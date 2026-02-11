@@ -20,10 +20,15 @@ public class Utilisateur {
 
     private String nom;
     private String prenom;
+
+    @Column(unique = true)
     private String email;
+
     private String password;
     private String role;
-    private String statut;
+
+    @Enumerated(EnumType.STRING)
+    private Statut statut;
 
     // 🔹 Méthodes de logique métier
     public void seConnecter() {
