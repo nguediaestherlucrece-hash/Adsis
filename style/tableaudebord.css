@@ -1,0 +1,57 @@
+body {
+  background: #f6f7fb;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: #ffffff;
+  border-right: 1px solid #eee;
+}
+
+/* LOGO */
+.logo {
+  max-width: 110px;
+}
+
+/* MENU */
+.nav-link {
+  color: #555;
+  border-radius: 8px;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  background: #eef2ff;
+  color: #2563eb;
+}
+
+/* LOGOUT */
+.logout {
+  margin-top: 30px;
+}
+
+/* STATS */
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.stat-card.green { border-left: 5px solid #22c55e; }
+.stat-card.purple { border-left: 5px solid #a855f7; }
+.stat-card.orange { border-left: 5px solid #f97316; }
+
+/* ACTIVITÉS */
+.activity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.activity:last-child {
+  border-bottom: none;
+}

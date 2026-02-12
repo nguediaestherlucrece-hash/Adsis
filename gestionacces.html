@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+   <link rel="stylesheet" href="style/gestionacess.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>projetarchiweb</title>
+  </head>
+<body>
+
+<div class="d-flex">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-box">
+      <img src="assets/image.png" alt="Logo établissement">
+      <div>
+        <small>ÉTABLISSEMENT</small>
+        <strong>Saint Jean Ingénieur</strong>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <a href="#"><i class="bi bi-grid"></i> Tableau de bord</a>
+      <a href="#"><i class="bi bi-people"></i> Gestion des utilisateurs</a>
+      <a href="#" class="active"><i class="bi bi-shield-lock"></i> Gestion des accès</a>
+      <a href="#"><i class="bi bi-person"></i> Mon Profil</a>
+    </nav>
+
+    <div class="logout">
+      <i class="bi bi-box-arrow-left"></i> Déconnexion
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-grow-1 p-4">
+
+    <!-- HEADER -->
+    <div class="topbar">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Rechercher un utilisateur...">
+      </div>
+
+      <div class="admin">
+        <i class="bi bi-bell"></i>
+        <div class="avatar">A</div>
+        <div>
+          <strong>Administrateur</strong>
+          <small>Admin Principal</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <h4 class="mt-4">Gestion des accès</h4>
+    <p class="text-muted">Configurez les permissions pour chaque rôle d'utilisateur</p>
+
+    <!-- ROLES -->
+    <div class="role-section">
+      <h6>Sélectionner un rôle</h6>
+
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="role-card">
+            <i class="bi bi-shield"></i>
+            <h6>Étudiant</h6>
+            <small>3 permissions</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="role-card active">
+            <i class="bi bi-shield-check"></i>
+            <h6>Enseignant</h6>
+            <small>6 permissions</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="role-card">
+            <i class="bi bi-shield"></i>
+            <h6>Assistant Pédagogique</h6>
+            <small>5 permissions</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="role-card">
+            <i class="bi bi-shield"></i>
+            <h6>Surveillant</h6>
+            <small>3 permissions</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERMISSIONS -->
+    <div class="permission-section mt-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6>
+          Permissions pour le rôle :
+          <span class="badge bg-primary">Enseignant</span>
+        </h6>
+        <small class="text-muted">6 / 12 permissions activées</small>
+      </div>
+
+      <div class="permission-item">
+        <div>
+          <strong>Voir les cours</strong>
+          <p>Consulter la liste des cours</p>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="permission-item">
+        <div>
+          <strong>Gérer les cours</strong>
+          <p>Créer, modifier et supprimer des cours</p>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

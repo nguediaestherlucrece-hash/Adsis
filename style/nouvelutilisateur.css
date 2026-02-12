@@ -1,0 +1,54 @@
+/* Fond général de la modal */
+.custom-modal {
+  border-radius: 16px;
+  padding: 8px;
+}
+
+/* Champs de saisie (look doux comme sur l’image) */
+.custom-input {
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid #d0d5dd;
+  padding-left: 14px;
+  font-size: 15px;
+}
+
+.custom-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+}
+
+/* Labels */
+.form-label {
+  font-weight: 500;
+  color: #344054;
+  margin-bottom: 6px;
+}
+
+/* Bouton Annuler */
+.btn-cancel {
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-weight: 500;
+  color: #344054;
+}
+
+/* Bouton Créer */
+.btn-create {
+  border-radius: 12px;
+  padding: 10px 28px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: none;
+}
+
+.btn-create:hover {
+  opacity: 0.9;
+}
+
+/* Responsive : mobile friendly */
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 12px;
+  }
+}

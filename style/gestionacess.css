@@ -1,0 +1,128 @@
+body {
+  background-color: #f5f7fb;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-box {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.logo-box img {
+  width: 40px;
+}
+
+.menu a {
+  display: block;
+  padding: 10px 14px;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.menu a.active,
+.menu a:hover {
+  background: #eaf1ff;
+  color: #2563eb;
+}
+
+.logout {
+  margin-top: auto;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 350px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+.admin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ROLES */
+.role-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.role-card.active {
+  border-color: #2563eb;
+  background: #f0f6ff;
+}
+
+.role-card i {
+  font-size: 20px;
+  color: #2563eb;
+}
+
+/* PERMISSIONS */
+.permission-section {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.permission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 0;
+}
+
+.permission-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}

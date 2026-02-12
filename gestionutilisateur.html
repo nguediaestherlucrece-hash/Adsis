@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+   <link rel="stylesheet" href="style/gestionutilisateur.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gestion utilisateur</title>
+  </head>
+ 
+<body>
+
+<div class="container-fluid">
+  <div class="row min-vh-100">
+
+    <!-- SIDEBAR -->
+    <aside class="col-md-3 col-lg-2 sidebar p-3 d-flex flex-column">
+
+      <!-- LOGO -->
+      <div class="logo-box text-center mb-4">
+        <img src="assets/image.png" alt="Logo ADSIS" class="logo">
+        <p class="fw-bold mt-2 mb-0">ADSIS</p>
+      </div>
+
+      <small class="text-muted">ÉTABLISSEMENT</small>
+      <p class="fw-semibold">Saint Jean Ingénieur</p>
+
+      <hr>
+
+      <!-- MENU -->
+      <nav class="nav flex-column gap-2">
+        <a class="nav-link" href="#"><i class="bi bi-grid me-2"></i>Tableau de bord</a>
+        <a class="nav-link active" href="#"><i class="bi bi-people me-2"></i>Gestion des utilisateurs</a>
+        <a class="nav-link" href="#"><i class="bi bi-shield-lock me-2"></i>Gestion des accès</a>
+        <a class="nav-link" href="#"><i class="bi bi-person me-2"></i>Mon Profil</a>
+      </nav>
+
+      <!-- LOGOUT -->
+      <a href="#" class="logout mt-auto text-danger">
+        <i class="bi bi-box-arrow-left me-2"></i>Déconnexion
+      </a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="col-md-9 col-lg-10 p-4">
+
+      <!-- TOP BAR -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <input class="form-control w-50" placeholder="Rechercher un utilisateur...">
+
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-bell fs-5"></i>
+          <div class="text-end">
+            <div class="fw-semibold">Administrateur</div>
+            <small class="text-muted">Admin Principal</small>
+          </div>
+          <span class="avatar">A</span>
+        </div>
+      </div>
+
+      <!-- TITLE -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="fw-bold">Gestion des utilisateurs</h4>
+          <p class="text-muted">Gérez les utilisateurs et leurs rôles dans le système</p>
+        </div>
+
+        <button class="btn btn-primary">
+          <i class="bi bi-plus"></i> Nouvel utilisateur
+        </button>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filter-tabs mb-3">
+        <span class="active">Tous (6)</span>
+        <span>Étudiants (2)</span>
+        <span>Enseignants (2)</span>
+        <span>Assistants (1)</span>
+        <span>Surveillants (1)</span>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card p-3">
+        <table class="table align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>UTILISATEUR</th>
+              <th>RÔLE</th>
+              <th>STATUT</th>
+              <th>DATE DE CRÉATION</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- USER -->
+            <tr>
+              <td class="d-flex align-items-center gap-3">
+                <span class="avatar blue">M</span>
+                <div>
+                  <strong>Marie Dupont</strong><br>
+                  <small class="text-muted">marie.dupont@school.fr</small>
+                </div>
+              </td>
+              <td><span class="badge role student">Étudiant</span></td>
+              <td><span class="badge status active">Actif</span></td>
+              <td>15/01/2024</td>
+              <td><i class="bi bi-three-dots-vertical"></i></td>
+            </tr>
+
+            <tr>
+              <td class="d-flex align-items-center gap-3">
+                <span class="avatar blue">J</span>
+                <div>
+                  <strong>Jean Martin</strong><br>
+                  <small class="text-muted">jean.martin@school.fr</small>
+                </div>
+              </td>
+              <td><span class="badge role teacher">Enseignant</span></td>
+              <td><span class="badge status active">Actif</span></td>
+              <td>01/09/2023</td>
+              <td><i class="bi bi-three-dots-vertical"></i></td>
+            </tr>
+
+            <tr>
+              <td class="d-flex align-items-center gap-3">
+                <span class="avatar blue">S</span>
+                <div>
+                  <strong>Sophie Bernard</strong><br>
+                  <small class="text-muted">sophie.bernard@school.fr</small>
+                </div>
+              </td>
+              <td><span class="badge role assistant">Assistant pédagogique</span></td>
+              <td><span class="badge status active">Actif</span></td>
+              <td>10/02/2024</td>
+              <td><i class="bi bi-three-dots-vertical"></i></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

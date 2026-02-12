@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+   <link rel="stylesheet" href="style/tableaudebord.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>projetarchiweb</title>
+  </head>
+<body class="bg-light">
+
+<div class="container-fluid">
+  <div class="row min-vh-100">
+
+    <!-- SIDEBAR -->
+    <aside class="col-md-3 col-lg-2 sidebar p-3">
+      <h6 class="text-muted mb-3">ÉTABLISSEMENT</h6>
+      <h5 class="fw-bold mb-4">Saint Jean Ingénieur</h5>
+
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="#"><i class="bi bi-grid me-2"></i>Tableau de bord</a>
+        <a class="nav-link" href="#"><i class="bi bi-people me-2"></i>Gestion des utilisateurs</a>
+        <a class="nav-link" href="#"><i class="bi bi-shield-lock me-2"></i>Gestion des accès</a>
+        <a class="nav-link" href="#"><i class="bi bi-person-circle me-2"></i>Mon profil</a>
+      </nav>
+
+      <a href="#" class="logout mt-auto d-block text-danger fw-semibold">
+        <i class="bi bi-box-arrow-left me-2"></i>Déconnexion
+      </a>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="col-md-9 col-lg-10 p-4">
+
+      <!-- TOP BAR -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <input type="search" class="form-control w-50" placeholder="Rechercher un utilisateur...">
+
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-bell fs-5"></i>
+          <div class="text-end">
+            <div class="fw-semibold">Administrateur</div>
+            <small class="text-muted">Admin Principal</small>
+          </div>
+          <div class="avatar">A</div>
+        </div>
+      </div>
+
+      <!-- TITRE -->
+      <h3 class="fw-bold">Tableau de bord</h3>
+      <p class="text-muted">Vue d’ensemble de la gestion des utilisateurs</p>
+
+      <!-- CARTES STATISTIQUES -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div>
+              <small>Total utilisateurs</small>
+              <h4 class="fw-bold">247</h4>
+            </div>
+            <div class="icon blue"><i class="bi bi-people"></i></div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div>
+              <small>Étudiants</small>
+              <h4 class="fw-bold">186</h4>
+            </div>
+            <div class="icon green"><i class="bi bi-mortarboard"></i></div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div>
+              <small>Enseignants</small>
+              <h4 class="fw-bold">45</h4>
+            </div>
+            <div class="icon purple"><i class="bi bi-person-badge"></i></div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div>
+              <small>Surveillants</small>
+              <h4 class="fw-bold">16</h4>
+            </div>
+            <div class="icon orange"><i class="bi bi-eye"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITÉS RÉCENTES -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Activités récentes</h5>
+
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+              <div>
+                <strong>Nouvel utilisateur créé</strong><br>
+                <small class="text-muted">Marie Dupont – Étudiant</small>
+              </div>
+              <small class="text-muted">il y a 5 minutes</small>
+            </li>
+
+            <li class="list-group-item d-flex justify-content-between">
+              <div>
+                <strong>Permissions modifiées</strong><br>
+                <small class="text-muted">Jean Martin – Enseignant</small>
+              </div>
+              <small class="text-muted">il y a 1 heure</small>
+            </li>
+
+            <li class="list-group-item d-flex justify-content-between">
+              <div>
+                <strong>Utilisateur supprimé</strong><br>
+                <small class="text-muted">Sophie Bernard – Surveillant</small>
+              </div>
+              <small class="text-muted">il y a 3 heures</small>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
+
+ 
+
+ 
