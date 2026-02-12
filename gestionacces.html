@@ -1,139 +1,166 @@
 <!doctype html>
-<html lang="en">
-  <head>
+<html lang="fr">
+<head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-   <link rel="stylesheet" href="style/gestionacess.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>projetarchiweb</title>
-  </head>
+    <title>Gestion des Accès - Saint Jean</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: sans-serif; color: #333; }
+
+        /* SIDEBAR */
+        .sidebar { width: 260px; height: 100vh; background: white; padding: 20px; position: fixed; border-right: 1px solid #dee2e6; }
+        .logo-box { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
+        .logo-box img { width: 35px; }
+        .menu a { display: flex; align-items: center; gap: 12px; padding: 10px 15px; color: #495057; text-decoration: none; border-radius: 5px; transition: 0.2s; margin-bottom: 5px; }
+        .menu a.active { background: #e7f1ff; color: #0d6efd; font-weight: 500; }
+        .logout { position: absolute; bottom: 30px; left: 20px; color: #6c757d; cursor: pointer; text-decoration: none; }
+
+        /* MAIN */
+        .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .search-box { background: white; border-radius: 8px; padding: 6px 15px; width: 350px; display: flex; align-items: center; gap: 10px; border: 1px solid #ced4da; }
+        .search-box input { border: none; outline: none; width: 100%; font-size: 0.9rem; }
+        .avatar { width: 35px; height: 35px; background: #0d6efd; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* ROLES */
+        .role-card { background: white; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #dee2e6; cursor: pointer; transition: 0.2s; position: relative; }
+        .role-card.active { background: #f0f7ff; border-color: #0d6efd; }
+        .role-card .check-icon { position: absolute; top: 10px; right: 10px; color: #0d6efd; display: none; }
+        .role-card.active .check-icon { display: block; }
+        .role-card i.bi-shield { font-size: 1.2rem; color: #adb5bd; margin-bottom: 10px; display: block; }
+        .role-card.active i.bi-shield { color: #0d6efd; }
+
+        /* PERMISSIONS */
+        .permission-section { background: white; border-radius: 12px; padding: 25px; border: 1px solid #dee2e6; margin-top: 25px; margin-bottom: 80px; }
+        .cat-group { margin-bottom: 30px; }
+        .cat-title { border-left: 3px solid #0d6efd; padding-left: 10px; color: #212529; font-weight: bold; margin-bottom: 15px; }
+        .permission-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
+        .permission-item:last-child { border-bottom: none; }
+        .permission-item p { margin: 0; font-size: 0.8rem; color: #6c757d; }
+        
+        /* FOOTER ACTION */
+        .footer-save { position: fixed; bottom: 0; left: 260px; right: 0; background: white; padding: 15px 30px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; }
+    </style>
+</head>
 <body>
 
 <div class="d-flex">
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="assets/image.png" alt="Logo">
+            <div>
+                <small class="text-muted d-block" style="font-size: 0.65rem;">ÉTABLISSEMENT</small>
+                <strong style="font-size: 0.85rem;">Saint Jean Ingénieur</strong>
+            </div>
+        </div>
+        <nav class="menu">
+            <a href="tableaudebord.html"><i class="bi bi-grid"></i> Tableau de bord</a>
+            <a href="gestionutilisateur.html"><i class="bi bi-people"></i> Gestion des utilisateurs</a>
+            <a href="gestionacces.html" class="active"><i class="bi bi-shield-lock"></i> Gestion des accès</a>
+            <a href="profil.html"><i class="bi bi-person"></i> Mon Profil</a>
+        </nav>
+        <a href="#" class="logout"><i class="bi bi-box-arrow-left"></i> Déconnexion</a>
+    </aside>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo-box">
-      <img src="assets/image.png" alt="Logo établissement">
-      <div>
-        <small>ÉTABLISSEMENT</small>
-        <strong>Saint Jean Ingénieur</strong>
-      </div>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-box">
+                <i class="bi bi-search text-muted"></i>
+                <input type="text" placeholder="Rechercher un utilisateur...">
+            </div>
+            <div class="admin d-flex align-items-center gap-3">
+                <i class="bi bi-bell text-muted"></i>
+                <div class="text-end"><strong class="d-block small">Administrateur</strong><small class="text-muted" style="font-size: 0.7rem;">Admin Principal</small></div>
+                <div class="avatar">A</div>
+            </div>
+        </header>
+
+        <h4 class="fw-bold">Gestion des accès</h4>
+        <p class="text-muted small">Configurez les permissions pour chaque rôle d'utilisateur</p>
+
+        <div class="mt-4">
+            <h6 class="mb-3 fw-bold small">Sélectionner un rôle</h6>
+            <div class="row g-3">
+                <div class="col-md-3"><div class="role-card" onclick="setRole('Étudiant')"><i class="bi bi-check2 check-icon"></i><i class="bi bi-shield"></i><h6 class="mb-1 small fw-bold">Étudiant</h6><small class="text-muted" style="font-size: 0.7rem;">3 permissions</small></div></div>
+                <div class="col-md-3"><div class="role-card active" onclick="setRole('Enseignant')"><i class="bi bi-check2 check-icon"></i><i class="bi bi-shield"></i><h6 class="mb-1 small fw-bold">Enseignant</h6><small class="text-muted" style="font-size: 0.7rem;">6 permissions</small></div></div>
+                <div class="col-md-3"><div class="role-card" onclick="setRole('Assistant Pédagogique')"><i class="bi bi-check2 check-icon"></i><i class="bi bi-shield"></i><h6 class="mb-1 small fw-bold">Assistant Pédagogique</h6><small class="text-muted" style="font-size: 0.7rem;">5 permissions</small></div></div>
+                <div class="col-md-3"><div class="role-card" onclick="setRole('Surveillant')"><i class="bi bi-check2 check-icon"></i><i class="bi bi-shield"></i><h6 class="mb-1 small fw-bold">Surveillant</h6><small class="text-muted" style="font-size: 0.7rem;">3 permissions</small></div></div>
+            </div>
+        </div>
+
+        <div class="permission-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h6 class="m-0 small fw-bold">Permissions pour le rôle : <span id="role-badge" class="badge bg-primary ms-2">Enseignant</span></h6>
+                <small class="text-muted" id="count-text">0 / 10 activées</small>
+            </div>
+
+            <div class="cat-group">
+                <div class="cat-title">Cours</div>
+                <div class="permission-item"><div><strong>Voir les cours</strong><p>Consulter la liste des cours</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="view_courses"></div></div>
+                <div class="permission-item"><div><strong>Gérer les cours</strong><p>Créer, modifier et supprimer des cours</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="manage_courses"></div></div>
+                <div class="permission-item"><div><strong>Noter les devoirs</strong><p>Attribuer des notes aux travaux rendus</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="grade_homework"></div></div>
+            </div>
+
+            <div class="cat-group">
+                <div class="cat-title">Utilisateurs</div>
+                <div class="permission-item"><div><strong>Voir les utilisateurs</strong><p>Accéder à l'annuaire global</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="view_users"></div></div>
+                <div class="permission-item"><div><strong>Gérer les utilisateurs</strong><p>Modifier les comptes et accès</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="manage_users"></div></div>
+                <div class="permission-item"><div><strong>Voir les étudiants</strong><p>Consulter les fiches spécifiques étudiants</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="view_students"></div></div>
+            </div>
+
+            <div class="cat-group">
+                <div class="cat-title">Permissions</div>
+                <div class="permission-item"><div><strong>Voir les présences</strong><p>Consulter le registre d'appel</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="view_attendance"></div></div>
+                <div class="permission-item"><div><strong>Gérer les présences</strong><p>Faire l'appel et justifier les absences</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="manage_attendance"></div></div>
+            </div>
+
+            <div class="cat-group">
+                <div class="cat-title">Evaluations</div>
+                <div class="permission-item"><div><strong>Voir les notes</strong><p>Consulter le carnet de notes</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="view_grades"></div></div>
+                <div class="permission-item"><div><strong>Soumettre les devoirs</strong><p>Téléverser des fichiers de travail</p></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="submit_homework"></div></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="footer-save">
+        <button class="btn btn-primary px-4 shadow-sm" onclick="alert('Modifications enregistrées avec succès !')">Enregistrer les modifications</button>
     </div>
-
-    <nav class="menu">
-      <a href="#"><i class="bi bi-grid"></i> Tableau de bord</a>
-      <a href="#"><i class="bi bi-people"></i> Gestion des utilisateurs</a>
-      <a href="#" class="active"><i class="bi bi-shield-lock"></i> Gestion des accès</a>
-      <a href="#"><i class="bi bi-person"></i> Mon Profil</a>
-    </nav>
-
-    <div class="logout">
-      <i class="bi bi-box-arrow-left"></i> Déconnexion
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="flex-grow-1 p-4">
-
-    <!-- HEADER -->
-    <div class="topbar">
-      <div class="search-box">
-        <i class="bi bi-search"></i>
-        <input type="text" placeholder="Rechercher un utilisateur...">
-      </div>
-
-      <div class="admin">
-        <i class="bi bi-bell"></i>
-        <div class="avatar">A</div>
-        <div>
-          <strong>Administrateur</strong>
-          <small>Admin Principal</small>
-        </div>
-      </div>
-    </div>
-
-    <!-- TITLE -->
-    <h4 class="mt-4">Gestion des accès</h4>
-    <p class="text-muted">Configurez les permissions pour chaque rôle d'utilisateur</p>
-
-    <!-- ROLES -->
-    <div class="role-section">
-      <h6>Sélectionner un rôle</h6>
-
-      <div class="row g-3">
-        <div class="col-md-3">
-          <div class="role-card">
-            <i class="bi bi-shield"></i>
-            <h6>Étudiant</h6>
-            <small>3 permissions</small>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="role-card active">
-            <i class="bi bi-shield-check"></i>
-            <h6>Enseignant</h6>
-            <small>6 permissions</small>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="role-card">
-            <i class="bi bi-shield"></i>
-            <h6>Assistant Pédagogique</h6>
-            <small>5 permissions</small>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="role-card">
-            <i class="bi bi-shield"></i>
-            <h6>Surveillant</h6>
-            <small>3 permissions</small>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PERMISSIONS -->
-    <div class="permission-section mt-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <h6>
-          Permissions pour le rôle :
-          <span class="badge bg-primary">Enseignant</span>
-        </h6>
-        <small class="text-muted">6 / 12 permissions activées</small>
-      </div>
-
-      <div class="permission-item">
-        <div>
-          <strong>Voir les cours</strong>
-          <p>Consulter la liste des cours</p>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
-
-      <div class="permission-item">
-        <div>
-          <strong>Gérer les cours</strong>
-          <p>Créer, modifier et supprimer des cours</p>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
-    </div>
-
-  </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const perms = {
+        'Étudiant': ['view_courses', 'view_attendance', 'view_grades', 'submit_homework'],
+        'Enseignant': ['view_courses', 'manage_courses', 'grade_homework', 'view_students', 'view_attendance', 'manage_attendance', 'view_grades'],
+        'Assistant Pédagogique': ['view_courses', 'view_users', 'view_students', 'view_attendance', 'manage_attendance'],
+        'Surveillant': ['view_users', 'view_students', 'view_attendance', 'manage_attendance']
+    };
+
+    function setRole(roleName) {
+        // Style UI
+        document.querySelectorAll('.role-card').forEach(c => {
+            c.classList.remove('active');
+            if(c.querySelector('h6').innerText === roleName) c.classList.add('active');
+        });
+        document.getElementById('role-badge').innerText = roleName;
+
+        // Logique de cochage
+        const inputs = document.querySelectorAll('.form-check-input');
+        inputs.forEach(i => i.checked = perms[roleName].includes(i.id));
+        updateCount();
+    }
+
+    function updateCount() {
+        const total = document.querySelectorAll('.form-check-input').length;
+        const checked = document.querySelectorAll('.form-check-input:checked').length;
+        document.getElementById('count-text').innerText = `${checked} / ${total} activées`;
+    }
+
+    // Initialisation au chargement
+    document.addEventListener('DOMContentLoaded', () => setRole('Enseignant'));
+    document.querySelectorAll('.form-check-input').forEach(i => i.addEventListener('change', updateCount));
+</script>
+
 </body>
 </html>
