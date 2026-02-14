@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console de Test API Complète</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .auth-bar {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .auth-bar input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        /* Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            max-width: 1600px;
+            margin: 20px auto;
+            width: 100%;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+        }
+
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: transparent;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #f0f2f5;
+            color: var(--primary);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Forms & Inputs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Results Area */
+        .result-box {
+            background: #2d2d2d;
+            color: #a9b7c6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Lists */
+        .item-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .list-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>🚀 Console de Test API - Projet Appel Classe</h1>
+            <div class="auth-bar">
+                <span>🔐 Token JWT:</span>
+                <input type="text" id="jwt-token"
+                    placeholder="Collez votre Bearer token ici pour tester les endpoints sécurisés...">
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="nav-btn active" onclick="showTab('tab-users')">👥 Utilisateurs (Base)</button>
+            <button class="nav-btn" onclick="showTab('tab-rbac')">🔐 RBAC (Rôles)</button>
+            <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
+            <button class="nav-btn" onclick="showTab('tab-etudiants')">🎓 Étudiants</button>
+            <button class="nav-btn" onclick="showTab('tab-enseignants')">👨‍🏫 Enseignants</button>
+            <button class="nav-btn" onclick="showTab('tab-surveillants')">👮 Surveillants</button>
+            <button class="nav-btn" onclick="showTab('tab-assistants')">📚 Assistants Péd.</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+
+            <!-- TAB: UTILISATEURS -->
+            <div id="tab-users" class="tab-content active">
+                <div class="card">
+                    <h2>Liste des Utilisateurs</h2>
+                    <button class="btn btn-primary" onclick="fetchData('/utilisateurs', 'res-users')">🔄 Actualiser la
+                        liste</button>
+                    <div id="res-users" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+            <!-- TAB: RBAC -->
+            <div id="tab-rbac" class="tab-content">
+                <div class="card">
+                    <h2>Gestion des Rôles</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nom du Rôle</label>
+                            <input type="text" id="role-name" placeholder="Ex: DIRECTEUR">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="role-desc" placeholder="Accès complet">
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="createRole()">➕ Créer Rôle</button>
+                    <button class="btn btn-primary" onclick="fetchData('/roles', 'res-roles')">📋 Lister Rôles</button>
+                    <div id="res-roles" class="result-box">En attente...</div>
+                </div>
+
+                <div class="card">
+                    <h2>Permissions</h2>
+                    <button class="btn btn-primary" onclick="fetchData('/permissions', 'res-perms')">📋 Lister
+                        Permissions</button>
+                    <div id="res-perms" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+            <!-- TAB: ETUDIANTS -->
+            <div id="tab-etudiants" class="tab-content">
+                <div class="card">
+                    <h2>🎓 Créer un Étudiant</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nom</label><input type="text" id="etu-nom" value="Dupont"></div>
+                        <div class="form-group"><label>Prénom</label><input type="text" id="etu-prenom" value="Jean">
+                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" id="etu-email"
+                                value="jean.dupont@ecole.fr"></div>
+                        <div class="form-group"><label>Mot de Passe</label><input type="password" id="etu-pass"
+                                value="123456"></div>
+                        <div class="form-group"><label>Matricule</label><input type="text" id="etu-mat"
+                                value="ETU2024001"></div>
+                        <div class="form-group"><label>Date Naissance</label><input type="date" id="etu-dnaiss"></div>
+                        <div class="form-group"><label>Téléphone</label><input type="text" id="etu-tel"
+                                value="+33612345678"></div>
+                        <div class="form-group"><label>Classe ID</label><input type="number" id="etu-classe" value="1">
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="createEtudiant()">✅ Créer l'Étudiant</button>
+                </div>
+
+                <div class="card">
+                    <h2>Liste des Étudiants</h2>
+                    <div class="form-grid">
+                        <button class="btn btn-primary" onclick="fetchData('/etudiants', 'res-etudiants')">📋 Tous les
+                            étudiants</button>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="search-etu-mat" placeholder="Recherche par matricule...">
+                            <button class="btn btn-primary" onclick="searchEtudiant()">🔍</button>
+                        </div>
+                    </div>
+                    <div id="res-etudiants" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+            <!-- TAB: ENSEIGNANTS -->
+            <div id="tab-enseignants" class="tab-content">
+                <div class="card">
+                    <h2>👨‍🏫 Créer un Enseignant</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nom</label><input type="text" id="ens-nom" value="Martin"></div>
+                        <div class="form-group"><label>Prénom</label><input type="text" id="ens-prenom" value="Sophie">
+                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" id="ens-email"
+                                value="sophie.martin@ecole.fr"></div>
+                        <div class="form-group"><label>Spécialité</label><input type="text" id="ens-spec"
+                                value="Mathématiques"></div>
+                        <div class="form-group"><label>Grade</label><input type="text" id="ens-grade"
+                                value="Professeur"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="createEnseignant()">✅ Créer l'Enseignant</button>
+                </div>
+                <div class="card">
+                    <h2>Assigner Cours</h2>
+                    <div class="form-grid">
+                        <input type="number" id="assign-ens-id" placeholder="ID Enseignant">
+                        <input type="text" id="assign-cours-ids" placeholder="IDs Cours (ex: 1,2,3)">
+                    </div>
+                    <button class="btn btn-primary" onclick="assignCours()">🔗 Assigner</button>
+                </div>
+                <div class="card">
+                    <button class="btn btn-primary" onclick="fetchData('/enseignants', 'res-enseignants')">📋 Lister
+                        Enseignants</button>
+                    <div id="res-enseignants" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+            <!-- TAB: SURVEILLANTS -->
+            <div id="tab-surveillants" class="tab-content">
+                <div class="card">
+                    <h2>👮 Créer un Surveillant</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nom</label><input type="text" id="surv-nom" value="Dubois"></div>
+                        <div class="form-group"><label>Prénom</label><input type="text" id="surv-prenom" value="Pierre">
+                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" id="surv-email"
+                                value="pierre.dubois@ecole.fr"></div>
+                        <div class="form-group"><label>Affectation</label><input type="text" id="surv-aff"
+                                value="Bâtiment A"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="createSurveillant()">✅ Créer le Surveillant</button>
+                </div>
+                <div class="card">
+                    <button class="btn btn-primary" onclick="fetchData('/surveillants', 'res-surv')">📋 Lister
+                        Surveillants</button>
+                    <div id="res-surv" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+            <!-- TAB: ASSISTANTS -->
+            <div id="tab-assistants" class="tab-content">
+                <div class="card">
+                    <h2>📚 Créer un Assistant Pédagogique</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nom</label><input type="text" id="asst-nom" value="Roux"></div>
+                        <div class="form-group"><label>Prénom</label><input type="text" id="asst-prenom" value="Claire">
+                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" id="asst-email"
+                                value="claire.roux@ecole.fr"></div>
+                        <div class="form-group"><label>Département</label><input type="text" id="asst-dept"
+                                value="Informatique"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="createAssistant()">✅ Créer l'Assistant</button>
+                </div>
+                <div class="card">
+                    <button class="btn btn-primary" onclick="fetchData('/assistants-pedagogiques', 'res-asst')">📋
+                        Lister Assistants</button>
+                    <div id="res-asst" class="result-box">En attente...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8081/api';
+
+        // GESTION DES ONGLETS
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // FONCTION GÉNÉRIQUE DE REQUÊTE
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const token = document.getElementById('jwt-token').value;
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                const data = await response.json().catch(() => ({ status: response.status }));
+                return { ok: response.ok, status: response.status, data };
+            } catch (error) {
+                return { ok: false, status: 0, data: { error: error.message } };
+            }
+        }
+
+        // AFFICHER RÉSULTAT
+        function displayResult(elementId, result) {
+            const el = document.getElementById(elementId);
+            const badge = result.ok
+                ? `<div class="status-badge status-success">HTTP ${result.status} OK</div>`
+                : `<div class="status-badge status-error">HTTP ${result.status} ERROR</div>`;
+
+            el.innerHTML = badge + JSON.stringify(result.data, null, 2);
+        }
+
+        // --- WRAPPERS ---
+
+        async function fetchData(endpoint, resultId) {
+            const res = await apiCall(endpoint);
+            displayResult(resultId, res);
+        }
+
+        // --- ETUDIANT ---
+
+        async function createEtudiant() {
+            const body = {
+                nom: document.getElementById('etu-nom').value,
+                prenom: document.getElementById('etu-prenom').value,
+                email: document.getElementById('etu-email').value,
+                password: document.getElementById('etu-pass').value,
+                matricule: document.getElementById('etu-mat').value,
+                dateNaissance: document.getElementById('etu-dnaiss').value,
+                telephone: document.getElementById('etu-tel').value,
+                classeId: document.getElementById('etu-classe').value,
+                roleNames: ["ETUDIANT"],
+                statut: "ACTIF"
+            };
+            const res = await apiCall('/etudiants', 'POST', body);
+            displayResult('res-etudiants', res);
+        }
+
+        async function searchEtudiant() {
+            const mat = document.getElementById('search-etu-mat').value;
+            fetchData(`/etudiants/matricule/${mat}`, 'res-etudiants');
+        }
+
+        // --- ENSEIGNANT ---
+
+        async function createEnseignant() {
+            const body = {
+                nom: document.getElementById('ens-nom').value,
+                prenom: document.getElementById('ens-prenom').value,
+                email: document.getElementById('ens-email').value,
+                password: "password",
+                specialite: document.getElementById('ens-spec').value,
+                grade: document.getElementById('ens-grade').value,
+                roleNames: ["ENSEIGNANT"],
+                statut: "ACTIF"
+            };
+            const res = await apiCall('/enseignants', 'POST', body);
+            displayResult('res-enseignants', res);
+        }
+
+        async function assignCours() {
+            const id = document.getElementById('assign-ens-id').value;
+            const coursIds = document.getElementById('assign-cours-ids').value.split(',').map(Number);
+            const res = await apiCall(`/enseignants/${id}/cours`, 'PATCH', coursIds);
+            displayResult('res-enseignants', res);
+        }
+
+        // --- SURVEILLANT ---
+
+        async function createSurveillant() {
+            const body = {
+                nom: document.getElementById('surv-nom').value,
+                prenom: document.getElementById('surv-prenom').value,
+                email: document.getElementById('surv-email').value,
+                password: "password",
+                affectation: document.getElementById('surv-aff').value,
+                roleNames: ["SURVEILLANT"],
+                statut: "ACTIF"
+            };
+            const res = await apiCall('/surveillants', 'POST', body);
+            displayResult('res-surv', res);
+        }
+
+        // --- ASSISTANT ---
+
+        async function createAssistant() {
+            const body = {
+                nom: document.getElementById('asst-nom').value,
+                prenom: document.getElementById('asst-prenom').value,
+                email: document.getElementById('asst-email').value,
+                password: "password",
+                departement: document.getElementById('asst-dept').value,
+                roleNames: ["ASSISTANT_PEDAGOGIQUE"],
+                statut: "ACTIF"
+            };
+            const res = await apiCall('/assistants-pedagogiques', 'POST', body);
+            displayResult('res-asst', res);
+        }
+
+        // --- RBAC ---
+
+        async function createRole() {
+            const body = {
+                name: document.getElementById('role-name').value,
+                description: document.getElementById('role-desc').value
+            };
+            const res = await apiCall('/roles', 'POST', body);
+            displayResult('res-roles', res);
+        }
+
+    </script>
+</body>
+
+</html>
