@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="style/tableaudebord.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+   <link rel="stylesheet" href="style/tableaudebord.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ADSIS - Tableau de bord</title>
   </head>
@@ -37,12 +37,10 @@
     </aside>
 
     <main class="col-md-9 col-lg-10 p-4">
-
+      
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <input type="text" class="form-control w-50" placeholder="Rechercher un utilisateur...">
-
+        <input type="text" class="form-control w-50" placeholder="Rechercher...">
         <div class="d-flex align-items-center gap-3">
-          <i class="bi bi-bell fs-5"></i>
           <div class="d-flex align-items-center gap-2">
             <span class="fw-semibold">Administrateur</span>
             <span class="badge bg-primary rounded-circle">A</span>
@@ -51,12 +49,11 @@
       </div>
 
       <h4>Tableau de bord</h4>
-      <p class="text-muted mb-4">Vue d’ensemble de la gestion des utilisateurs</p>
-
+      
       <div class="row g-3 mb-4">
         <div class="col-md-3">
           <div class="stat-card">
-            <p>Total utilisateurs</p>
+            <p>Total</p>
             <h3 id="stat-total">0</h3>
           </div>
         </div>
@@ -80,36 +77,32 @@
         </div>
       </div>
 
-      <div class="card p-3">
+      <div class="card p-3 shadow-sm border-0">
         <h6 class="fw-bold mb-3">Activités récentes</h6>
-        <div id="activity-list">
-           <div class="activity">
-            <span class="badge bg-success rounded-circle">M</span>
-            <div>
-              <strong>Nouvel utilisateur créé</strong><br>
-              <small class="text-muted">Marie Dupont – Étudiant</small>
-            </div>
-            <small class="ms-auto text-muted">Il y a 5 min</small>
-          </div>
 
-          <div class="activity">
-            <span class="badge bg-primary rounded-circle">J</span>
-            <div>
-              <strong>Permissions modifiées</strong><br>
-              <small class="text-muted">Jean Martin – Enseignant</small>
-            </div>
-            <small class="ms-auto text-muted">Il y a 1 h</small>
+        <div class="activity d-flex align-items-center mb-3">
+          <span class="badge bg-success rounded-circle me-3">M</span>
+          <div>
+            <strong>Nouvel utilisateur créé</strong><br>
+            <small class="text-muted">Marie Dupont – Étudiant</small>
           </div>
+          <small class="ms-auto text-muted">Il y a 5 min</small>
+        </div>
+
+        <div class="activity d-flex align-items-center mb-3">
+          <span class="badge bg-primary rounded-circle me-3">J</span>
+          <div>
+            <strong>Permissions modifiées</strong><br>
+            <small class="text-muted">Jean Martin – Enseignant</small>
+          </div>
+          <small class="ms-auto text-muted">Il y a 1 h</small>
         </div>
       </div>
-
     </main>
   </div>
 </div>
 
 <script>
-  // Cette liste est la même que celle de gestionutilisateur.html
-  // En production, cette donnée proviendra de votre API Back-end
   const users = [
     { name: "Marie Dupont", role: "Étudiant" },
     { name: "Jean Martin", role: "Enseignant" },
@@ -120,25 +113,12 @@
   ];
 
   function updateDashboardStats() {
-    // Calcul des totaux
-    const total = users.length;
-    const etudiants = users.filter(u => u.role === "Étudiant").length;
-    const enseignants = users.filter(u => u.role === "Enseignant").length;
-    const surveillants = users.filter(u => u.role === "Surveillant").length;
-
-    // Mise à jour de l'affichage
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-etudiants').innerText = etudiants;
-    document.getElementById('stat-enseignants').innerText = enseignants;
-    document.getElementById('stat-surveillants').innerText = surveillants;
-    
-    console.log("Stats synchronisées avec la base utilisateurs.");
+    document.getElementById('stat-total').innerText = users.length;
+    document.getElementById('stat-etudiants').innerText = users.filter(u => u.role === "Étudiant").length;
+    document.getElementById('stat-enseignants').innerText = users.filter(u => u.role === "Enseignant").length;
+    document.getElementById('stat-surveillants').innerText = users.filter(u => u.role === "Surveillant").length;
   }
-
-  // Initialisation au chargement de la page
-  document.addEventListener('DOMContentLoaded', updateDashboardStats);
+  updateDashboardStats();
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

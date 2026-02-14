@@ -1,316 +1,285 @@
 <!doctype html>
 <html lang="fr">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestion des utilisateurs - ADSIS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="style/tableaudebord.css">
     <style>
-      body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+      /* Styles spécifiques à la page gestion utilisateurs */
+      .filter-tab { cursor: pointer; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; transition: 0.3s; border: 1px solid transparent; }
+      .filter-tab.active { background: #0d6efd; color: white; }
+      .user-avatar { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; color: white; text-transform: uppercase; }
+      .status-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; }
+      .niveaux-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; font-size: 0.72rem; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; }
+      .niveaux-grid label { margin-bottom: 0; cursor: pointer; }
       
-      /* SIDEBAR */
-      .sidebar { width: 260px; height: 100vh; background: white; padding: 20px; position: fixed; border-right: 1px solid #dee2e6; z-index: 100; }
-      .logo-box img { width: 40px; }
-      .nav-link { color: #495057; border-radius: 8px; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; padding: 10px 15px; text-decoration: none; }
-      .nav-link.active { background: #e7f1ff; color: #0d6efd; font-weight: 600; }
-      .nav-link:hover:not(.active) { background: #f1f3f5; }
-      .logout { position: absolute; bottom: 20px; width: calc(100% - 40px); }
-
-      /* MAIN CONTENT */
-      .main-content { margin-left: 260px; padding: 30px; }
+      /* Ajustement pour coller au design de tableaudebord */
+      .sidebar .nav-link { display: flex; align-items: center; gap: 10px; }
       .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-      .search-box { background: white; border: 1px solid #dee2e6; border-radius: 10px; padding: 8px 15px; width: 400px; display: flex; align-items: center; gap: 10px; }
-      .search-box input { border: none; outline: none; width: 100%; font-size: 0.9rem; }
-      .avatar { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
-
-      /* FILTERS */
-      .filter-tabs { display: flex; gap: 25px; border-bottom: 1px solid #dee2e6; margin-bottom: 25px; }
-      .filter-tab { cursor: pointer; color: #6c757d; font-size: 0.9rem; padding-bottom: 10px; position: relative; transition: 0.3s; }
-      .filter-tab.active { color: #0d6efd; font-weight: bold; }
-      .filter-tab.active::after { content: ""; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #0d6efd; }
-
-      /* TABLE */
-      .card-table { background: white; border-radius: 12px; border: 1px solid #dee2e6; overflow: hidden; }
-      .table thead th { background: #fafafa; color: #adb5bd; font-size: 0.75rem; text-transform: uppercase; padding: 15px; border-bottom: 1px solid #eee; }
-      .table tbody td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f8f9fa; }
-      
-      /* BADGES */
-      .badge-role { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
-      .role-etudiant { background: #e7f1ff; color: #0d6efd; }
-      .role-enseignant { background: #fff4e5; color: #ff9800; }
-      .role-assistant { background: #f3e8ff; color: #9333ea; }
-      .role-surveillant { background: #e6fffa; color: #319795; }
-      
-      .badge-status { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-      .status-actif { background: #e6fffa; color: #38b2ac; }
-      .status-inactif { background: #fee2e2; color: #ef4444; }
-
-      /* MODALS */
-      .custom-input { background-color: #f3f4f6 !important; border: none !important; border-radius: 10px !important; padding: 10px 15px !important; }
-      
-      .dropdown-menu { border: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 12px; padding: 8px; }
-      .dropdown-item { border-radius: 8px; font-size: 0.9rem; padding: 8px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+      .search-box { background: #fff; border-radius: 12px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; width: 360px; border: 1px solid #e5e7eb; }
+      .search-box input { border: none; outline: none; width: 100%; }
     </style>
-  </head>
+</head>
 <body>
 
-  <aside class="sidebar">
-    <div class="logo-box text-center mb-4">
-      <img src="assets/image.png" alt="Logo ADSIS">
-      <p class="fw-bold mt-2">ADSIS</p>
-    </div>
-    <small class="text-muted px-3">ÉTABLISSEMENT</small>
-    <p class="fw-bold px-3">Saint Jean Ingénieur</p>
-    <hr>
-    <nav class="nav flex-column">
-      <a class="nav-link" href="tableaudebord.html"><i class="bi bi-grid"></i> Tableau de bord</a>
-      <a class="nav-link active" href="gestionutilisateur.html"><i class="bi bi-people"></i> Gestion des utilisateurs</a>
-      <a class="nav-link" href="gestionacces.html"><i class="bi bi-shield-lock"></i> Gestion des accès</a>
-      <a class="nav-link" href="profil.html"><i class="bi bi-person"></i> Mon Profil</a>
-    </nav>
-    <div class="logout">
-      <a href="#" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i> Déconnexion</a>
-    </div>
-  </aside>
+<div class="container-fluid">
+  <div class="row min-vh-100">
 
-  <main class="main-content">
-    <header class="topbar">
-      <div class="search-box">
-        <i class="bi bi-search text-muted"></i>
-        <input type="text" id="searchInput" placeholder="Rechercher un utilisateur..." onkeyup="filterTable()">
+    <aside class="col-md-3 col-lg-2 sidebar d-flex flex-column p-3">
+      <div class="logo-box text-center mb-4">
+        <img src="assets/image.png" alt="Logo ADSIS" class="logo" style="width: 40px;">
+        <h6 class="mt-2 fw-bold">ADSIS</h6>
       </div>
-      <div class="d-flex align-items-center gap-3">
-        <i class="bi bi-bell fs-5"></i>
-        <div class="text-end">
-          <div class="fw-bold small">Administrateur</div>
-          <small class="text-muted" style="font-size: 0.7rem;">Admin Principal</small>
+
+      <p class="text-muted small mb-1">ÉTABLISSEMENT</p>
+      <h6 class="fw-bold mb-4">Saint Jean Ingénieur</h6>
+
+      <nav class="nav flex-column gap-2">
+        <a class="nav-link" href="tableaudebord.html">
+          <i class="bi bi-grid"></i> Tableau de bord
+        </a>
+        <a class="nav-link active" href="gestionutilisateur.html">
+          <i class="bi bi-people"></i> Gestion des utilisateurs
+        </a>
+        <a class="nav-link" href="gestionacces.html">
+          <i class="bi bi-shield-lock"></i> Gestion des accès
+        </a>
+        <a class="nav-link" href="profil.html">
+          <i class="bi bi-person"></i> Mon profil
+        </a>
+      </nav>
+
+      <a href="#" class="nav-link text-danger mt-auto fw-semibold">
+        <i class="bi bi-box-arrow-left me-2"></i>Déconnexion
+      </a>
+    </aside>
+
+    <main class="col-md-9 col-lg-10 p-4">
+      
+      <div class="topbar">
+        <div class="search-box">
+          <i class="bi bi-search text-muted"></i>
+          <input type="text" placeholder="Rechercher un utilisateur...">
         </div>
-        <div class="avatar bg-primary">A</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="text-end d-none d-sm-block">
+            <div class="fw-bold small">Administrateur</div>
+            <div class="text-muted" style="font-size: 0.7rem;">admin@adsis.com</div>
+          </div>
+          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px;">A</div>
+        </div>
       </div>
-    </header>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h4 class="fw-bold">Gestion des utilisateurs</h4>
-        <p class="text-muted small">Gérez les utilisateurs et leurs rôles dans le système</p>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold m-0">Gestion des membres</h4>
+          <p class="text-muted small m-0">Consultez et modifiez les accès des utilisateurs.</p>
+        </div>
+        <button class="btn btn-primary rounded-3 px-4 shadow-sm" onclick="openCreateModal()">
+          <i class="bi bi-plus-lg me-2"></i>Nouvel utilisateur
+        </button>
       </div>
-      <button class="btn btn-primary rounded-3 px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#newUserModal">
-        <i class="bi bi-plus-lg me-2"></i> Nouvel utilisateur
-      </button>
-    </div>
 
-    <div class="filter-tabs" id="filterTabs">
-      <span class="filter-tab active" onclick="filterByRole('Tous')">Tous (<span id="count-Tous">0</span>)</span>
-      <span class="filter-tab" onclick="filterByRole('Étudiant')">Étudiants (<span id="count-Étudiant">0</span>)</span>
-      <span class="filter-tab" onclick="filterByRole('Enseignant')">Enseignants (<span id="count-Enseignant">0</span>)</span>
-      <span class="filter-tab" onclick="filterByRole('Assistant pédagogique')">Assistants (<span id="count-Assistant">0</span>)</span>
-      <span class="filter-tab" onclick="filterByRole('Surveillant')">Surveillants (<span id="count-Surveillant">0</span>)</span>
-    </div>
+      <div class="d-flex gap-2 mb-4">
+        <span class="filter-tab active" onclick="filterByRole('Tous')">Tous (<span id="count-Tous">0</span>)</span>
+        <span class="filter-tab" onclick="filterByRole('Étudiant')">Étudiants</span>
+        <span class="filter-tab" onclick="filterByRole('Enseignant')">Enseignants</span>
+        <span class="filter-tab" onclick="filterByRole('Assistant pédagogique')">Assistants</span>
+        <span class="filter-tab" onclick="filterByRole('Surveillant')">Surveillants</span>
+      </div>
 
-    <div class="card-table shadow-sm">
-      <table class="table align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Utilisateur</th>
-            <th>Rôle</th>
-            <th>Statut</th>
-            <th>Date de création</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="userTableBody"></tbody>
-      </table>
-    </div>
-  </main>
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">Utilisateur</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Détails</th>
+              <th class="text-center pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
 
-  <div class="modal fade" id="newUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold">Nouvel utilisateur</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="modalTitle">Édition Utilisateur</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="userId">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">NOM COMPLET</label>
+          <input type="text" id="userName" class="form-control rounded-3">
         </div>
-        <div class="modal-body p-4">
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Nom complet</label>
-            <input type="text" id="newUserName" class="form-control custom-input" placeholder="Ex. Marie Dupont">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Email</label>
-            <input type="email" id="newUserEmail" class="form-control custom-input" placeholder="Ex. marie.dupont@school.fr">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Mot de passe</label>
-            <input type="password" id="newUserPassword" class="form-control custom-input" placeholder="••••••••">
-          </div>
-          <div class="mb-4">
-            <label class="form-label small fw-bold">Rôle</label>
-            <select id="newUserRole" class="form-select custom-input">
-              <option>Étudiant</option>
-              <option>Enseignant</option>
-              <option>Assistant pédagogique</option>
-              <option>Surveillant</option>
-            </select>
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-light rounded-3 px-4 border" data-bs-dismiss="modal">Annuler</button>
-            <button class="btn btn-primary rounded-3 px-4" onclick="addUser()">Créer</button>
-          </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">EMAIL</label>
+          <input type="email" id="userEmail" class="form-control rounded-3">
         </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">RÔLE</label>
+          <select id="userRole" class="form-select rounded-3" onchange="toggleRoleFields()">
+            <option value="Étudiant">Étudiant</option>
+            <option value="Enseignant">Enseignant</option>
+            <option value="Assistant pédagogique">Assistant pédagogique</option>
+            <option value="Surveillant">Surveillant</option>
+          </select>
+        </div>
+
+        <div id="matiereField" class="mb-3 d-none">
+          <label class="form-label small fw-bold">MATIÈRE ENSEIGNÉE</label>
+          <input type="text" id="userMatiere" class="form-control rounded-3">
+        </div>
+
+        <div id="niveauxField" class="mb-3 d-none">
+          <label class="form-label small fw-bold">NIVEAUX SUPERVISÉS</label>
+          <div class="niveaux-grid" id="niveauxCheckboxes"></div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-primary w-100 py-2 rounded-3 fw-bold shadow-sm" onclick="saveUser()">Enregistrer les modifications</button>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold">Modifier l'utilisateur</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4">
-          <input type="hidden" id="editUserId">
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Nom complet</label>
-            <input type="text" id="editUserName" class="form-control custom-input">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Email</label>
-            <input type="email" id="editUserEmail" class="form-control custom-input">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Nouveau mot de passe (laisser vide si inchangé)</label>
-            <input type="password" id="editUserPassword" class="form-control custom-input" placeholder="••••••••">
-          </div>
-          <div class="mb-4">
-            <label class="form-label small fw-bold">Rôle</label>
-            <select id="editUserRole" class="form-select custom-input">
-              <option>Étudiant</option>
-              <option>Enseignant</option>
-              <option>Assistant pédagogique</option>
-              <option>Surveillant</option>
-            </select>
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-light rounded-3 px-4 border" data-bs-dismiss="modal">Annuler</button>
-            <button class="btn btn-primary rounded-3 px-4" onclick="saveEdit()">Enregistrer</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const NIVEAUX_LIST = ["ING 1 FR", "ING 1 EN", "ING 2 FR", "ING 2 EN", "ING 3 ISI FR", "ING 3 ISI EN", "ING 3 SRT", "ING 3 GC", "ING 3 EL", "ING 4 ISI FR", "ING 4 ISI EN", "ING 4 SRT", "ING 4 GC", "ING 4 EL", "ING 5 ISI", "ING 5 SRT"];
+  const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    let users = [
-      { id: 1, name: "Marie Dupont", email: "marie.dupont@school.fr", role: "Étudiant", status: "Actif", date: "15/01/2024", initial: "M", color: "#0d6efd" },
-      { id: 2, name: "Jean Martin", email: "jean.martin@school.fr", role: "Enseignant", status: "Actif", date: "01/09/2023", initial: "J", color: "#ff9800" },
-      { id: 3, name: "Sophie Bernard", email: "sophie.bernard@school.fr", role: "Assistant pédagogique", status: "Actif", date: "10/02/2024", initial: "S", color: "#9333ea" },
-      { id: 4, name: "Thomas Lefebvre", email: "thomas.le@school.fr", role: "Surveillant", status: "Actif", date: "20/11/2023", initial: "T", color: "#319795" },
-      { id: 5, name: "Lucas Garcia", email: "lucas.g@school.fr", role: "Étudiant", status: "Actif", date: "12/02/2024", initial: "L", color: "#0d6efd" },
-      { id: 6, name: "Claire Petit", email: "claire.p@school.fr", role: "Enseignant", status: "Actif", date: "05/09/2023", initial: "C", color: "#ff9800" }
-    ];
+  let users = [
+    { id: 1, name: "Marie Dupont", email: "marie@test.com", role: "Étudiant", status: "Actif", matiere: "", niveaux: [], color: '#4e73df' },
+    { id: 2, name: "Jean Martin", email: "jean@adsis.com", role: "Enseignant", status: "Actif", matiere: "Physique Quantique", niveaux: [], color: '#1cc88a' },
+    { id: 3, name: "Alice Kouassi", email: "alice@adsis.com", role: "Assistant pédagogique", status: "Actif", matiere: "", niveaux: ["ING 1 FR", "ING 2 FR"], color: '#6610f2' },
+    { id: 4, name: "Marc Lefebvre", email: "marc@adsis.com", role: "Surveillant", status: "Bloqué", matiere: "", niveaux: ["ING 3 SRT"], color: '#fd7e14' },
+    { id: 5, name: "Claire Petit", email: "claire@test.com", role: "Étudiant", status: "Actif", matiere: "", niveaux: [], color: '#e74a3b' }
+  ];
 
-    let currentRole = "Tous";
+  // Init cases à cocher
+  const container = document.getElementById('niveauxCheckboxes');
+  NIVEAUX_LIST.forEach(niv => {
+    container.innerHTML += `<div class="form-check">
+      <input class="form-check-input niv-check" type="checkbox" value="${niv}" id="niv-${niv.replace(/ /g,'')}">
+      <label class="form-check-label" for="niv-${niv.replace(/ /g,'')}">${niv}</label>
+    </div>`;
+  });
 
-    function renderTable(filterRole = "Tous") {
-      const tableBody = document.getElementById('userTableBody');
-      tableBody.innerHTML = "";
-      const filtered = filterRole === "Tous" ? users : users.filter(u => u.role === filterRole);
+  function toggleRoleFields() {
+    const role = document.getElementById('userRole').value;
+    document.getElementById('matiereField').classList.toggle('d-none', role !== 'Enseignant');
+    document.getElementById('niveauxField').classList.toggle('d-none', role !== 'Assistant pédagogique' && role !== 'Surveillant');
+  }
 
-      filtered.forEach(user => {
-        const row = `
-          <tr>
-            <td class="d-flex align-items-center gap-3">
-              <div class="avatar" style="background-color: ${user.color}">${user.initial}</div>
-              <div><div class="fw-bold small">${user.name}</div><small class="text-muted">${user.email}</small></div>
-            </td>
-            <td><span class="badge-role role-${user.role.split(' ')[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}">${user.role}</span></td>
-            <td><span class="badge-status ${user.status === 'Actif' ? 'status-actif' : 'status-inactif'}">${user.status}</span></td>
-            <td class="text-muted small">${user.date}</td>
-            <td class="text-center">
-              <div class="dropdown">
-                <i class="bi bi-three-dots-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
-                <ul class="dropdown-menu shadow">
-                  <li><a class="dropdown-item" onclick="openEditModal(${user.id})"><i class="bi bi-pencil text-primary"></i> Modifier</a></li>
-                  <li><a class="dropdown-item" onclick="toggleBlock(${user.id})"><i class="bi bi-slash-circle text-warning"></i> ${user.status === 'Actif' ? 'Bloquer' : 'Débloquer'}</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li><a class="dropdown-item text-danger" onclick="deleteUser(${user.id})"><i class="bi bi-trash"></i> Supprimer</a></li>
-                </ul>
-              </div>
-            </td>
-          </tr>`;
-        tableBody.insertAdjacentHTML('beforeend', row);
-      });
-      updateCounts();
+  function renderTable(roleFilter = 'Tous') {
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = '';
+    const filtered = roleFilter === 'Tous' ? users : users.filter(u => u.role === roleFilter);
+
+    filtered.forEach(u => {
+      const details = u.role === 'Enseignant' ? u.matiere : (u.niveaux.length > 0 ? u.niveaux.join(', ') : '-');
+      const isBlocked = u.status === 'Bloqué';
+      
+      tbody.innerHTML += `
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <div class="user-avatar" style="background-color: ${u.color}">${u.name.charAt(0)}</div>
+              <div><div class="fw-bold">${u.name}</div><div class="text-muted small">${u.email}</div></div>
+            </div>
+          </td>
+          <td><span class="badge bg-light text-dark border rounded-pill px-3">${u.role}</span></td>
+          <td><span class="status-badge text-white ${isBlocked ? 'bg-danger' : 'bg-success'}">${u.status}</span></td>
+          <td class="small text-muted text-truncate" style="max-width: 250px;">${details}</td>
+          <td class="text-center pe-4">
+            <button class="btn btn-sm btn-outline-primary border-0" onclick="openEditModal(${u.id})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm border-0 ${isBlocked ? 'text-success' : 'text-warning'}" onclick="toggleBlock(${u.id})">
+              <i class="bi ${isBlocked ? 'bi-unlock-fill' : 'bi-lock-fill'}"></i>
+            </button>
+            <button class="btn btn-sm text-danger border-0" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+    });
+    document.getElementById('count-Tous').innerText = users.length;
+  }
+
+  function toggleBlock(id) {
+    const u = users.find(user => user.id === id);
+    if(u) {
+      u.status = u.status === 'Actif' ? 'Bloqué' : 'Actif';
+      renderTable();
+    }
+  }
+
+  function openCreateModal() {
+    document.getElementById('userId').value = "";
+    document.getElementById('userName').value = "";
+    document.getElementById('userEmail').value = "";
+    document.getElementById('userRole').value = "Étudiant";
+    document.getElementById('userMatiere').value = "";
+    document.querySelectorAll('.niv-check').forEach(c => c.checked = false);
+    toggleRoleFields();
+    new bootstrap.Modal(document.getElementById('userModal')).show();
+  }
+
+  function openEditModal(id) {
+    const u = users.find(user => user.id === id);
+    document.getElementById('userId').value = u.id;
+    document.getElementById('userName').value = u.name;
+    document.getElementById('userEmail').value = u.email;
+    document.getElementById('userRole').value = u.role;
+    document.getElementById('userMatiere').value = u.matiere || "";
+    document.querySelectorAll('.niv-check').forEach(c => c.checked = u.niveaux.includes(c.value));
+    toggleRoleFields();
+    new bootstrap.Modal(document.getElementById('userModal')).show();
+  }
+
+  function saveUser() {
+    const id = document.getElementById('userId').value;
+    const role = document.getElementById('userRole').value;
+    const selectedNiveaux = Array.from(document.querySelectorAll('.niv-check:checked')).map(c => c.value);
+
+    const userData = {
+      id: id ? parseInt(id) : Date.now(),
+      name: document.getElementById('userName').value,
+      email: document.getElementById('userEmail').value,
+      role: role,
+      status: id ? users.find(u => u.id == id).status : "Actif",
+      matiere: role === 'Enseignant' ? document.getElementById('userMatiere').value : "",
+      niveaux: (role === 'Assistant pédagogique' || role === 'Surveillant') ? selectedNiveaux : [],
+      color: id ? users.find(u => u.id == id).color : COLORS[Math.floor(Math.random() * COLORS.length)]
+    };
+
+    if(id) {
+      const idx = users.findIndex(u => u.id == id);
+      users[idx] = userData;
+    } else {
+      users.push(userData);
     }
 
-    function toggleBlock(id) {
-      const u = users.find(user => user.id === id);
-      if(u) {
-        u.status = u.status === "Actif" ? "Inactif" : "Actif";
-        console.log(`Back-End: Statut de l'utilisateur ${id} changé en ${u.status}`);
-        renderTable(currentRole);
-      }
-    }
+    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+    renderTable();
+  }
 
-    function deleteUser(id) {
-      if(confirm("Confirmer la suppression définitive ?")) {
-        users = users.filter(u => u.id !== id);
-        console.log(`Back-End: Utilisateur ${id} supprimé de la BDD`);
-        renderTable(currentRole);
-      }
-    }
+  function deleteUser(id) { if(confirm("Supprimer cet utilisateur ?")) { users = users.filter(u => u.id !== id); renderTable(); } }
 
-    function openEditModal(id) {
-      const u = users.find(user => user.id === id);
-      if(u) {
-        document.getElementById('editUserId').value = u.id;
-        document.getElementById('editUserName').value = u.name;
-        document.getElementById('editUserEmail').value = u.email;
-        document.getElementById('editUserRole').value = u.role;
-        document.getElementById('editUserPassword').value = ""; // Toujours vide à l'ouverture
-        new bootstrap.Modal(document.getElementById('editUserModal')).show();
-      }
-    }
+  function filterByRole(role) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    renderTable(role);
+  }
 
-    function saveEdit() {
-      const id = parseInt(document.getElementById('editUserId').value);
-      const u = users.find(user => user.id === id);
-      const newPwd = document.getElementById('editUserPassword').value;
-
-      if(u) {
-        u.name = document.getElementById('editUserName').value;
-        u.email = document.getElementById('editUserEmail').value;
-        u.role = document.getElementById('editUserRole').value;
-        u.initial = u.name.charAt(0).toUpperCase();
-
-        if(newPwd !== "") {
-          console.log(`Back-End: Mot de passe mis à jour pour l'utilisateur ${id}`);
-        }
-        
-        bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
-        renderTable(currentRole);
-      }
-    }
-
-    function updateCounts() {
-      document.getElementById('count-Tous').innerText = users.length;
-      document.getElementById('count-Étudiant').innerText = users.filter(u => u.role === "Étudiant").length;
-      document.getElementById('count-Enseignant').innerText = users.filter(u => u.role === "Enseignant").length;
-      document.getElementById('count-Assistant').innerText = users.filter(u => u.role === "Assistant pédagogique").length;
-      document.getElementById('count-Surveillant').innerText = users.filter(u => u.role === "Surveillant").length;
-    }
-
-    function filterByRole(role) {
-      currentRole = role;
-      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      renderTable(role);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => renderTable());
-  </script>
+  document.addEventListener('DOMContentLoaded', () => renderTable());
+</script>
 </body>
 </html>

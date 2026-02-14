@@ -1,120 +1,92 @@
-body {
-  background: #f5f7fb;
-  font-family: "Segoe UI", sans-serif;
-}
+/* profil.css - Focus uniquement sur le design des cartes et éléments internes */
 
-/* SIDEBAR */
-.sidebar {
-  width: 260px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
-  min-height: 100vh;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-box {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.logo-box img {
-  width: 40px;
-}
-
-.menu a {
-  display: block;
-  padding: 10px 14px;
-  color: #374151;
-  text-decoration: none;
-  border-radius: 10px;
-  margin-bottom: 6px;
-}
-
-.menu a.active,
-.menu a:hover {
-  background: #eef4ff;
-  color: #2563eb;
-}
-
-.logout {
-  margin-top: auto;
-  color: #dc2626;
-  cursor: pointer;
-}
-
-/* TOPBAR */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 360px;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  width: 100%;
-}
-
-.admin {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* CARD */
+/* Conteneur de section (Cartes blanches) */
 .card-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  margin-top: 24px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
 }
 
-/* PHOTO */
-.profile-photo {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 20px;
+.card-section h5 {
+    color: #111827;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.photo-circle {
-  width: 80px;
-  height: 80px;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 50%;
-  font-size: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Photo de Profil */
+.photo-preview {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    border: 4px solid #f3f4f6;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s;
 }
 
-label {
-  font-weight: 500;
-  margin-bottom: 6px;
+.photo-preview:hover {
+    transform: scale(1.02);
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Formulaires */
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.625rem;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* Boutons spécifiques au profil */
+.btn-save {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    transition: background 0.2s;
+}
+
+.btn-save:hover {
+    background-color: #2563eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-section {
+        padding: 1.25rem;
+    }
 }
