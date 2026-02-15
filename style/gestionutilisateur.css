@@ -1,0 +1,74 @@
+body {
+  background: #f5f6fa;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* LOGO */
+.logo {
+  max-width: 90px;
+}
+
+/* NAV */
+.nav-link {
+  color: #555;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  background: #eef2ff;
+  color: #2563eb;
+}
+
+/* AVATAR */
+.avatar {
+  width: 36px;
+  height: 36px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.avatar.blue {
+  background: #3b82f6;
+}
+
+/* FILTERS */
+.filter-tabs span {
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.filter-tabs .active {
+  background: #2563eb;
+  color: white;
+}
+
+/* BADGES */
+.role.student { background: #e0f2fe; color: #0369a1; }
+.role.teacher { background: #dcfce7; color: #15803d; }
+.role.assistant { background: #ede9fe; color: #6d28d9; }
+
+.status.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* LOGOUT */
+.logout {
+  text-decoration: none;
+  font-weight: 500;
+}
