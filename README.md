@@ -1,22 +1,22 @@
-# 📚 API - Gestion des Appels en Classe
+#  API - Gestion des Appels en Classe
 
 Projet Spring Boot pour la gestion des utilisateurs, des enseignants, des étudiants, des cours et des absences.
 
 ---
 
-## 🚀 1. Documentation Principale
+##  1. Documentation Principale
 
 Pour garder ce projet propre et organisé, la documentation technique est divisée en **2 guides essentiels** :
 
-### 📘 [Guide d'Installation & Base de Données (Démarrer ici)](./DB_SETUP_GUIDE.md)
+###  [Guide d'Installation & Base de Données (Démarrer ici)](./DB_SETUP_GUIDE.md)
 > *Comment configurer MySQL, créer votre propre fichier de configuration sécurisé et lancer le serveur sans erreur.*
 
-### 🏗️ [Architecture Technique & API](./API_ARCHITECTURE.md)
+###  [Architecture Technique & API](./API_ARCHITECTURE.md)
 > *Comprendre la structure du code (Controller/Service/Repository), le système de sécurité RBAC (Rôles & Permissions) et la gestion des erreurs.*
 
 ---
 
-## ✅ 2. Démarrage Rapide
+##  2. Démarrage Rapide Backend
 
 Si vous avez déjà tout configuré :
 
@@ -28,11 +28,6 @@ Si vous avez déjà tout configuré :
 
 ---
 
-## 🧪 3. Tests Intégrés
-
-Des fichiers HTML interactifs sont inclus à la racine pour tester l'API sans outil externe :
-
-- **[`test-api.html`](./test-api.html)** : Tests CRUD de base (Utilisateurs / Cours / Etudiants).
-- **[`test-rbac.html`](./test-rbac.html)** : Tests spécifiques aux Rôles et Permissions.
-
-Ouvrez simplement ces fichiers dans votre navigateur après avoir lancé le serveur !
+##  3. Démarrage Rapide Frontend
+    Après avoir lancé le backend, vous pouvez ouvrir le fichier ../admin/tableaudebord.html dans votre navigateur.
+    via npx vite ou bien l'extension go live de vs code 

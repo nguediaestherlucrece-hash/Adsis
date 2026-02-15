@@ -1,4 +1,4 @@
-// Exemple de données
+// Données de simulation pour l'historique
 const transactions = [
   { date: '2026-01-12', desc: 'Achat transport', type: 'expense', montant: -19 },
   { date: '2026-01-12', desc: 'Paiement salaire', type: 'income', montant: 1718 },
@@ -7,24 +7,26 @@ const transactions = [
   { date: '2025-12-23', desc: 'Payement salaire', type: 'income', montant: 14100 }
 ];
 
-// Affichage transactions
+// Affiche la liste des transactions
 function afficherTransactions(transactionsList) {
-    const container = document.querySelector('.transaction-container');
-    container.innerHTML = '';
+  const container = document.querySelector('.transaction-container');
+  container.innerHTML = ''; // Réinitialisation
 
-    let currentDate = '';
-    transactionsList.forEach(t => {
-        if(t.date !== currentDate){
-            currentDate = t.date;
-            const dateHeader = document.createElement('div');
-            dateHeader.className = 'date-header d-flex justify-content-between';
-            dateHeader.innerHTML = `<span>● ${currentDate}</span><span>1 transaction</span>`;
-            container.appendChild(dateHeader);
-        }
+  let currentDate = '';
+  transactionsList.forEach(t => {
+    // En-tête de date si nouvelle date
+    if (t.date !== currentDate) {
+      currentDate = t.date;
+      const dateHeader = document.createElement('div');
+      dateHeader.className = 'date-header d-flex justify-content-between';
+      dateHeader.innerHTML = `<span>● ${currentDate}</span><span>1 transaction</span>`;
+      container.appendChild(dateHeader);
+    }
 
-        const card = document.createElement('div');
-        card.className = 'transaction-card';
-        card.innerHTML = `
+    // Carte transaction
+    const card = document.createElement('div');
+    card.className = 'transaction-card';
+    card.innerHTML = `
             <div class="icon ${t.type === 'income' ? 'income' : 'expense'}">
               <i class="bi ${t.type === 'income' ? 'bi-arrow-up' : 'bi-arrow-down'}"></i>
             </div>
@@ -36,34 +38,34 @@ function afficherTransactions(transactionsList) {
               ${t.montant} <span>FCFA</span>
             </div>
         `;
-        container.appendChild(card);
-    });
+    container.appendChild(card);
+  });
 }
 
-// Filtre recherche
-document.getElementById("filtre").addEventListener("input", function(){
-    const value = this.value.toLowerCase();
-    const filtered = transactions.filter(t =>
-        t.desc.toLowerCase().includes(value)
-    );
-    afficherTransactions(filtered);
+// Filtrage par texte
+document.getElementById("filtre").addEventListener("input", function () {
+  const value = this.value.toLowerCase();
+  const filtered = transactions.filter(t =>
+    t.desc.toLowerCase().includes(value)
+  );
+  afficherTransactions(filtered);
 });
 
-// Export CSV
-document.getElementById("export-btn").addEventListener('click', function(){
-    let csv = "Date,Description,Type,Montant\n";
-    transactions.forEach(t=>{
-        csv += `${t.date},${t.desc},${t.type},${t.montant}\n`;
-    });
+// Export vers CSV
+document.getElementById("export-btn").addEventListener('click', function () {
+  let csv = "Date,Description,Type,Montant\n";
+  transactions.forEach(t => {
+    csv += `${t.date},${t.desc},${t.type},${t.montant}\n`;
+  });
 
-    const blob = new Blob([csv], {type:"text/csv"});
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "historique_transactions.csv";
-    link.click();
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "historique_transactions.csv";
+  link.click();
 });
 
-// Boutons de filtre
+// Gestion des filtres visuels
 const filterButtons = document.querySelectorAll('.filter-btn');
 filterButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -72,5 +74,6 @@ filterButtons.forEach(btn => {
   });
 });
 
+// Initialisation
 afficherTransactions(transactions);
-console.log("Dashboard chargé avec succès");
+console.log("Historique chargé avec succès");
