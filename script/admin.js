@@ -414,13 +414,13 @@ function openViewModal(u) {
     } else if (u.role === 'Surveillant') {
         extraDiv.innerHTML = `
             <div class="bg-light p-3 rounded-3">
-                <label class="small text-muted fw-bold">AFFECTATION</label>
+                <label class="small text-muted fw-bold">Étage</label>
                 <div class="fw-semibold">${u.raw.affectation || "-"}</div>
             </div>`;
     } else if (u.role === 'Assistant pédagogique') {
         extraDiv.innerHTML = `
             <div class="bg-light p-3 rounded-3">
-                <label class="small text-muted fw-bold">DÉPARTEMENT</label>
+                <label class="small text-muted fw-bold">Cycle</label>
                 <div class="fw-semibold">${u.raw.departement || "-"}</div>
             </div>`;
     } else {

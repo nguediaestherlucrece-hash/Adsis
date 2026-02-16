@@ -10,6 +10,7 @@ import com.ISI.Appel_classe.exception.BadRequestException;
 import com.ISI.Appel_classe.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.repository.AssistantPedagogiqueRepository;
 import com.ISI.Appel_classe.repository.RoleRepository;
+import com.ISI.Appel_classe.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.service.AssistantPedagogiqueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
 
     private final AssistantPedagogiqueRepository assistantRepository;
     private final RoleRepository roleRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Override
     public List<AssistantPedagogiqueDTO> getAllAssistants() {
@@ -61,8 +63,10 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     @Override
     @Transactional
     public AssistantPedagogiqueDTO createAssistant(AssistantPedagogiqueCreateDTO dto) {
-        if (assistantRepository.existsByEmail(dto.getEmail())) {
-            throw new BadRequestException("Un assistant avec cet email existe déjà: " + dto.getEmail());
+        // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+        // utilisateurs, pas seulement les assistants
+        if (utilisateurRepository.existsByEmail(dto.getEmail())) {
+            throw new BadRequestException("Un utilisateur avec cet email existe déjà: " + dto.getEmail());
         }
 
         // Créer un ASSISTANT PEDAGOGIQUE
@@ -115,8 +119,10 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
             assistant.setPrenom(dto.getPrenom());
 
         if (dto.getEmail() != null) {
+            // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+            // utilisateurs
             if (!dto.getEmail().equals(assistant.getEmail()) &&
-                    assistantRepository.existsByEmail(dto.getEmail())) {
+                    utilisateurRepository.existsByEmail(dto.getEmail())) {
                 throw new BadRequestException("Email déjà utilisé: " + dto.getEmail());
             }
             assistant.setEmail(dto.getEmail());

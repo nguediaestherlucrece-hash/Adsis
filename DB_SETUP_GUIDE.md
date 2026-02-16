@@ -16,7 +16,7 @@ Le projet utilise les paramètres standard pour l'environnement de développemen
 
 -   **Base de Données** : `appel_classe_db` (créée automatiquement si elle n'existe pas)
 -   **Utilisateur** : `root`
--   **Mot de passe** : `root`
+-   **Mot de passe** : `mot2passe@`
 -   **Port MySQL** : `3306`
 
 *Note : Ces paramètres sont situés dans `src/main/resources/application.properties`.*
