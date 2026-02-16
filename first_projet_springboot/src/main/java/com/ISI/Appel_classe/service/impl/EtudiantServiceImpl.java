@@ -13,6 +13,7 @@ import com.ISI.Appel_classe.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.repository.ClasseRepository;
 import com.ISI.Appel_classe.repository.EtudiantRepository;
 import com.ISI.Appel_classe.repository.RoleRepository;
+import com.ISI.Appel_classe.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.service.EtudiantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final EtudiantRepository etudiantRepository;
     private final ClasseRepository classeRepository;
     private final RoleRepository roleRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Override
     public List<EtudiantDTO> getAllEtudiants() {
@@ -89,9 +91,10 @@ public class EtudiantServiceImpl implements EtudiantService {
         // VALIDATIONS
         // ========================================
 
-        // Vérifier l'unicité de l'email
-        if (etudiantRepository.existsByEmail(dto.getEmail())) {
-            throw new BadRequestException("Un étudiant avec cet email existe déjà: " + dto.getEmail());
+        // Vérifier l'unicité de l'email au niveau de TOUS les utilisateurs
+        // ⚠️ IMPORTANT: Utiliser utilisateurRepository, pas etudiantRepository
+        if (utilisateurRepository.existsByEmail(dto.getEmail())) {
+            throw new BadRequestException("Un utilisateur avec cet email existe déjà: " + dto.getEmail());
         }
 
         // Vérifier l'unicité du matricule
@@ -201,10 +204,11 @@ public class EtudiantServiceImpl implements EtudiantService {
         }
 
         if (dto.getEmail() != null) {
-            // Vérifier que le nouvel email n'est pas déjà utilisé par un autre étudiant
+            // Vérifier que le nouvel email n'est pas déjà utilisé par un autre utilisateur
+            // ⚠️ IMPORTANT: Utiliser utilisateurRepository, pas etudiantRepository
             if (!dto.getEmail().equals(etudiant.getEmail()) &&
-                    etudiantRepository.existsByEmail(dto.getEmail())) {
-                throw new BadRequestException("L'email est déjà utilisé par un autre étudiant: " + dto.getEmail());
+                    utilisateurRepository.existsByEmail(dto.getEmail())) {
+                throw new BadRequestException("L'email est déjà utilisé par un autre utilisateur: " + dto.getEmail());
             }
             etudiant.setEmail(dto.getEmail());
         }

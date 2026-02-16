@@ -12,6 +12,7 @@ import com.ISI.Appel_classe.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.repository.CoursUERepository;
 import com.ISI.Appel_classe.repository.EnseignantRepository;
 import com.ISI.Appel_classe.repository.RoleRepository;
+import com.ISI.Appel_classe.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.service.EnseignantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final EnseignantRepository enseignantRepository;
     private final CoursUERepository coursUERepository;
     private final RoleRepository roleRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Override
     public List<EnseignantDTO> getAllEnseignants() {
@@ -83,9 +85,10 @@ public class EnseignantServiceImpl implements EnseignantService {
     public EnseignantDTO createEnseignant(EnseignantCreateDTO dto) {
         log.info("Création d'un nouvel enseignant: {}", dto.getEmail());
 
-        // Vérifications
-        if (enseignantRepository.existsByEmail(dto.getEmail())) {
-            throw new BadRequestException("Un enseignant avec cet email existe déjà: " + dto.getEmail());
+        // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+        // utilisateurs
+        if (utilisateurRepository.existsByEmail(dto.getEmail())) {
+            throw new BadRequestException("Un utilisateur avec cet email existe déjà: " + dto.getEmail());
         }
 
         // Créer un ENSEIGNANT
@@ -153,8 +156,10 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.setPrenom(dto.getPrenom());
 
         if (dto.getEmail() != null) {
+            // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+            // utilisateurs
             if (!dto.getEmail().equals(enseignant.getEmail()) &&
-                    enseignantRepository.existsByEmail(dto.getEmail())) {
+                    utilisateurRepository.existsByEmail(dto.getEmail())) {
                 throw new BadRequestException("Email déjà utilisé: " + dto.getEmail());
             }
             enseignant.setEmail(dto.getEmail());

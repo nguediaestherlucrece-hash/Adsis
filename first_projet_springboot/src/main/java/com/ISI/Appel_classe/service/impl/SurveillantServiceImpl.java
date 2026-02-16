@@ -10,6 +10,7 @@ import com.ISI.Appel_classe.exception.BadRequestException;
 import com.ISI.Appel_classe.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.repository.RoleRepository;
 import com.ISI.Appel_classe.repository.SurveillantRepository;
+import com.ISI.Appel_classe.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.service.SurveillantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class SurveillantServiceImpl implements SurveillantService {
 
     private final SurveillantRepository surveillantRepository;
     private final RoleRepository roleRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     @Override
     public List<SurveillantDTO> getAllSurveillants() {
@@ -61,8 +63,10 @@ public class SurveillantServiceImpl implements SurveillantService {
     @Override
     @Transactional
     public SurveillantDTO createSurveillant(SurveillantCreateDTO dto) {
-        if (surveillantRepository.existsByEmail(dto.getEmail())) {
-            throw new BadRequestException("Un surveillant avec cet email existe déjà: " + dto.getEmail());
+        // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+        // utilisateurs
+        if (utilisateurRepository.existsByEmail(dto.getEmail())) {
+            throw new BadRequestException("Un utilisateur avec cet email existe déjà: " + dto.getEmail());
         }
 
         // Créer un SURVEILLANT
@@ -115,8 +119,10 @@ public class SurveillantServiceImpl implements SurveillantService {
             surveillant.setPrenom(dto.getPrenom());
 
         if (dto.getEmail() != null) {
+            // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
+            // utilisateurs
             if (!dto.getEmail().equals(surveillant.getEmail()) &&
-                    surveillantRepository.existsByEmail(dto.getEmail())) {
+                    utilisateurRepository.existsByEmail(dto.getEmail())) {
                 throw new BadRequestException("Email déjà utilisé: " + dto.getEmail());
             }
             surveillant.setEmail(dto.getEmail());
