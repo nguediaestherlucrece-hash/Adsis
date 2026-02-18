@@ -1,5 +1,88 @@
 import { Api } from './api.js';
 
+/**
+ * Affiche un toast Bootstrap (succès, erreur, info, warning)
+ * @param {string} message 
+ * @param {'success'|'danger'|'warning'|'info'} type 
+ */
+function showToast(message, type = 'info') {
+    const config = {
+        success: { icon: 'bi-check-circle-fill',          label: 'Succès',   bg: '#1a7f5a', delay: 3500 },
+        danger:  { icon: 'bi-x-circle-fill',              label: 'Erreur',   bg: '#c0392b', delay: 6000 },
+        warning: { icon: 'bi-exclamation-triangle-fill',  label: 'Attention',bg: '#d68910', delay: 5000 },
+        info:    { icon: 'bi-info-circle-fill',           label: 'Info',     bg: '#1a6fa8', delay: 4000 },
+    };
+    const c = config[type] || config.info;
+    const container = document.getElementById('toastContainer');
+
+    const toastEl = document.createElement('div');
+    toastEl.className = 'toast border-0 rounded-3 shadow-lg overflow-hidden';
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('data-bs-delay', c.delay);
+    toastEl.style.minWidth = '280px';
+    toastEl.style.maxWidth = '360px';
+    toastEl.innerHTML = `
+        <div class="toast-header border-0 text-white py-2 px-3" style="background:${c.bg}">
+            <i class="bi ${c.icon} me-2"></i>
+            <strong class="me-auto">${c.label}</strong>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body text-dark bg-white small py-2 px-3">${message}</div>`;
+
+    container.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+/**
+ * Extrait un message lisible depuis une erreur API (JSON ou texte brut)
+ */
+function parseApiError(error) {
+    const raw = error?.message || String(error);
+    try {
+        const match = raw.match(/\{.*\}/s);
+        if (match) {
+            const parsed = JSON.parse(match[0]);
+            return parsed.message || parsed.error || raw;
+        }
+    } catch (_) { /* pas du JSON */ }
+    return raw;
+}
+
+/**
+ * Affiche une modal de confirmation personnalisée
+ * @param {string} title 
+ * @param {string} message 
+ * @returns {Promise<boolean>}
+ */
+function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
+    return new Promise((resolve) => {
+        const modalEl = document.getElementById('confirmModal');
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+
+        const cleanup = (result) => {
+            modal.hide();
+            // Remove listeners to éviter les doublons
+            okBtn.replaceWith(okBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            resolve(result);
+        };
+
+        // Re-select after cloneNode
+        document.getElementById('confirmOkBtn').addEventListener('click', () => cleanup(true), { once: true });
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => cleanup(false), { once: true });
+        modalEl.addEventListener('hide.bs.modal', () => resolve(false), { once: true });
+
+        modal.show();
+    });
+}
+
 // DOM Elements
 const userTableBody = document.getElementById('userTableBody');
 const userModal = new bootstrap.Modal(document.getElementById('userModal'));
@@ -284,22 +367,34 @@ async function toggleBlock(id, roleName) {
         // Update both local list and UI immediately without reload
         user.raw.statut = user.status === "Actif" ? "ACTIF" : "INACTIF";
         renderTable(currentFilter);
+        showToast(
+            user.status === "Actif" ? `${user.name} a été débloqué.` : `${user.name} a été bloqué.`,
+            user.status === "Actif" ? 'success' : 'warning'
+        );
 
     } catch (e) {
-        alert("Erreur lors de la modification du statut: " + e.message);
+        showToast('Erreur lors de la modification du statut : ' + parseApiError(e), 'danger');
     }
 }
 
 async function deleteUser(id, roleName) {
-    if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+    const user = currentUserList.find(u => u.id === id);
+    const userName = user ? user.name : 'cet utilisateur';
+
+    const confirmed = await showConfirm(
+        `Supprimer ${userName} ?`,
+        'Cette action est irréversible. L\'utilisateur sera définitivement supprimé.'
+    );
+    if (!confirmed) return;
 
     try {
         await Api.deleteUser(id, roleName);
         currentUserList = currentUserList.filter(u => u.id !== id);
         renderTable(currentFilter);
         updateCounts();
+        showToast(`${userName} a été supprimé avec succès.`, 'success');
     } catch (e) {
-        alert("Erreur lors de la suppression: " + e.message);
+        showToast('Erreur lors de la suppression : ' + parseApiError(e), 'danger');
     }
 }
 
@@ -483,9 +578,10 @@ async function handleSaveUser() {
 
         userModal.hide();
         loadUsers(); // Reload list
+        showToast(id ? 'Utilisateur modifié avec succès.' : 'Utilisateur créé avec succès.', 'success');
 
     } catch (e) {
-        alert("Erreur lors de l'enregistrement: " + e.message);
+        showToast('Erreur lors de l\'enregistrement : ' + parseApiError(e), 'danger');
         console.error(e);
     }
 }
