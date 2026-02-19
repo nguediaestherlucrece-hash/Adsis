@@ -1,6 +1,6 @@
-package com.Gestion_des_utilisateurs.dto.response;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response;
 
-import com.Gestion_des_utilisateurs.entity.Statut;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import lombok.Data;
 
 import java.time.LocalDateTime;

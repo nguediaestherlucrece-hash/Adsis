@@ -1,9 +1,9 @@
-package com.Gestion_des_utilisateurs.controller.api;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.controller.api;
 
-    import com.Gestion_des_utilisateurs.dto.request.SurveillantCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.SurveillantUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.SurveillantDTO;
-import com.Gestion_des_utilisateurs.service.SurveillantService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.SurveillantDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.SurveillantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

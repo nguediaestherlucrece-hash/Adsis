@@ -1,16 +1,17 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.request.UtilisateurCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.UtilisateurUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.UtilisateurDTO;
-import com.Gestion_des_utilisateurs.entity.Role;
-import com.Gestion_des_utilisateurs.entity.Statut;
-import com.Gestion_des_utilisateurs.entity.Utilisateur;
-import com.Gestion_des_utilisateurs.exception.BadRequestException;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.RoleRepository;
-import com.Gestion_des_utilisateurs.repository.UtilisateurRepository;
-import com.Gestion_des_utilisateurs.service.UtilisateurService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.UtilisateurCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.UtilisateurUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.UtilisateurDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.UtilisateurMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +27,12 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     private final UtilisateurRepository repository;
     private final RoleRepository roleRepository;
+    private final UtilisateurMapper mapper;
 
     @Override
     public List<UtilisateurDTO> getAllUtilisateurs() {
         return repository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -38,7 +40,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     public UtilisateurDTO getUtilisateurById(Long id) {
         Utilisateur utilisateur = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
-        return convertToDTO(utilisateur);
+        return mapper.toDTO(utilisateur);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         if (utilisateur == null) {
             throw new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email);
         }
-        return convertToDTO(utilisateur);
+        return mapper.toDTO(utilisateur);
     }
 
     @Override
@@ -76,7 +78,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         }
 
         Utilisateur saved = repository.save(utilisateur);
-        return convertToDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -106,7 +108,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         }
 
         Utilisateur updated = repository.save(utilisateur);
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
     @Override
@@ -128,27 +130,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
         utilisateur.setStatut(utilisateur.getStatut() == Statut.ACTIF ? Statut.INACTIF : Statut.ACTIF);
         Utilisateur updated = repository.save(utilisateur);
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
-    private UtilisateurDTO convertToDTO(Utilisateur utilisateur) {
-        UtilisateurDTO dto = new UtilisateurDTO();
-        dto.setId(utilisateur.getId());
-        dto.setNom(utilisateur.getNom());
-        dto.setPrenom(utilisateur.getPrenom());
-        dto.setEmail(utilisateur.getEmail());
-        // AVERTISSEMENT SECURITE : Exposer le mot de passe hashé est risqué
-        dto.setPassword(utilisateur.getPassword());
-        dto.setStatut(utilisateur.getStatut());
-        dto.setPremiereConnexion(utilisateur.getPremiereConnexion());
-        dto.setCreatedAt(utilisateur.getCreatedAt());
-
-        // Convertir les rôles en noms de rôles
-        Set<String> roleNames = utilisateur.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-        dto.setRoleNames(roleNames);
-
-        return dto;
-    }
 }
+

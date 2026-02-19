@@ -1,6 +1,6 @@
-package com.Gestion_des_utilisateurs.repository;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.repository;
 
-import com.Gestion_des_utilisateurs.entity.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

@@ -1,9 +1,9 @@
-package com.Gestion_des_utilisateurs.controller.api;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.controller.api;
 
-import com.Gestion_des_utilisateurs.dto.request.UtilisateurCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.UtilisateurUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.UtilisateurDTO;
-import com.Gestion_des_utilisateurs.service.UtilisateurService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.UtilisateurCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.UtilisateurUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.UtilisateurDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

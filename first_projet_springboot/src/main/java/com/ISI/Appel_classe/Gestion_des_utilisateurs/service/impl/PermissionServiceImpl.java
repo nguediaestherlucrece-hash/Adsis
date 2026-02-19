@@ -1,10 +1,11 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.response.PermissionDTO;
-import com.Gestion_des_utilisateurs.entity.Permission;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.PermissionRepository;
-import com.Gestion_des_utilisateurs.service.PermissionService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.PermissionDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Permission;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PermissionRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.PermissionService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.PermissionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,12 @@ import java.util.stream.Collectors;
 public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
+    private final PermissionMapper mapper;
 
     @Override
     public List<PermissionDTO> getAllPermissions() {
         return permissionRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -31,7 +33,7 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionDTO getPermissionById(Long id) {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Permission non trouvée avec l'ID: " + id));
-        return convertToDTO(permission);
+        return mapper.toDTO(permission);
     }
 
     @Override
@@ -64,11 +66,5 @@ public class PermissionServiceImpl implements PermissionService {
         }
     }
 
-    private PermissionDTO convertToDTO(Permission permission) {
-        PermissionDTO dto = new PermissionDTO();
-        dto.setId(permission.getId());
-        dto.setName(permission.getName());
-        dto.setDescription(permission.getDescription());
-        return dto;
-    }
+
 }

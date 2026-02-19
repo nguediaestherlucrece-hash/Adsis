@@ -1,15 +1,16 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.request.CreateRoleDTO;
-import com.Gestion_des_utilisateurs.dto.request.UpdateRolePermissionsDTO;
-import com.Gestion_des_utilisateurs.dto.response.RoleDTO;
-import com.Gestion_des_utilisateurs.entity.Permission;
-import com.Gestion_des_utilisateurs.entity.Role;
-import com.Gestion_des_utilisateurs.exception.BadRequestException;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.PermissionRepository;
-import com.Gestion_des_utilisateurs.repository.RoleRepository;
-import com.Gestion_des_utilisateurs.service.RoleService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.CreateRoleDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.UpdateRolePermissionsDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.RoleDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Permission;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PermissionRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.RoleService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.RoleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,11 +28,12 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final RoleMapper mapper;
 
     @Override
     public List<RoleDTO> getAllRoles() {
         return roleRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -39,7 +41,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleDTO getRoleById(Long id) {
         Role role = roleRepository.findByIdWithPermissions(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rôle non trouvé avec l'ID: " + id));
-        return convertToDTO(role);
+        return mapper.toDTO(role);
     }
 
     @Override
@@ -65,7 +67,7 @@ public class RoleServiceImpl implements RoleService {
 
         Role saved = roleRepository.save(role);
         log.info("Rôle créé: {}", saved.getName());
-        return convertToDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -92,7 +94,7 @@ public class RoleServiceImpl implements RoleService {
         Role updated = roleRepository.save(role);
         log.info("Permissions du rôle {} mises à jour: {}", role.getName(), dto.getPermissions());
 
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
     @Override
@@ -145,14 +147,5 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
-    private RoleDTO convertToDTO(Role role) {
-        RoleDTO dto = new RoleDTO();
-        dto.setId(role.getId());
-        dto.setName(role.getName());
-        dto.setDescription(role.getDescription());
-        dto.setPermissions(role.getPermissions().stream()
-                .map(Permission::getName)
-                .collect(Collectors.toSet()));
-        return dto;
-    }
+
 }

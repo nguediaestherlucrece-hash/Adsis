@@ -1,17 +1,18 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.AssistantPedagogiqueDTO;
-import com.Gestion_des_utilisateurs.entity.AssistantPedagogique;
-import com.Gestion_des_utilisateurs.entity.Role;
-import com.Gestion_des_utilisateurs.entity.Statut;
-import com.Gestion_des_utilisateurs.exception.BadRequestException;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.AssistantPedagogiqueRepository;
-import com.Gestion_des_utilisateurs.repository.RoleRepository;
-import com.Gestion_des_utilisateurs.repository.UtilisateurRepository;
-import com.Gestion_des_utilisateurs.service.AssistantPedagogiqueService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.AssistantPedagogiqueDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.AssistantPedagogiqueRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.AssistantPedagogiqueService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.AssistantPedagogiqueMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,11 +32,12 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     private final AssistantPedagogiqueRepository assistantRepository;
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AssistantPedagogiqueMapper mapper;
 
     @Override
     public List<AssistantPedagogiqueDTO> getAllAssistants() {
         return assistantRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -43,20 +45,20 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     public AssistantPedagogiqueDTO getAssistantById(Long id) {
         AssistantPedagogique assistant = assistantRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + id));
-        return convertToDTO(assistant);
+        return mapper.toDTO(assistant);
     }
 
     @Override
     public AssistantPedagogiqueDTO getAssistantByEmail(String email) {
         AssistantPedagogique assistant = assistantRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + email));
-        return convertToDTO(assistant);
+        return mapper.toDTO(assistant);
     }
 
     @Override
     public List<AssistantPedagogiqueDTO> getAssistantsByDepartement(String departement) {
         return assistantRepository.findByDepartement(departement).stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -104,7 +106,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         AssistantPedagogique saved = assistantRepository.save(assistant);
         log.info("Assistant pédagogique créé - ID: {}", saved.getId());
 
-        return convertToDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -145,7 +147,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         }
 
         AssistantPedagogique updated = assistantRepository.save(assistant);
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
     @Override
@@ -157,34 +159,5 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         assistantRepository.deleteById(id);
     }
 
-    private AssistantPedagogiqueDTO convertToDTO(AssistantPedagogique assistant) {
-        AssistantPedagogiqueDTO dto = new AssistantPedagogiqueDTO();
 
-        dto.setId(assistant.getId());
-        dto.setNom(assistant.getNom());
-        dto.setPrenom(assistant.getPrenom());
-        dto.setEmail(assistant.getEmail());
-        dto.setStatut(assistant.getStatut());
-        dto.setEnabled(assistant.getEnabled());
-        dto.setAccountNonLocked(assistant.getAccountNonLocked());
-        dto.setPremiereConnexion(assistant.getPremiereConnexion());
-        dto.setCreatedAt(assistant.getCreatedAt());
-
-        Set<String> roleNames = assistant.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-        dto.setRoleNames(roleNames);
-
-        dto.setDepartement(assistant.getDepartement());
-
-        if (assistant.getJustificatifsValides() != null) {
-            dto.setNombreJustificatifsValides(assistant.getJustificatifsValides().size());
-        }
-
-        if (assistant.getEmploisDuTemps() != null) {
-            dto.setNombreEmploisDuTemps(assistant.getEmploisDuTemps().size());
-        }
-
-        return dto;
-    }
 }

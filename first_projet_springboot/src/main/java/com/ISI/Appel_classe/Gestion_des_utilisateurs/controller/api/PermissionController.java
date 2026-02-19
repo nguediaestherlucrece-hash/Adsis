@@ -1,7 +1,7 @@
-package com.Gestion_des_utilisateurs.controller.api;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.controller.api;
 
-import com.Gestion_des_utilisateurs.dto.response.PermissionDTO;
-import com.Gestion_des_utilisateurs.service.PermissionService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.PermissionDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.PermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

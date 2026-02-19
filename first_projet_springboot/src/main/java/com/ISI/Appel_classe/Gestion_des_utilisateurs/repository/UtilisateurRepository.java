@@ -1,10 +1,8 @@
-package com.Gestion_des_utilisateurs.repository;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.repository;
 
-import com.Gestion_des_utilisateurs.entity.Utilisateur;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
 
 @Repository
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {

@@ -1,19 +1,20 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.request.EnseignantCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.EnseignantUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.EnseignantDTO;
-import com.Gestion_des_utilisateurs.entity.CoursUE;
-import com.Gestion_des_utilisateurs.entity.Enseignant;
-import com.Gestion_des_utilisateurs.entity.Role;
-import com.Gestion_des_utilisateurs.entity.Statut;
-import com.Gestion_des_utilisateurs.exception.BadRequestException;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.CoursUERepository;
-import com.Gestion_des_utilisateurs.repository.EnseignantRepository;
-import com.Gestion_des_utilisateurs.repository.RoleRepository;
-import com.Gestion_des_utilisateurs.repository.UtilisateurRepository;
-import com.Gestion_des_utilisateurs.service.EnseignantService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EnseignantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EnseignantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EnseignantDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.CoursUE;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.CoursUERepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.EnseignantRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.EnseignantService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.EnseignantMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,12 +40,13 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final CoursUERepository coursUERepository;
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final EnseignantMapper mapper;
 
     @Override
     public List<EnseignantDTO> getAllEnseignants() {
         log.info("Récupération de tous les enseignants");
         return enseignantRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +55,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         log.info("Récupération de l'enseignant id={}", id);
         Enseignant enseignant = enseignantRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé avec l'ID: " + id));
-        return convertToDTO(enseignant);
+        return mapper.toDTO(enseignant);
     }
 
     @Override
@@ -61,14 +63,14 @@ public class EnseignantServiceImpl implements EnseignantService {
         log.info("Récupération de l'enseignant email={}", email);
         Enseignant enseignant = enseignantRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé avec l'email: " + email));
-        return convertToDTO(enseignant);
+        return mapper.toDTO(enseignant);
     }
 
     @Override
     public List<EnseignantDTO> getEnseignantsBySpecialite(String specialite) {
         log.info("Récupération des enseignants de spécialité: {}", specialite);
         return enseignantRepository.findBySpecialite(specialite).stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -76,7 +78,7 @@ public class EnseignantServiceImpl implements EnseignantService {
     public List<EnseignantDTO> getEnseignantsByGrade(String grade) {
         log.info("Récupération des enseignants de grade: {}", grade);
         return enseignantRepository.findByGrade(grade).stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -138,7 +140,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         Enseignant saved = enseignantRepository.save(enseignant);
         log.info("Enseignant créé avec succès - ID: {}", saved.getId());
 
-        return convertToDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -201,7 +203,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         Enseignant updated = enseignantRepository.save(enseignant);
         log.info("Enseignant mis à jour avec succès");
 
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
     @Override
@@ -234,50 +236,8 @@ public class EnseignantServiceImpl implements EnseignantService {
         Enseignant updated = enseignantRepository.save(enseignant);
 
         log.info("Cours assignés avec succès");
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
-    private EnseignantDTO convertToDTO(Enseignant enseignant) {
-        EnseignantDTO dto = new EnseignantDTO();
 
-        // Attributs hérités
-        dto.setId(enseignant.getId());
-        dto.setNom(enseignant.getNom());
-        dto.setPrenom(enseignant.getPrenom());
-        dto.setEmail(enseignant.getEmail());
-        dto.setStatut(enseignant.getStatut());
-        dto.setEnabled(enseignant.getEnabled());
-        dto.setAccountNonLocked(enseignant.getAccountNonLocked());
-        dto.setPremiereConnexion(enseignant.getPremiereConnexion());
-        dto.setCreatedAt(enseignant.getCreatedAt());
-
-        Set<String> roleNames = enseignant.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-        dto.setRoleNames(roleNames);
-
-        // Attributs spécifiques
-        dto.setSpecialite(enseignant.getSpecialite());
-        dto.setGrade(enseignant.getGrade());
-
-        // Relations
-        if (enseignant.getCoursEnseignes() != null) {
-            List<EnseignantDTO.CoursSimpleDTO> cours = enseignant.getCoursEnseignes().stream()
-                    .map(c -> {
-                        EnseignantDTO.CoursSimpleDTO coursDTO = new EnseignantDTO.CoursSimpleDTO();
-                        coursDTO.setId(c.getId());
-                        coursDTO.setNomCours(c.getIntitule());
-                        coursDTO.setCode(c.getCodeUE());
-                        return coursDTO;
-                    })
-                    .collect(Collectors.toList());
-            dto.setCoursEnseignes(cours);
-        }
-
-        if (enseignant.getSeances() != null) {
-            dto.setNombreSeances(enseignant.getSeances().size());
-        }
-
-        return dto;
-    }
 }

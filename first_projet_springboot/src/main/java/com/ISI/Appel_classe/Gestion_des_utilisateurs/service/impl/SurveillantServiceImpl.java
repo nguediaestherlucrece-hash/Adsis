@@ -1,17 +1,18 @@
-package com.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 
-import com.Gestion_des_utilisateurs.dto.request.SurveillantCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.SurveillantUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.SurveillantDTO;
-import com.Gestion_des_utilisateurs.entity.Role;
-import com.Gestion_des_utilisateurs.entity.Statut;
-import com.Gestion_des_utilisateurs.entity.Surveillant;
-import com.Gestion_des_utilisateurs.exception.BadRequestException;
-import com.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.Gestion_des_utilisateurs.repository.RoleRepository;
-import com.Gestion_des_utilisateurs.repository.SurveillantRepository;
-import com.Gestion_des_utilisateurs.repository.UtilisateurRepository;
-import com.Gestion_des_utilisateurs.service.SurveillantService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.SurveillantDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SurveillantRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.SurveillantService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.SurveillantMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,11 +32,12 @@ public class SurveillantServiceImpl implements SurveillantService {
     private final SurveillantRepository surveillantRepository;
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final SurveillantMapper mapper;
 
     @Override
     public List<SurveillantDTO> getAllSurveillants() {
         return surveillantRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -43,20 +45,20 @@ public class SurveillantServiceImpl implements SurveillantService {
     public SurveillantDTO getSurveillantById(Long id) {
         Surveillant surveillant = surveillantRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + id));
-        return convertToDTO(surveillant);
+        return mapper.toDTO(surveillant);
     }
 
     @Override
     public SurveillantDTO getSurveillantByEmail(String email) {
         Surveillant surveillant = surveillantRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + email));
-        return convertToDTO(surveillant);
+        return mapper.toDTO(surveillant);
     }
 
     @Override
     public List<SurveillantDTO> getSurveillantsByAffectation(String affectation) {
         return surveillantRepository.findByAffectation(affectation).stream()
-                .map(this::convertToDTO)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -104,7 +106,7 @@ public class SurveillantServiceImpl implements SurveillantService {
         Surveillant saved = surveillantRepository.save(surveillant);
         log.info("Surveillant créé - ID: {}", saved.getId());
 
-        return convertToDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -145,7 +147,7 @@ public class SurveillantServiceImpl implements SurveillantService {
         }
 
         Surveillant updated = surveillantRepository.save(surveillant);
-        return convertToDTO(updated);
+        return mapper.toDTO(updated);
     }
 
     @Override
@@ -157,30 +159,5 @@ public class SurveillantServiceImpl implements SurveillantService {
         surveillantRepository.deleteById(id);
     }
 
-    private SurveillantDTO convertToDTO(Surveillant surveillant) {
-        SurveillantDTO dto = new SurveillantDTO();
 
-        dto.setId(surveillant.getId());
-        dto.setNom(surveillant.getNom());
-        dto.setPrenom(surveillant.getPrenom());
-        dto.setEmail(surveillant.getEmail());
-        dto.setStatut(surveillant.getStatut());
-        dto.setEnabled(surveillant.getEnabled());
-        dto.setAccountNonLocked(surveillant.getAccountNonLocked());
-        dto.setPremiereConnexion(surveillant.getPremiereConnexion());
-        dto.setCreatedAt(surveillant.getCreatedAt());
-
-        Set<String> roleNames = surveillant.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-        dto.setRoleNames(roleNames);
-
-        dto.setAffectation(surveillant.getAffectation());
-
-        if (surveillant.getSeances() != null) {
-            dto.setNombreSeances(surveillant.getSeances().size());
-        }
-
-        return dto;
-    }
 }

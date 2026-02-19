@@ -1,9 +1,9 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.controller.api;
 
-import com.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueCreateDTO;
-import com.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueUpdateDTO;
-import com.Gestion_des_utilisateurs.dto.response.AssistantPedagogiqueDTO;
-import com.Gestion_des_utilisateurs.service.AssistantPedagogiqueService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.AssistantPedagogiqueDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.AssistantPedagogiqueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
