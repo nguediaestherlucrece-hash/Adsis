@@ -67,4 +67,17 @@ public class SurveillantController {
         surveillantService.deleteSurveillant(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/filiere/{filiereId}")
+    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
+    public ResponseEntity<List<SurveillantDTO>> getSurveillantByFiliere(@PathVariable Long filiereId) {
+        return ResponseEntity.ok(surveillantService.getSurveillantsByFiliere(filiereId));
+    }
+
+    @PostMapping("/{id}/filiere/{filiereId}")
+    @PreAuthorize("hasAuthority('SURVEILLANT_UPDATE')")
+    public ResponseEntity<SurveillantDTO> assignByFiliere(@PathVariable Long id, @PathVariable Long filiereId) {
+        return ResponseEntity.ok(surveillantService.assignSurveillantToFiliere(id, filiereId));
+    }
+
 }

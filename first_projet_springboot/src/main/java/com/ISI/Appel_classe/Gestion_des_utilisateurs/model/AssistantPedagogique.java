@@ -22,6 +22,10 @@ public class AssistantPedagogique extends Utilisateur {
     private String departement;
 
     // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "filiere_id")
+    private Filiere filiere;
+
     @OneToMany(mappedBy = "validateur") // Nécessite que le champ 'validateur' existe dans Justificatif
     private List<Justificatif> justificatifsValides = new ArrayList<>();
 

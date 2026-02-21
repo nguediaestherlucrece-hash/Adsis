@@ -19,17 +19,25 @@ public class Filiere {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idFiliere;
+
     private String nomFiliere;
     private String description;
 
     // 🔹 Relations JPA
     @ManyToOne
-    @JoinColumn(name = "etablissement_id")
-    private Etablissement etablissement;
+    @JoinColumn(name = "cycle")
+    private Cycle cycle;
 
     @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
     private List<Classe> classes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
+    private List<AssistantPedagogique> assistantPedagogiques = new ArrayList<>();
+
+    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
+    private List<Surveillant> surveillants = new ArrayList<>();
 
     // 🔹 Méthodes de logique métier
     public void ajouterClasse(Classe classe) {

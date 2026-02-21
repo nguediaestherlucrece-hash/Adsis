@@ -19,6 +19,7 @@ public class Classe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idClasse;
     private String nomClasse;
     private String niveau;
@@ -29,12 +30,9 @@ public class Classe {
     @JoinColumn(name = "filiere_id")
     private Filiere filiere;
 
-    @ManyToOne
-    @JoinColumn(name = "etablissement")
-    private Etablissement etablissement;
-
     @OneToMany(mappedBy = "classe", cascade =CascadeType.ALL)
     private List<Etudiant> etudiants = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(name = "classe_cours", joinColumns = @JoinColumn(name = "classe_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))
     private List<CoursUE> cours = new ArrayList<>();

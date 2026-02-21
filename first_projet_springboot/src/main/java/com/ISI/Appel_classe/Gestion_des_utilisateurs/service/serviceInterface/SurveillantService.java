@@ -21,4 +21,8 @@ public interface SurveillantService {
     SurveillantDTO updateSurveillant(Long id, SurveillantUpdateDTO dto);
 
     void deleteSurveillant(Long id);
+
+    SurveillantDTO assignSurveillantToFiliere(Long surveillantId, Long filiereId);
+
+    java.util.List<SurveillantDTO> getSurveillantsByFiliere(Long filiereId);
 }

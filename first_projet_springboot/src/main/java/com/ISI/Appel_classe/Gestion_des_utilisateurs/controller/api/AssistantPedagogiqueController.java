@@ -67,4 +67,16 @@ public class AssistantPedagogiqueController {
         assistantService.deleteAssistant(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/filiere/{filiereId}")
+    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
+    public ResponseEntity<List<AssistantPedagogiqueDTO>> getAssistantPedagogiqueByFiliere(@PathVariable Long filiereId) {
+        return ResponseEntity.ok(assistantService.getAssistantsByFiliere(filiereId));
+    }
+
+    @PostMapping("/{id}/filiere/{filiereId}")
+    @PreAuthorize("hasAuthority('ASSISTANT_UPDATE')")
+    public ResponseEntity<AssistantPedagogiqueDTO> assignFiliere(@PathVariable Long id, @PathVariable Long filiereId) {
+        return ResponseEntity.ok(assistantService.assignAssistantToFiliere(id, filiereId));
+    }
 }

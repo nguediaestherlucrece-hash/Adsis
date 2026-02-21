@@ -33,6 +33,7 @@ public class SurveillantServiceImpl implements SurveillantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final SurveillantMapper mapper;
+    private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
 
     @Override
     public List<SurveillantDTO> getAllSurveillants() {
@@ -158,6 +159,26 @@ public class SurveillantServiceImpl implements SurveillantService {
         }
         surveillantRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public SurveillantDTO assignSurveillantToFiliere(Long surveillantId, Long filiereId) {
+        Surveillant s = surveillantRepository.findById(surveillantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + surveillantId));
+        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(filiereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + filiereId));
+        s.setFiliere(filiere);
+        Surveillant saved = surveillantRepository.save(s);
+        return mapper.toDTO(saved);
+    }
+
+    @Override
+    public List<SurveillantDTO> getSurveillantsByFiliere(Long filiereId) {
+        return surveillantRepository.findByFiliere_Id(filiereId).stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
 
 }

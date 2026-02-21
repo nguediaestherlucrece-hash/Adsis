@@ -22,6 +22,10 @@ public class Surveillant extends Utilisateur {
     private String affectation;
 
     // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "filiere_id")
+    private Filiere filiere;
+
     @ManyToMany(mappedBy = "surveillants")
     private List<Seance> seances = new ArrayList<>();
 }

@@ -33,6 +33,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AssistantPedagogiqueMapper mapper;
+    private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
 
     @Override
     public List<AssistantPedagogiqueDTO> getAllAssistants() {
@@ -159,5 +160,22 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         assistantRepository.deleteById(id);
     }
 
+    @Override
+    @Transactional
+    public AssistantPedagogiqueDTO assignAssistantToFiliere(Long assistantId, Long filiereId) {
+        AssistantPedagogique assistant = assistantRepository.findById(assistantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + assistantId));
+        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(filiereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + filiereId));
+        assistant.setFiliere(filiere);
+        AssistantPedagogique saved = assistantRepository.save(assistant);
+        return mapper.toDTO(saved);
+    }
 
+    @Override
+    public List<AssistantPedagogiqueDTO> getAssistantsByFiliere(Long filiereId) {
+        return assistantRepository.findByFiliere_Id(filiereId).stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

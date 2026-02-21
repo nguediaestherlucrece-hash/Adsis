@@ -21,4 +21,8 @@ public interface AssistantPedagogiqueService {
     AssistantPedagogiqueDTO updateAssistant(Long id, AssistantPedagogiqueUpdateDTO dto);
 
     void deleteAssistant(Long id);
+
+    AssistantPedagogiqueDTO assignAssistantToFiliere(Long assistantId, Long filiereId);
+
+    java.util.List<AssistantPedagogiqueDTO> getAssistantsByFiliere(Long filiereId);
 }
