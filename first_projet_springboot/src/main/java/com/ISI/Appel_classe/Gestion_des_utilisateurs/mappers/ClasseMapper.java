@@ -18,6 +18,10 @@ public class ClasseMapper {
         dto.setNomClasse(classe.getNomClasse());
         dto.setNiveau(classe.getNiveau());
         dto.setAnneeAcademique(classe.getAnneeAcademique());
+        // Mapper l'ID de la filière associée
+        if (classe.getFiliere() != null) {
+            dto.setFiliereId(classe.getFiliere().getId());
+        }
         return dto;
     }
 
@@ -45,4 +49,3 @@ public class ClasseMapper {
             c.setAnneeAcademique(dto.getAnneeAcademique());
     }
 }
-

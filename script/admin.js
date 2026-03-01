@@ -1,10 +1,6 @@
 import { Api } from './api.js';
 
-/**
- * Affiche un toast Bootstrap (succès, erreur, info, warning)
- * @param {string} message 
- * @param {'success'|'danger'|'warning'|'info'} type 
- */
+// Affiche une notification en cas de succès ou d'erreur
 function showToast(message, type = 'info') {
     const config = {
         success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
@@ -35,9 +31,7 @@ function showToast(message, type = 'info') {
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-/**
- * Extrait un message lisible depuis une erreur API (JSON ou texte brut)
- */
+// Extrait un message d'erreur clair depuis la réponse de l'API
 function parseApiError(error) {
     const raw = error?.message || String(error);
     try {
@@ -50,12 +44,7 @@ function parseApiError(error) {
     return raw;
 }
 
-/**
- * Affiche une modal de confirmation personnalisée
- * @param {string} title 
- * @param {string} message 
- * @returns {Promise<boolean>}
- */
+// Affiche une fenêtre de confirmation avant une action critique
 function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
     return new Promise((resolve) => {
         const modalEl = document.getElementById('confirmModal');
@@ -104,9 +93,7 @@ let currentFilter = 'Tous';
 // Constants
 const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
 
-/**
- * Initialize
- */
+// Lance le chargement initial au démarrage de la page
 document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     setupEventListeners();
@@ -177,9 +164,7 @@ function updateSearchTerm(term) {
     renderTable(currentFilter);
 }
 
-/**
- * Load users from API
- */
+// Récupère les données de tous les utilisateurs depuis l'API
 async function loadUsers() {
     try {
         userTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chargement...</td></tr>';
@@ -198,10 +183,7 @@ async function loadUsers() {
     }
 }
 
-/**
- * Normalize API user object to internal format
- * Seuls les Surveillants et Assistants pédagogiques sont gérés ici.
- */
+// Normalise le format de l'utilisateur pour l'affichage interne
 function normalizeUser(u) {
     let role = "Inconnu";
     let details = "";
@@ -233,9 +215,7 @@ function normalizeUser(u) {
     };
 }
 
-/**
- * Render table
- */
+// Rafraîchit l'affichage du tableau avec les données filtrées
 function renderTable(roleFilter) {
     userTableBody.innerHTML = '';
 
@@ -310,6 +290,7 @@ function renderTable(roleFilter) {
     });
 }
 
+// Génère un bouton d'action pour chaque ligne
 function createBtn(iconClass, btnClass, onClick) {
     const btn = document.createElement('button');
     btn.className = `btn btn-sm border-0 mx-1 ${btnClass}`;
@@ -324,18 +305,13 @@ function updateCounts() {
     if (countSpan) countSpan.innerText = currentUserList.length;
 }
 
-/**
- * Filter handler
- */
+// Applique le filtre de sélection par rôle
 function filterByRole(role) {
     if (role.startsWith("Tous")) role = "Tous"; // Handle "Tous (0)" text
     renderTable(role);
 }
 
-/**
- * ACTIONS
- */
-
+// Bascule le statut de l'utilisateur (Bloqué / Actif)
 async function toggleBlock(id, roleName) {
     // L'API attend une méthode updateUser avec status
     // On doit d'abord savoir si c'est block ou unblock
@@ -367,6 +343,7 @@ async function toggleBlock(id, roleName) {
     }
 }
 
+// Supprime totalement l'utilisateur et met à jour l'interface
 async function deleteUser(id, roleName) {
     const user = currentUserList.find(u => u.id === id);
     const userName = user ? user.name : 'cet utilisateur';
@@ -388,10 +365,7 @@ async function deleteUser(id, roleName) {
     }
 }
 
-/**
- * MODALS
- */
-
+// Gère l'affichage dynamique des champs selon le rôle sélectionné
 function toggleRoleFields(role) {
     const surveillantFields = document.getElementById('surveillantFields');
     const assistantFields = document.getElementById('assistantFields');
@@ -408,6 +382,7 @@ function toggleRoleFields(role) {
     }
 }
 
+// Ouvre la modale vide pour la création d'un utilisateur
 function openCreateModal() {
     document.getElementById('modalTitle').innerText = "Nouvel Utilisateur";
     document.getElementById('userId').value = "";
@@ -427,6 +402,7 @@ function openCreateModal() {
     userModal.show();
 }
 
+// Ouvre et pré-remplit la modale pour modifier un utilisateur
 function openEditModal(id) {
     const u = currentUserList.find(user => user.id === id);
     if (!u) return;
@@ -448,6 +424,7 @@ function openEditModal(id) {
     userModal.show();
 }
 
+// Ouvre la modale affichant les détails complets d'un utilisateur
 function openViewModal(u) {
     document.getElementById('viewUserName').innerText = u.name;
     document.getElementById('viewUserEmail').innerText = u.email;
@@ -479,6 +456,7 @@ function openViewModal(u) {
     viewModal.show();
 }
 
+// Valide le formulaire et enregistre l'utilisateur via l'API
 async function handleSaveUser() {
     const id = document.getElementById('userId').value;
     const roleStr = document.getElementById('userRole').value;

@@ -1,4 +1,3 @@
-// Données de simulation pour l'historique
 const transactions = [
   { date: '2026-01-12', desc: 'Achat transport', type: 'expense', montant: -19 },
   { date: '2026-01-12', desc: 'Paiement salaire', type: 'income', montant: 1718 },
@@ -7,14 +6,13 @@ const transactions = [
   { date: '2025-12-23', desc: 'Payement salaire', type: 'income', montant: 14100 }
 ];
 
-// Affiche la liste des transactions
+// Met à jour l'affichage avec la liste fournie et gère les dates
 function afficherTransactions(transactionsList) {
   const container = document.querySelector('.transaction-container');
-  container.innerHTML = ''; // Réinitialisation
+  container.innerHTML = '';
 
   let currentDate = '';
   transactionsList.forEach(t => {
-    // En-tête de date si nouvelle date
     if (t.date !== currentDate) {
       currentDate = t.date;
       const dateHeader = document.createElement('div');
@@ -23,7 +21,6 @@ function afficherTransactions(transactionsList) {
       container.appendChild(dateHeader);
     }
 
-    // Carte transaction
     const card = document.createElement('div');
     card.className = 'transaction-card';
     card.innerHTML = `
@@ -42,7 +39,7 @@ function afficherTransactions(transactionsList) {
   });
 }
 
-// Filtrage par texte
+// Filtre l'historique lors de la frappe au clavier
 document.getElementById("filtre").addEventListener("input", function () {
   const value = this.value.toLowerCase();
   const filtered = transactions.filter(t =>
@@ -51,7 +48,7 @@ document.getElementById("filtre").addEventListener("input", function () {
   afficherTransactions(filtered);
 });
 
-// Export vers CSV
+// Télécharge les transactions sous forme de fichier CSV
 document.getElementById("export-btn").addEventListener('click', function () {
   let csv = "Date,Description,Type,Montant\n";
   transactions.forEach(t => {
@@ -65,7 +62,7 @@ document.getElementById("export-btn").addEventListener('click', function () {
   link.click();
 });
 
-// Gestion des filtres visuels
+// Applique le style sur le bouton cliqué
 const filterButtons = document.querySelectorAll('.filter-btn');
 filterButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -74,6 +71,4 @@ filterButtons.forEach(btn => {
   });
 });
 
-// Initialisation
 afficherTransactions(transactions);
-console.log("Historique chargé avec succès");

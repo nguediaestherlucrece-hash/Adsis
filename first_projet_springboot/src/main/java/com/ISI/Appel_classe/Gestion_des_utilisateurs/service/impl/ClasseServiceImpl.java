@@ -61,6 +61,8 @@ public class ClasseServiceImpl implements ClasseService {
         if (dto.getFiliereId() != null) {
             c.setFiliere(filiereRepository.findById(dto.getFiliereId())
                     .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId())));
+        } else {
+            c.setFiliere(null); // Retrait explicite de la filière
         }
         Classe updated = repository.save(c);
         return mapper.toDTO(updated);
@@ -75,4 +77,3 @@ public class ClasseServiceImpl implements ClasseService {
         repository.deleteById(id);
     }
 }
-

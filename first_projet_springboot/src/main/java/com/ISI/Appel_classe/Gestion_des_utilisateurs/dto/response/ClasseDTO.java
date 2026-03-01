@@ -9,4 +9,5 @@ public class ClasseDTO {
     private String nomClasse;
     private String niveau;
     private String anneeAcademique;
+    private Long filiereId; // ID de la filière associée (relation ManyToOne)
 }

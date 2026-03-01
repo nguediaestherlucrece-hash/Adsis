@@ -59,6 +59,8 @@ public class FiliereServiceImpl implements FiliereService {
         if (dto.getCycleId() != null) {
             f.setCycle(cycleRepository.findById(dto.getCycleId())
                     .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + dto.getCycleId())));
+        } else {
+            f.setCycle(null); // Retrait explicite du cycle
         }
         Filiere updated = filiereRepository.save(f);
         return mapper.toDTO(updated);
@@ -73,4 +75,3 @@ public class FiliereServiceImpl implements FiliereService {
         filiereRepository.deleteById(id);
     }
 }
-

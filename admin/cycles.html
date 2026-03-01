@@ -1,212 +1,396 @@
 <!doctype html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cycles et Filières - ADSIS</title>
+    <title>ADSIS - Cycles &amp; Filières</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../style/cycles.css">
-   <body>
-
-
-<div class="d-flex">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar p-3">
-        <div class="d-flex align-items-center mb-4">
-        <img src="../assets/image.png" width="40" class="me-2">
-        <h4 class="fw-bold m-0">ADSIS</h4>
-    </div>
-
-
-        <p class="etablissement">ÉTABLISSEMENT<br><strong>Saint Jean Ingénieur</strong></p>
-
-        <ul class="nav flex-column mt-4">
-            <li class="nav-item"><a class="nav-link" href="tableaudebord.html">Tableau de bord</a></li>
-            <li class="nav-item"><a class="nav-link" href="gestionutilisateur.html">Gestion des utilisateurs</a></li>
-            <li class="nav-item"><a class="nav-link active" href="cycles.html">Cycles et Filières</a></li>
-            <li class="nav-item"><a class="nav-link" href="gestionacces.html">Gestion des accès</a></li>
-            <li class="nav-item"><a class="nav-link" href="profil.html">Mon profil</a></li>
-        </ul>
-
-        <div class="logout mt-auto">
-            <a href="#" class="text-danger"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+    <link rel="stylesheet" href="../style/tableaudebord.css">
+    <style>
+        .filter-tab {
+            cursor: pointer;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.25s;
+            border: 1.5px solid #dee2e6;
+            background: white;
+            color: #495057;
+            user-select: none;
+        }
+        .filter-tab.active {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        .filter-tab:hover:not(.active) {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+        th {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+        }
+        .badge {
+            font-size: 0.72rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row min-vh-100">
+            <aside class="col-md-3 col-lg-2 sidebar d-flex flex-column p-4 sticky-top">
+                <div class="logo-box mb-4 pb-3 border-bottom">
+                    <img src="../assets/image.png" alt="Logo ADSIS" class="logo">
+                    <h5 class="brand-name m-0 ms-2">ADSIS</h5>
+                </div>
+                <div class="mb-4">
+                    <small class="text-secondary fw-bold"
+                        style="font-size: 0.7rem; letter-spacing: 1px;">ÉTABLISSEMENT</small>
+                    <h6 class="fw-bold text-dark mt-1">Saint Jean Ingénieur</h6>
+                </div>
+                <nav class="nav flex-column gap-2">
+                    <a class="nav-link" href="tableaudebord.html"><i class="bi bi-grid"></i>Tableau de bord</a>
+                    <a class="nav-link" href="gestionutilisateur.html"><i class="bi bi-people"></i>Gestion du Staff</a>
+                    <a class="nav-link" href="gestionacces.html"><i class="bi bi-shield-lock"></i>Gestion des accès</a>
+                    <a class="nav-link active" href="cycles.html"><i class="bi bi-diagram-3 me-2"></i>Cycles &amp;
+                        Filières</a>
+                    <a class="nav-link" href="profil.html"><i class="bi bi-person"></i>Mon profil</a>
+                </nav>
+                <div class="mt-4 pt-2 border-top">
+                    <a href="#" class="nav-link text-danger fw-semibold">
+                        <i class="bi bi-box-arrow-left"></i>Déconnexion
+                    </a>
+                </div>
+            </aside>
+            <main class="col-md-9 col-lg-10 p-4">
+                <div class="topbar">
+                    <div></div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-end d-none d-sm-block">
+                            <div class="fw-bold small">Administrateur</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">admin@adsis.com</div>
+                        </div>
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                            style="width: 38px; height: 38px;">A</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold m-0">Cycles &amp; Filières</h4>
+                        <p class="text-muted small m-0">Gérez les cycles académiques, les filières et les classes.</p>
+                    </div>
+                    <div class="d-flex gap-2" id="headerButtons">
+                        <button class="btn btn-primary rounded-3 px-4 shadow-sm" id="btnNewCycle"
+                            onclick="openCreateCycle()">
+                            <i class="bi bi-plus-lg me-2"></i>Nouveau cycle
+                        </button>
+                        <button class="btn btn-outline-primary rounded-3 px-3 d-none" id="btnNewFiliere"
+                            onclick="openCreateFiliere()">
+                            <i class="bi bi-plus-lg me-2"></i>Nouvelle filière
+                        </button>
+                        <button class="btn btn-outline-success rounded-3 px-3 d-none" id="btnNewClasse"
+                            onclick="openCreateClasse()">
+                            <i class="bi bi-plus-lg me-2"></i>Nouvelle classe
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mb-4 flex-wrap">
+                    <span class="filter-tab active" data-tab="cycles" onclick="switchTabHandler(this,'cycles')">Cycles
+                        (0)</span>
+                    <span class="filter-tab" data-tab="filieres" onclick="switchTabHandler(this,'filieres')">Filières
+                        (0)</span>
+                    <span class="filter-tab" data-tab="classes" onclick="switchTabHandler(this,'classes')">Classes
+                        (0)</span>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="pane-cycles">
+                        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Nom du cycle</th>
+                                        <th>Code</th>
+                                        <th>Année scolaire</th>
+                                        <th>Filières associées</th>
+                                        <th class="text-center pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cyclesTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            </div>
+                                            Chargement...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pane-filieres">
+                        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Nom de la filière</th>
+                                        <th>Code</th>
+                                        <th>Cycle</th>
+                                        <th>Description</th>
+                                        <th>Classes</th>
+                                        <th class="text-center pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filieresTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            </div>
+                                            Chargement...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pane-classes">
+                        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Nom de la classe</th>
+                                        <th>Code</th>
+                                        <th>Niveau</th>
+                                        <th>Année académique</th>
+                                        <th>Filière / Cycle</th>
+                                        <th class="text-center pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="classesTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            </div>
+                                            Chargement...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content p-4 w-100">
-
-        <!-- HEADER -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3>Cycles et Filières</h3>
-            <div>
-                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#cycleModal">
-                    <i class="bi bi-plus"></i> Nouveau cycle
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filiereModal">
-                    <i class="bi bi-plus"></i> Nouvelle filière
-                </button>
+    <div class="modal fade" id="cycleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="cycleModalTitle">Nouveau cycle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="cycleId">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">NOM DU CYCLE *</label>
+                            <input type="text" id="cycleNom" class="form-control rounded-3" placeholder="Ex : Licence">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">CODE *</label>
+                            <input type="text" id="cycleIdCycle" class="form-control rounded-3" placeholder="Ex : L">
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label small fw-bold">ANNÉE SCOLAIRE *</label>
+                            <select id="cycleAnneeScolaire" class="form-select rounded-3">
+                                <option value="">-- Sélectionnez une année scolaire --</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-bold">ANNÉE DE CRÉATION</label>
+                            <input type="number" id="cycleAnneeCreation" class="form-control rounded-3"
+                                placeholder="Ex : 2024">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="cycleSubmitBtn" class="btn btn-primary rounded-3 px-4 fw-bold"
+                        onclick="saveCycle()">
+                        Enregistrer
+                    </button>
+                </div>
             </div>
         </div>
-
-        <!-- TABS -->
-        <ul class="nav nav-pills mb-4">
-            <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#cycles">Cycles (3)</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#filieres">Filières (4)</button>
-            </li>
-        </ul>
-
-        <div class="tab-content">
-
-            <!-- CYCLES -->
-            <div class="tab-pane fade show active" id="cycles">
-                <div class="card shadow-sm">
-                    <div class="card-body p-0">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Nom du cycle</th>
-                                    <th>Code</th>
-                                    <th>Durée</th>
-                                    <th>Description</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Licence</td>
-                                    <td><span class="badge bg-primary">L</span></td>
-                                    <td>3 ans</td>
-                                    <td>Premier cycle universitaire</td>
-                                    <td>
-                                        <i class="bi bi-pencil action-icon"></i>
-                                        <i class="bi bi-trash action-icon text-danger"></i>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>Master</td>
-                                    <td><span class="badge bg-success">M</span></td>
-                                    <td>2 ans</td>
-                                    <td>Deuxième cycle universitaire</td>
-                                    <td>
-                                        <i class="bi bi-pencil action-icon"></i>
-                                        <i class="bi bi-trash action-icon text-danger"></i>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>Doctorat</td>
-                                    <td><span class="badge bg-warning text-dark">D</span></td>
-                                    <td>3 ans</td>
-                                    <td>Troisième cycle universitaire</td>
-                                    <td>
-                                        <i class="bi bi-pencil action-icon"></i>
-                                        <i class="bi bi-trash action-icon text-danger"></i>
-                                    </td>
-                                </tr>
-
-                            </tbody>
-                        </table>
+    </div>
+    <div class="modal fade" id="filiereModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="filiereModalTitle">Nouvelle filière</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="filiereId">
+                    <div class="row g-3">
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">NOM DE LA FILIÈRE *</label>
+                            <input type="text" id="filiereNom" class="form-control rounded-3"
+                                placeholder="Ex : Génie Informatique">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">CODE *</label>
+                            <input type="text" id="filiereIdFiliere" class="form-control rounded-3"
+                                placeholder="Ex : GI">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">CYCLE ASSOCIÉ *</label>
+                            <select id="filiereCycleId" class="form-select rounded-3">
+                                <option value="">-- Sélectionnez un cycle --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">DESCRIPTION</label>
+                            <textarea id="filiereDescription" class="form-control rounded-3" rows="2"
+                                placeholder="Description de la filière..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="filiereSubmitBtn" class="btn btn-primary rounded-3 px-4 fw-bold"
+                        onclick="saveFiliere()">
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="classeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="classeModalTitle">Nouvelle classe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="classeId">
+                    <div class="row g-3">
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">NOM DE LA CLASSE *</label>
+                            <input type="text" id="classeNom" class="form-control rounded-3" placeholder="Ex : L1 GI A">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">CODE *</label>
+                            <input type="text" id="classeIdClasse" class="form-control rounded-3"
+                                placeholder="Ex : L1GIA">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">FILIÈRE ASSOCIÉE *</label>
+                            <select id="classeFiliereId" class="form-select rounded-3">
+                                <option value="">-- Sélectionnez une filière --</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">NIVEAU *</label>
+                            <select id="classeNiveau" class="form-select rounded-3">
+                                <option value="">-- Sélectionnez un niveau --</option>
+                                <option value="1">Niveau 1</option>
+                                <option value="2">Niveau 2</option>
+                                <option value="3">Niveau 3</option>
+                                <option value="4">Niveau 4</option>
+                                <option value="5">Niveau 5</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">ANNÉE SCOLAIRE
+                                <span class="text-muted fw-normal" style="font-size:0.7rem;"> (auto depuis la
+                                    filière)</span>
+                            </label>
+                            <input type="text" id="classeAnneeAcademique" class="form-control rounded-3 bg-light"
+                                placeholder="Auto-rempli" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="classeSubmitBtn" class="btn btn-primary rounded-3 px-4 fw-bold"
+                        onclick="saveClasse()">
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3" style="font-size: 2.5rem;">🗑️</div>
+                    <h6 class="fw-bold mb-1" id="confirmModalTitle">Confirmer la suppression ?</h6>
+                    <p class="text-muted small mb-4" id="confirmModalMessage">Cette action est irréversible.</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light w-50 rounded-3 fw-semibold"
+                            id="confirmCancelBtn">Annuler</button>
+                        <button type="button" class="btn btn-danger w-50 rounded-3 fw-semibold"
+                            id="confirmOkBtn">Supprimer</button>
                     </div>
                 </div>
             </div>
-
-            <!-- FILIERES -->
-            <div class="tab-pane fade" id="filieres">
-                <div class="card shadow-sm">
-                    <div class="card-body p-0">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Nom de la filière</th>
-                                    <th>Code</th>
-                                    <th>Cycle</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Génie Informatique</td>
-                                    <td>GI</td>
-                                    <td>Licence</td>
-                                    <td>
-                                        <i class="bi bi-pencil action-icon"></i>
-                                        <i class="bi bi-trash action-icon text-danger"></i>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td>Réseaux & Télécom</td>
-                                    <td>RT</td>
-                                    <td>Master</td>
-                                    <td>
-                                        <i class="bi bi-pencil action-icon"></i>
-                                        <i class="bi bi-trash action-icon text-danger"></i>
-                                    </td>
-                                </tr>
-
-                            </tbody>
-                        </table>
+        </div>
+    </div>
+    <div class="modal fade" id="assignFiliereModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="assignFiliereTitle">Attribuer des filières</h5>
+                        <p class="text-muted small mb-0">Cliquez sur une filière pour l'attribuer à ce cycle.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div id="assignFiliereList"
+                        style="max-height: 440px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
-</div>
-
-<!-- MODAL CYCLE -->
-<div class="modal fade" id="cycleModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Ajouter un cycle</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input class="form-control mb-3" placeholder="Nom du cycle">
-                <input class="form-control mb-3" placeholder="Code">
-                <input class="form-control mb-3" placeholder="Durée">
-                <textarea class="form-control" placeholder="Description"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary">Enregistrer</button>
+    <div class="modal fade" id="assignClasseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="assignClasseTitle">Attribuer des classes</h5>
+                        <p class="text-muted small mb-0">Cliquez sur une classe pour l'attribuer à cette filière.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div id="assignClasseList"
+                        style="max-height: 440px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- MODAL FILIERE -->
-<div class="modal fade" id="filiereModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Ajouter une filière</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input class="form-control mb-3" placeholder="Nom de la filière">
-                <input class="form-control mb-3" placeholder="Code">
-                <select class="form-select">
-                    <option>Licence</option>
-                    <option>Master</option>
-                    <option>Doctorat</option>
-                </select>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary">Enregistrer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../script/cycles.js"></script>
+    <script>
+        // Liaison onglets → bouton d'ajout
+        function switchTabHandler(el, name) {
+            switchTab(name);
+            // Afficher le bon bouton d'ajout
+            document.getElementById('btnNewCycle').classList.toggle('d-none', name !== 'cycles');
+            document.getElementById('btnNewFiliere').classList.toggle('d-none', name !== 'filieres');
+            document.getElementById('btnNewClasse').classList.toggle('d-none', name !== 'classes');
+        }
+    </script>
 </body>
 </html>
