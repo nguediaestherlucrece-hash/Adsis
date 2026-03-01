@@ -37,5 +37,3 @@ local.properties
 .env
 application-local.properties
 application-dev.properties
-
-config/
