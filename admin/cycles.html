@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cycles et Filières - ADSIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../style/cycles.css">
+   <body>
+
+
+<div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar p-3">
+        <div class="d-flex align-items-center mb-4">
+        <img src="../assets/image.png" width="40" class="me-2">
+        <h4 class="fw-bold m-0">ADSIS</h4>
+    </div>
+
+
+        <p class="etablissement">ÉTABLISSEMENT<br><strong>Saint Jean Ingénieur</strong></p>
+
+        <ul class="nav flex-column mt-4">
+            <li class="nav-item"><a class="nav-link" href="tableaudebord.html">Tableau de bord</a></li>
+            <li class="nav-item"><a class="nav-link" href="gestionutilisateur.html">Gestion des utilisateurs</a></li>
+            <li class="nav-item"><a class="nav-link active" href="cycles.html">Cycles et Filières</a></li>
+            <li class="nav-item"><a class="nav-link" href="gestionacces.html">Gestion des accès</a></li>
+            <li class="nav-item"><a class="nav-link" href="profil.html">Mon profil</a></li>
+        </ul>
+
+        <div class="logout mt-auto">
+            <a href="#" class="text-danger"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content p-4 w-100">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Cycles et Filières</h3>
+            <div>
+                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#cycleModal">
+                    <i class="bi bi-plus"></i> Nouveau cycle
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filiereModal">
+                    <i class="bi bi-plus"></i> Nouvelle filière
+                </button>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <ul class="nav nav-pills mb-4">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#cycles">Cycles (3)</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#filieres">Filières (4)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+
+            <!-- CYCLES -->
+            <div class="tab-pane fade show active" id="cycles">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nom du cycle</th>
+                                    <th>Code</th>
+                                    <th>Durée</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Licence</td>
+                                    <td><span class="badge bg-primary">L</span></td>
+                                    <td>3 ans</td>
+                                    <td>Premier cycle universitaire</td>
+                                    <td>
+                                        <i class="bi bi-pencil action-icon"></i>
+                                        <i class="bi bi-trash action-icon text-danger"></i>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Master</td>
+                                    <td><span class="badge bg-success">M</span></td>
+                                    <td>2 ans</td>
+                                    <td>Deuxième cycle universitaire</td>
+                                    <td>
+                                        <i class="bi bi-pencil action-icon"></i>
+                                        <i class="bi bi-trash action-icon text-danger"></i>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Doctorat</td>
+                                    <td><span class="badge bg-warning text-dark">D</span></td>
+                                    <td>3 ans</td>
+                                    <td>Troisième cycle universitaire</td>
+                                    <td>
+                                        <i class="bi bi-pencil action-icon"></i>
+                                        <i class="bi bi-trash action-icon text-danger"></i>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILIERES -->
+            <div class="tab-pane fade" id="filieres">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nom de la filière</th>
+                                    <th>Code</th>
+                                    <th>Cycle</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Génie Informatique</td>
+                                    <td>GI</td>
+                                    <td>Licence</td>
+                                    <td>
+                                        <i class="bi bi-pencil action-icon"></i>
+                                        <i class="bi bi-trash action-icon text-danger"></i>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Réseaux & Télécom</td>
+                                    <td>RT</td>
+                                    <td>Master</td>
+                                    <td>
+                                        <i class="bi bi-pencil action-icon"></i>
+                                        <i class="bi bi-trash action-icon text-danger"></i>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CYCLE -->
+<div class="modal fade" id="cycleModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un cycle</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-3" placeholder="Nom du cycle">
+                <input class="form-control mb-3" placeholder="Code">
+                <input class="form-control mb-3" placeholder="Durée">
+                <textarea class="form-control" placeholder="Description"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL FILIERE -->
+<div class="modal fade" id="filiereModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une filière</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-3" placeholder="Nom de la filière">
+                <input class="form-control mb-3" placeholder="Code">
+                <select class="form-select">
+                    <option>Licence</option>
+                    <option>Master</option>
+                    <option>Doctorat</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
