@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestion des utilisateurs - ADSIS</title>
+    <title>Gestion des assistants et surveillants - ADSIS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../style/tableaudebord.css">
@@ -80,8 +80,8 @@
 
                 <nav class="nav flex-column gap-2">
                     <a class="nav-link" href="tableaudebord.html"><i class="bi bi-grid"></i>Tableau de bord</a>
-                    <a class="nav-link active" href="gestionutilisateur.html"><i class="bi bi-people"></i>Gestion des
-                        utilisateurs</a>
+                    <a class="nav-link active" href="gestionutilisateur.html"><i class="bi bi-people"></i>Gestion du
+                        Staff</a>
                     <a class="nav-link" href="gestionacces.html"><i class="bi bi-shield-lock"></i>Gestion des accès</a>
                      <a class="nav-link" href="cycles.html"><i class="bi bi-diagram-3 me-2"></i> Cycles & Filières</a>
                     <a class="nav-link" href="profil.html"><i class="bi bi-person"></i>Mon profil</a>
@@ -113,8 +113,8 @@
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h4 class="fw-bold m-0">Gestion des membres</h4>
-                        <p class="text-muted small m-0">Consultez et modifiez les accès des utilisateurs.</p>
+                        <h4 class="fw-bold m-0">Gestion du personnel de surveillance et d'assistance</h4>
+                        <p class="text-muted small m-0">Gérez les assistants pédagogiques et les surveillants.</p>
                     </div>
                     <button class="btn btn-primary rounded-3 px-4 shadow-sm">
                         <i class="bi bi-plus-lg me-2"></i>Nouvel utilisateur
@@ -123,8 +123,6 @@
 
                 <div class="d-flex gap-2 mb-4">
                     <span class="filter-tab active">Tous (<span id="count-Tous">0</span>)</span>
-                    <span class="filter-tab">Étudiants</span>
-                    <span class="filter-tab">Enseignants</span>
                     <span class="filter-tab">Assistants</span>
                     <span class="filter-tab">Surveillants</span>
                 </div>
@@ -178,48 +176,12 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold">RÔLE *</label>
                         <select id="userRole" class="form-select rounded-3">
-                            <option value="Étudiant">Étudiant</option>
-                            <option value="Enseignant">Enseignant</option>
                             <option value="Assistant pédagogique">Assistant pédagogique</option>
                             <option value="Surveillant">Surveillant</option>
                         </select>
                     </div>
 
-                    <div id="matriculeField" class="mb-3">
-                        <label class="form-label small fw-bold">MATRICULE</label>
-                        <input type="text" id="userMatricule" class="form-control rounded-3"
-                            placeholder="Ex: ETU2024001">
-                    </div>
 
-                    <!-- Student-specific fields -->
-                    <div id="etudiantFields" class="d-none">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">DATE DE NAISSANCE</label>
-                            <input type="date" id="userBirthdate" class="form-control rounded-3">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">TÉLÉPHONE</label>
-                            <input type="tel" id="userPhone" class="form-control rounded-3"
-                                placeholder="+237 6XX XX XX XX">
-                        </div>
-                    </div>
-
-                    <div id="enseignantFields" class="mb-3 d-none">
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">SPÉCIALITÉ</label>
-                            <select id="userSpecialite" class="form-select rounded-3">
-                                <option value="" selected>-- Sélectionnez une spécialité --</option>
-                                <option value="Mathématiques">Mathématiques</option>
-                                <option value="Physique">Physique</option>
-                                <option value="Chimie">Chimie</option>
-                                <option value="Informatique">Informatique</option>
-                                <option value="Anglais">Anglais</option>
-                                <option value="Économie & Statistique">Économie & Statistique</option>
-                                <option value="Communication & Art linguistique">Communication & Art linguistique
-                                </option>
-                            </select>
-                        </div>
-                    </div>
 
                     <div id="surveillantFields" class="mb-3 d-none">
                         <label class="form-label small fw-bold">ÉTAGE</label>

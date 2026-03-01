@@ -63,6 +63,32 @@ export const Api = {
     },
 
     /**
+     * Récupère UNIQUEMENT les surveillants et assistants pédagogiques.
+     * Utiliser cette méthode sur la page de gestion du personnel (gestionutilisateur.html)
+     * pour garantir que les étudiants et enseignants ne s'affichent jamais ici,
+     * même s'ils existent en base de données.
+     * @returns {Promise<Array>}
+     */
+    async getStaff() {
+        const staffEndpoints = ["/surveillants", "/assistants-pedagogiques"];
+        try {
+            const promises = staffEndpoints.map(endpoint =>
+                fetch(`${API_BASE_URL}${endpoint}`)
+                    .then(res => res.ok ? res.json() : [])
+                    .catch(e => {
+                        console.error(`Erreur fetch ${endpoint}`, e);
+                        return [];
+                    })
+            );
+            const results = await Promise.all(promises);
+            return results.flat();
+        } catch (error) {
+            console.error("Erreur globale getStaff", error);
+            throw error;
+        }
+    },
+
+    /**
      * Récupère un utilisateur par ID et Rôle
      * Note: Comme l'ID n'est pas unique entre les tables, le rôle est nécessaire
      * @param {number} id 

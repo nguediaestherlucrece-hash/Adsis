@@ -7,10 +7,10 @@ import { Api } from './api.js';
  */
 function showToast(message, type = 'info') {
     const config = {
-        success: { icon: 'bi-check-circle-fill',          label: 'Succès',   bg: '#1a7f5a', delay: 3500 },
-        danger:  { icon: 'bi-x-circle-fill',              label: 'Erreur',   bg: '#c0392b', delay: 6000 },
-        warning: { icon: 'bi-exclamation-triangle-fill',  label: 'Attention',bg: '#d68910', delay: 5000 },
-        info:    { icon: 'bi-info-circle-fill',           label: 'Info',     bg: '#1a6fa8', delay: 4000 },
+        success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
+        danger: { icon: 'bi-x-circle-fill', label: 'Erreur', bg: '#c0392b', delay: 6000 },
+        warning: { icon: 'bi-exclamation-triangle-fill', label: 'Attention', bg: '#d68910', delay: 5000 },
+        info: { icon: 'bi-info-circle-fill', label: 'Info', bg: '#1a6fa8', delay: 4000 },
     };
     const c = config[type] || config.info;
     const container = document.getElementById('toastContainer');
@@ -63,21 +63,27 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
         document.getElementById('confirmModalMessage').innerText = message;
 
         const modal = new bootstrap.Modal(modalEl);
-        const okBtn = document.getElementById('confirmOkBtn');
-        const cancelBtn = document.getElementById('confirmCancelBtn');
 
-        const cleanup = (result) => {
+        // Flag pour éviter que resolve soit appelé plusieurs fois
+        let resolved = false;
+        const done = (result) => {
+            if (resolved) return;
+            resolved = true;
+            // Cloner les boutons pour supprimer tous les anciens listeners
+            const ok = document.getElementById('confirmOkBtn');
+            const cancel = document.getElementById('confirmCancelBtn');
+            ok.replaceWith(ok.cloneNode(true));
+            cancel.replaceWith(cancel.cloneNode(true));
             modal.hide();
-            // Remove listeners to éviter les doublons
-            okBtn.replaceWith(okBtn.cloneNode(true));
-            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
             resolve(result);
         };
 
-        // Re-select after cloneNode
-        document.getElementById('confirmOkBtn').addEventListener('click', () => cleanup(true), { once: true });
-        document.getElementById('confirmCancelBtn').addEventListener('click', () => cleanup(false), { once: true });
-        modalEl.addEventListener('hide.bs.modal', () => resolve(false), { once: true });
+        // Attacher les listeners APRÈS le cloneNode initial (si besoin de reset)
+        document.getElementById('confirmOkBtn').addEventListener('click', () => done(true), { once: true });
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => done(false), { once: true });
+
+        // Résoudre false seulement si la modal est fermée sans choix (croix, clic extérieur)
+        modalEl.addEventListener('hidden.bs.modal', () => done(false), { once: true });
 
         modal.show();
     });
@@ -118,11 +124,15 @@ function setupEventListeners() {
         });
     });
 
-    // Modal role change
-    document.getElementById('userRole').addEventListener('change', toggleRoleFields);
+    // Modal role change (un seul listener)
+    const roleSelect = document.getElementById('userRole');
+    if (roleSelect) {
+        roleSelect.addEventListener('change', (e) => {
+            toggleRoleFields(e.target.value);
+        });
+    }
 
     // Save button
-    // Selector based on modal footer
     const saveBtn = document.querySelector('#userModal .modal-footer .btn-primary');
     if (saveBtn) {
         saveBtn.addEventListener('click', handleSaveUser);
@@ -135,14 +145,6 @@ function setupEventListeners() {
             btn.addEventListener('click', openCreateModal);
         }
     });
-
-    // Role select change listener
-    const roleSelect = document.getElementById('userRole');
-    if (roleSelect) {
-        roleSelect.addEventListener('change', (e) => {
-            toggleRoleFields(e.target.value);
-        });
-    }
 
     // Search input
     const searchInput = document.querySelector('.search-box input');
@@ -198,32 +200,25 @@ async function loadUsers() {
 
 /**
  * Normalize API user object to internal format
+ * Seuls les Surveillants et Assistants pédagogiques sont gérés ici.
  */
 function normalizeUser(u) {
-    // Detect role from object properties or roleNames
-    // API returns roleNames: ["ETUDIANT"] or has specific fields
     let role = "Inconnu";
     let details = "";
 
-    // Check properties to determine type if roleNames is missing (fallback)
-    if (u.matricule) role = "Étudiant";
-    else if (u.grade || u.specialite) role = "Enseignant";
-    else if (u.affectation) role = "Surveillant";
-    else if (u.departement) role = "Assistant pédagogique";
-
-    // Override if roleNames exists (standard way)
+    // Détection du rôle via roleNames (méthode prioritaire)
     if (u.roleNames && u.roleNames.length > 0) {
         const r = u.roleNames[0];
-        if (r === "ETUDIANT") role = "Étudiant";
-        else if (r === "ENSEIGNANT") role = "Enseignant";
-        else if (r === "SURVEILLANT") role = "Surveillant";
+        if (r === "SURVEILLANT") role = "Surveillant";
         else if (r === "ASSISTANT_PEDAGOGIQUE") role = "Assistant pédagogique";
+    } else {
+        // Fallback sur les propriétés
+        if (u.affectation) role = "Surveillant";
+        else if (u.departement) role = "Assistant pédagogique";
     }
 
-    // Details string
-    if (role === "Enseignant") details = u.specialite || u.grade || "-";
-    else if (role === "Étudiant") details = `Mat: ${u.matricule || "-"}`;
-    else if (role === "Surveillant") details = u.affectation || "-";
+    // Détails spécifiques
+    if (role === "Surveillant") details = u.affectation || "-";
     else if (role === "Assistant pédagogique") details = u.departement || "-";
 
     return {
@@ -233,9 +228,7 @@ function normalizeUser(u) {
         role: role,
         status: u.statut === "ACTIF" ? "Actif" : "Bloqué",
         details: details,
-        // Keep raw data for editing
         raw: u,
-        // Assign random color if not present (could be hashed from name)
         color: COLORS[u.id % COLORS.length]
     };
 }
@@ -248,10 +241,7 @@ function renderTable(roleFilter) {
 
     let filtered = currentUserList;
     if (roleFilter !== 'Tous') {
-        // Handle plural/singular mapping
         let filterSingular = roleFilter;
-        if (roleFilter === 'Étudiants') filterSingular = "Étudiant";
-        if (roleFilter === 'Enseignants') filterSingular = "Enseignant";
         if (roleFilter === 'Assistants') filterSingular = "Assistant pédagogique";
         if (roleFilter === 'Surveillants') filterSingular = "Surveillant";
 
@@ -403,26 +393,15 @@ async function deleteUser(id, roleName) {
  */
 
 function toggleRoleFields(role) {
-    const matriculeField = document.getElementById('matriculeField');
-    const etudiantFields = document.getElementById('etudiantFields');
-    const enseignantFields = document.getElementById('enseignantFields');
     const surveillantFields = document.getElementById('surveillantFields');
     const assistantFields = document.getElementById('assistantFields');
 
-    // Hide all
-    matriculeField.classList.add('d-none');
-    etudiantFields.classList.add('d-none');
-    enseignantFields.classList.add('d-none');
+    // Masquer tous les champs spécifiques
     surveillantFields.classList.add('d-none');
     assistantFields.classList.add('d-none');
 
-    // Show relevant
-    if (role === "Étudiant") {
-        matriculeField.classList.remove('d-none');
-        etudiantFields.classList.remove('d-none');
-    } else if (role === "Enseignant") {
-        enseignantFields.classList.remove('d-none');
-    } else if (role === "Surveillant") {
+    // Afficher les champs correspondant au rôle sélectionné
+    if (role === "Surveillant") {
         surveillantFields.classList.remove('d-none');
     } else if (role === "Assistant pédagogique") {
         assistantFields.classList.remove('d-none');
@@ -437,17 +416,13 @@ function openCreateModal() {
     document.getElementById('userEmail').value = "";
     document.getElementById('userPassword').value = "";
     document.getElementById('userPassword').required = true;
-    document.getElementById('userRole').value = "Étudiant";
+    document.getElementById('userRole').value = "Assistant pédagogique";
 
-    // Clear specific fields
-    document.getElementById('userMatricule').value = "";
-    document.getElementById('userBirthdate').value = "";
-    document.getElementById('userPhone').value = "";
-    document.getElementById('userSpecialite').value = "";
+    // Vider les champs spécifiques
     document.getElementById('userAffectation').value = "";
     document.getElementById('userDepartement').value = "";
 
-    toggleRoleFields("Étudiant");
+    toggleRoleFields("Assistant pédagogique");
 
     userModal.show();
 }
@@ -464,11 +439,7 @@ function openEditModal(id) {
     document.getElementById('userPassword').required = false;
     document.getElementById('userRole').value = u.role;
 
-    // Specific fields
-    document.getElementById('userMatricule').value = u.raw.matricule || "";
-    document.getElementById('userBirthdate').value = u.raw.dateNaissance || "";
-    document.getElementById('userPhone').value = u.raw.telephone || "";
-    document.getElementById('userSpecialite').value = u.raw.specialite || "";
+    // Champs spécifiques au rôle
     document.getElementById('userAffectation').value = u.raw.affectation || "";
     document.getElementById('userDepartement').value = u.raw.departement || "";
 
@@ -488,38 +459,21 @@ function openViewModal(u) {
     avatar.style.backgroundColor = u.color;
     avatar.innerText = u.name.charAt(0);
 
-    // Extra info
+    // Extra info selon le rôle
     const extraDiv = document.getElementById('viewUserExtra');
     extraDiv.innerHTML = "";
-    if (u.role === 'Étudiant') {
+    if (u.role === 'Surveillant') {
         extraDiv.innerHTML = `
             <div class="bg-light p-3 rounded-3">
-                <div class="row g-3">
-                    <div class="col-6"><label class="small text-muted fw-bold">MATRICULE</label><div class="fw-semibold text-primary">${u.raw.matricule || "-"}</div></div>
-                    <div class="col-6"><label class="small text-muted fw-bold">DATE DE NAISSANCE</label><div class="fw-semibold">${u.raw.dateNaissance || "-"}</div></div>
-                    <div class="col-12"><label class="small text-muted fw-bold">TÉLÉPHONE</label><div class="fw-semibold">${u.raw.telephone || "-"}</div></div>
-                </div>
-            </div>`;
-    } else if (u.role === 'Enseignant') {
-        extraDiv.innerHTML = `
-            <div class="bg-light p-3 rounded-3">
-                <label class="small text-muted fw-bold">SPÉCIALITÉ</label>
-                <div class="fw-semibold">${u.raw.specialite || "-"}</div>
-            </div>`;
-    } else if (u.role === 'Surveillant') {
-        extraDiv.innerHTML = `
-            <div class="bg-light p-3 rounded-3">
-                <label class="small text-muted fw-bold">Étage</label>
+                <label class="small text-muted fw-bold">ÉTAGE</label>
                 <div class="fw-semibold">${u.raw.affectation || "-"}</div>
             </div>`;
     } else if (u.role === 'Assistant pédagogique') {
         extraDiv.innerHTML = `
             <div class="bg-light p-3 rounded-3">
-                <label class="small text-muted fw-bold">Cycle</label>
+                <label class="small text-muted fw-bold">CYCLE</label>
                 <div class="fw-semibold">${u.raw.departement || "-"}</div>
             </div>`;
-    } else {
-        extraDiv.innerHTML = '';
     }
 
     viewModal.show();
@@ -542,16 +496,8 @@ async function handleSaveUser() {
         baseData.password = password || "Pass1234";
     }
 
-    // Specific fields
-    if (roleStr === "Étudiant") {
-        baseData.matricule = document.getElementById('userMatricule').value;
-        baseData.dateNaissance = document.getElementById('userBirthdate').value;
-        baseData.telephone = document.getElementById('userPhone').value;
-        baseData.roleNames = ["ETUDIANT"];
-    } else if (roleStr === "Enseignant") {
-        baseData.specialite = document.getElementById('userSpecialite').value;
-        baseData.roleNames = ["ENSEIGNANT"];
-    } else if (roleStr === "Surveillant") {
+    // Champs spécifiques au rôle
+    if (roleStr === "Surveillant") {
         baseData.affectation = document.getElementById('userAffectation').value;
         baseData.roleNames = ["SURVEILLANT"];
     } else if (roleStr === "Assistant pédagogique") {

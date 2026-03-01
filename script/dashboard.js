@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Charge les statistiques du tableau de bord
 async function loadDashboardStats() {
     try {
-        const users = await Api.getUsers();
+        const users = await Api.getStaff();
 
         // Répartition par rôle
         const students = users.filter(u => u.roleNames?.includes("ETUDIANT"));
@@ -25,8 +25,7 @@ async function loadDashboardStats() {
 
         // Mise à jour de l'interface
         document.getElementById("stat-total").innerText = users.length;
-        document.getElementById("stat-etudiants").innerText = students.length;
-        document.getElementById("stat-enseignants").innerText = teachers.length;
+
         document.getElementById("stat-surveillants").innerText = surveillants.length;
         document.getElementById("stat-assistants").innerText = assistants.length;
 
