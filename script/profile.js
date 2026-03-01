@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Prévisualisation de l'image de profil
+    // Affiche l'image choisie par l'utilisateur
     window.previewImage = function (input) {
         const display = document.getElementById('profileDisplay');
         if (input.files && input.files[0]) {
@@ -11,29 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Suppression de la photo
+    // Retire la photo et remet l'initiale
     window.removePhoto = function () {
         const display = document.getElementById('profileDisplay');
         const input = document.getElementById('photoInput');
-        display.innerHTML = "A"; // Initiale par défaut ou icône
+        display.innerHTML = "A";
         input.value = "";
     };
 
-    // Gestion de la soumission du formulaire
+    // Gère la sauvegarde du profil
     const profileForm = document.querySelector('form');
     if (profileForm) {
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const btn = profileForm.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
-
-            // État de chargement
             btn.innerText = "Enregistrement...";
             btn.disabled = true;
-
             try {
-                // Simulation appel API
                 await new Promise(r => setTimeout(r, 1000));
                 alert("Profil mis à jour avec succès !");
             } catch (error) {

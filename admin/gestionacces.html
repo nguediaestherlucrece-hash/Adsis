@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,7 +11,6 @@
         body {
             background-color: #f8f9fa;
         }
-
         .role-card {
             background: white;
             border: 1px solid #dee2e6;
@@ -21,18 +19,15 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .role-card:hover {
             border-color: #0d6efd;
             background: #f0f7ff;
         }
-
         .role-card.active {
             border-color: #0d6efd;
             background: #e7f1ff;
             box-shadow: 0 4px 10px rgba(13, 110, 253, 0.1);
         }
-
         .perm-group-title {
             background: #f8f9fa;
             padding: 10px 15px;
@@ -42,7 +37,6 @@
             margin-top: 20px;
             color: #495057;
         }
-
         .perm-item {
             display: flex;
             align-items: center;
@@ -50,54 +44,41 @@
             padding: 12px 15px;
             border-bottom: 1px solid #f1f1f1;
         }
-
         .perm-item:last-child {
             border-bottom: none;
         }
     </style>
 </head>
-
 <body>
-
     <div class="container-fluid">
         <div class="row min-vh-100">
-
             <aside class="col-md-3 col-lg-2 sidebar d-flex flex-column p-4 sticky-top">
-
                 <div class="logo-box mb-4 pb-3 border-bottom">
                     <img src="../assets/image.png" alt="Logo ADSIS" class="logo">
                     <h5 class="brand-name m-0 ms-2">ADSIS</h5>
                 </div>
-
                 <div class="mb-4">
                     <small class="text-secondary fw-bold"
                         style="font-size: 0.7rem; letter-spacing: 1px;">ÉTABLISSEMENT</small>
                     <h6 class="fw-bold text-dark mt-1">Saint Jean Ingénieur</h6>
                 </div>
-
                 <nav class="nav flex-column gap-2">
                     <a class="nav-link" href="tableaudebord.html"><i class="bi bi-grid"></i>Tableau de bord</a>
-                    <a class="nav-link" href="gestionutilisateur.html"><i class="bi bi-people"></i>Gestion des
-                        utilisateurs</a>
+                    <a class="nav-link" href="gestionutilisateur.html"><i class="bi bi-people"></i>Gestion du Staff</a>
                     <a class="nav-link active" href="gestionacces.html"><i class="bi bi-shield-lock"></i>Gestion des
                         accès</a>
-                         <a class="nav-link" href="cycles.html"><i class="bi bi-diagram-3 me-2"></i> Cycles & Filières</a>
+                    <a class="nav-link" href="cycles.html"><i class="bi bi-diagram-3 me-2"></i> Cycles & Filières</a>
                     <a class="nav-link" href="profil.html"><i class="bi bi-person"></i>Mon profil</a>
-                     
-                     </nav>
-
+                </nav>
                 <div class="mt-4 pt-2 border-top">
                     <a href="#" class="nav-link text-danger fw-semibold">
                         <i class="bi bi-box-arrow-left"></i>Déconnexion
                     </a>
                 </div>
             </aside>
-
             <main class="col-md-9 col-lg-10 p-4">
-
                 <div class="topbar">
                     <div>
-
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-end d-none d-sm-block">
@@ -108,7 +89,6 @@
                             style="width: 38px; height: 38px;">A</div>
                     </div>
                 </div>
-
                 <div class="mb-4">
                     <h4 class="fw-bold m-0">Gestion des accès</h4>
                 </div>
@@ -118,13 +98,11 @@
                 <div class="row g-4">
                     <div class="col-md-4">
                         <div class="d-flex flex-column gap-3" id="roleListContainer">
-                            <!-- Roles will be injected here -->
                             <div class="text-center py-4">
                                 <div class="spinner-border text-primary" role="status"></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-8">
                         <div class="card p-0 shadow-sm border-0 overflow-hidden">
                             <div class="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
@@ -132,21 +110,15 @@
                                         class="badge bg-primary">Enseignant</span></h5>
                                 <span class="text-muted small" id="count-text">0 / 10 activées</span>
                             </div>
-
                             <div class="p-3" id="permissionsContainer">
-                                <!-- Permissions will be injected here -->
                             </div>
-
-
                         </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../script/access.js"></script>
 </body>
-
 </html>
