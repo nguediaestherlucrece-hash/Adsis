@@ -18,7 +18,9 @@ public class Justificatif {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idJustificatif;
+
     private String motif;
     private String documentUrl;
     private String statutValidation;

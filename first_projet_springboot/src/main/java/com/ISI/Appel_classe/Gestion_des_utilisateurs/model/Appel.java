@@ -20,7 +20,9 @@ public class Appel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idAppel;
+
     private LocalDateTime dateHeureDebut;
     private LocalDateTime dateHeureFin;
     private String statut;

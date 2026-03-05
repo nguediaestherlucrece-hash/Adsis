@@ -9,5 +9,5 @@ public class FiliereCreateDTO {
     private String description;
 
 
-    private Long cycleId;
+    private Long niveauId;
 }

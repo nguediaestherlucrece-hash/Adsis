@@ -3,13 +3,13 @@ package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EnseignantCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EnseignantUpdateDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EnseignantDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.CoursUE;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.CoursUERepository;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.CoursUERepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.EnseignantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ public class EnseignantServiceImpl implements EnseignantService {
     @Override
     public EnseignantDTO getEnseignantById(Long id) {
         log.info("Récupération de l'enseignant id={}", id);
-        Enseignant enseignant = enseignantRepository.findById(id)
+        Enseignant enseignant = enseignantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé avec l'ID: " + id));
         return mapper.toDTO(enseignant);
     }
@@ -130,7 +131,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         if (dto.getCoursIds() != null && !dto.getCoursIds().isEmpty()) {
             List<CoursUE> cours = new ArrayList<>();
             for (Long coursId : dto.getCoursIds()) {
-                CoursUE coursUE = coursUERepository.findById(coursId)
+                CoursUE coursUE = coursUERepository.findById(Objects.requireNonNull(coursId, "CoursId cannot be null"))
                         .orElseThrow(() -> new ResourceNotFoundException("Cours non trouvé: " + coursId));
                 cours.add(coursUE);
             }
@@ -148,7 +149,7 @@ public class EnseignantServiceImpl implements EnseignantService {
     public EnseignantDTO updateEnseignant(Long id, EnseignantUpdateDTO dto) {
         log.info("Mise à jour de l'enseignant id={}", id);
 
-        Enseignant enseignant = enseignantRepository.findById(id)
+        Enseignant enseignant = enseignantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé: " + id));
 
         // Mettre à jour les attributs hérités
@@ -192,7 +193,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         if (dto.getCoursIds() != null) {
             List<CoursUE> cours = new ArrayList<>();
             for (Long coursId : dto.getCoursIds()) {
-                CoursUE coursUE = coursUERepository.findById(coursId)
+                CoursUE coursUE = coursUERepository.findById(Objects.requireNonNull(coursId, "CoursId cannot be null"))
                         .orElseThrow(() -> new ResourceNotFoundException("Cours non trouvé: " + coursId));
                 cours.add(coursUE);
             }
@@ -200,7 +201,7 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.setCoursEnseignes(cours);
         }
 
-        Enseignant updated = enseignantRepository.save(enseignant);
+        Enseignant updated = enseignantRepository.save(Objects.requireNonNull(enseignant, "Enseignant cannot be null"));
         log.info("Enseignant mis à jour avec succès");
 
         return mapper.toDTO(updated);
@@ -210,10 +211,10 @@ public class EnseignantServiceImpl implements EnseignantService {
     @Transactional
     public void deleteEnseignant(Long id) {
         log.info("Suppression de l'enseignant id={}", id);
-        if (!enseignantRepository.existsById(id)) {
+        if (!enseignantRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Enseignant non trouvé: " + id);
         }
-        enseignantRepository.deleteById(id);
+        enseignantRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
         log.info("Enseignant supprimé avec succès");
     }
 
@@ -222,12 +223,12 @@ public class EnseignantServiceImpl implements EnseignantService {
     public EnseignantDTO assignerCours(Long enseignantId, List<Long> coursIds) {
         log.info("Assignation de {} cours à l'enseignant id={}", coursIds.size(), enseignantId);
 
-        Enseignant enseignant = enseignantRepository.findById(enseignantId)
+        Enseignant enseignant = enseignantRepository.findById(Objects.requireNonNull(enseignantId, "EnseignantId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé: " + enseignantId));
 
         List<CoursUE> cours = new ArrayList<>();
         for (Long coursId : coursIds) {
-            CoursUE coursUE = coursUERepository.findById(coursId)
+            CoursUE coursUE = coursUERepository.findById(Objects.requireNonNull(coursId, "CoursId cannot be null"))
                     .orElseThrow(() -> new ResourceNotFoundException("Cours non trouvé: " + coursId));
             cours.add(coursUE);
         }

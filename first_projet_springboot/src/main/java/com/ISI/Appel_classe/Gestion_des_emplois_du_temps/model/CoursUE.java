@@ -1,9 +1,14 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Seance;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import jakarta.persistence.CascadeType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +24,9 @@ public class CoursUE {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idCours;
+
     private String codeUE;
     private String intitule;
     private Integer volumeHoraire;

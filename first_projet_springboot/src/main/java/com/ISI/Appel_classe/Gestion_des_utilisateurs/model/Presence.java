@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.CascadeType;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +20,9 @@ public class Presence {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idPresence;
+
     private LocalDateTime horodatage;
     private String statut; // "présent", "absent", "retard"
     private String modeEnregistrement; // "QR", "PIN", "manuel"

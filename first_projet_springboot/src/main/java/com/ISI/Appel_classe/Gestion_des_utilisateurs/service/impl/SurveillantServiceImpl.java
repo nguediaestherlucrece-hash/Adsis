@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public class SurveillantServiceImpl implements SurveillantService {
 
     @Override
     public SurveillantDTO getSurveillantById(Long id) {
-        Surveillant surveillant = surveillantRepository.findById(id)
+        Surveillant surveillant = surveillantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + id));
         return mapper.toDTO(surveillant);
     }
@@ -113,7 +114,7 @@ public class SurveillantServiceImpl implements SurveillantService {
     @Override
     @Transactional
     public SurveillantDTO updateSurveillant(Long id, SurveillantUpdateDTO dto) {
-        Surveillant surveillant = surveillantRepository.findById(id)
+        Surveillant surveillant = surveillantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + id));
 
         if (dto.getNom() != null)
@@ -147,25 +148,25 @@ public class SurveillantServiceImpl implements SurveillantService {
             surveillant.setRoles(roles);
         }
 
-        Surveillant updated = surveillantRepository.save(surveillant);
+        Surveillant updated = surveillantRepository.save(Objects.requireNonNull(surveillant, "Surveillant cannot be null"));
         return mapper.toDTO(updated);
     }
 
     @Override
     @Transactional
     public void deleteSurveillant(Long id) {
-        if (!surveillantRepository.existsById(id)) {
+        if (!surveillantRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Surveillant non trouvé: " + id);
         }
-        surveillantRepository.deleteById(id);
+        surveillantRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 
     @Override
     @Transactional
     public SurveillantDTO assignSurveillantToFiliere(Long surveillantId, Long filiereId) {
-        Surveillant s = surveillantRepository.findById(surveillantId)
+        Surveillant s = surveillantRepository.findById(Objects.requireNonNull(surveillantId, "SurveillantId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + surveillantId));
-        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(filiereId)
+        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(Objects.requireNonNull(filiereId, "FiliereId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + filiereId));
         s.setFiliere(filiere);
         Surveillant saved = surveillantRepository.save(s);

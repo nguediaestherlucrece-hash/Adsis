@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

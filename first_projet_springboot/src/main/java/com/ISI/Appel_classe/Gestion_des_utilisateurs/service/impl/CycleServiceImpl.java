@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,7 +32,7 @@ public class CycleServiceImpl implements CycleService {
 
     @Override
     public CycleDTO getCycleById(Long id) {
-        Cycle c = cycleRepository.findById(id)
+        Cycle c = cycleRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + id));
         return mapper.toDTO(c);
     }
@@ -40,27 +41,27 @@ public class CycleServiceImpl implements CycleService {
     @Transactional
     public CycleDTO createCycle(CycleCreateDTO dto) {
         Cycle c = mapper.fromCreateDTO(dto);
-        Cycle saved = cycleRepository.save(c);
+        Cycle saved = cycleRepository.save(Objects.requireNonNull(c, "Cycle cannot be null"));
         return mapper.toDTO(saved);
     }
 
     @Override
     @Transactional
     public CycleDTO updateCycle(Long id, CycleUpdateDTO dto) {
-        Cycle c = cycleRepository.findById(id)
+        Cycle c = cycleRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + id));
         mapper.updateFromDTO(c, dto);
-        Cycle updated = cycleRepository.save(c);
+        Cycle updated = cycleRepository.save(Objects.requireNonNull(c, "Cycle cannot be null"));
         return mapper.toDTO(updated);
     }
 
     @Override
     @Transactional
     public void deleteCycle(Long id) {
-        if (!cycleRepository.existsById(id)) {
+        if (!cycleRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Cycle non trouvé: " + id);
         }
-        cycleRepository.deleteById(id);
+        cycleRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 }
 

@@ -10,5 +10,5 @@ public class FiliereDTO {
     private String description;
 
 
-    private Long cycleId;
+    private Long niveauId;
 }

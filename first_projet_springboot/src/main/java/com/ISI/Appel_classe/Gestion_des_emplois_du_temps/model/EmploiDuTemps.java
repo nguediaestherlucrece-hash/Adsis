@@ -1,5 +1,8 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Seance;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,7 +22,9 @@ public class EmploiDuTemps {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idEmploi;
+
     private String periode; // Ex: "Semestre 1 2023-2024"
     private String creneaux; // JSON ou texte structuré
 

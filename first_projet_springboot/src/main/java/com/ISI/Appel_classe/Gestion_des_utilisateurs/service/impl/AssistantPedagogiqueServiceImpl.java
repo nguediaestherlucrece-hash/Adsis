@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
 
     @Override
     public AssistantPedagogiqueDTO getAssistantById(Long id) {
-        AssistantPedagogique assistant = assistantRepository.findById(id)
+        AssistantPedagogique assistant = assistantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + id));
         return mapper.toDTO(assistant);
     }
@@ -113,7 +114,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     @Override
     @Transactional
     public AssistantPedagogiqueDTO updateAssistant(Long id, AssistantPedagogiqueUpdateDTO dto) {
-        AssistantPedagogique assistant = assistantRepository.findById(id)
+        AssistantPedagogique assistant = assistantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + id));
 
         if (dto.getNom() != null)
@@ -147,25 +148,25 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
             assistant.setRoles(roles);
         }
 
-        AssistantPedagogique updated = assistantRepository.save(assistant);
+        AssistantPedagogique updated = assistantRepository.save(Objects.requireNonNull(assistant, "AssistantPedagogique cannot be null"));
         return mapper.toDTO(updated);
     }
 
     @Override
     @Transactional
     public void deleteAssistant(Long id) {
-        if (!assistantRepository.existsById(id)) {
+        if (!assistantRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Assistant pédagogique non trouvé: " + id);
         }
-        assistantRepository.deleteById(id);
+        assistantRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 
     @Override
     @Transactional
     public AssistantPedagogiqueDTO assignAssistantToFiliere(Long assistantId, Long filiereId) {
-        AssistantPedagogique assistant = assistantRepository.findById(assistantId)
+        AssistantPedagogique assistant = assistantRepository.findById(Objects.requireNonNull(assistantId, "AssistantId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Assistant pédagogique non trouvé: " + assistantId));
-        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(filiereId)
+        com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere filiere = filiereRepository.findById(Objects.requireNonNull(filiereId, "FiliereId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + filiereId));
         assistant.setFiliere(filiere);
         AssistantPedagogique saved = assistantRepository.save(assistant);

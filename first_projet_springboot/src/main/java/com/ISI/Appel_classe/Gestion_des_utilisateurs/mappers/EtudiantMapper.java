@@ -39,7 +39,6 @@ public class EtudiantMapper {
             ClasseDTO classeDTO = new ClasseDTO();
             classeDTO.setId(etudiant.getClasse().getId());
             classeDTO.setNomClasse(etudiant.getClasse().getNomClasse());
-            classeDTO.setNiveau(etudiant.getClasse().getNiveau());
             dto.setClasse(classeDTO);
         }
 

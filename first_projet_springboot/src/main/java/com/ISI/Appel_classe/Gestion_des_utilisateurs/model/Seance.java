@@ -1,9 +1,13 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import jakarta.persistence.CascadeType;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -21,7 +25,9 @@ public class Seance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idSeance;
+
     private LocalDate date; // Changé de String à LocalDate
     private LocalTime heureDebut; // Changé de String à LocalTime
     private LocalTime heureFin; // Changé de String à LocalTime

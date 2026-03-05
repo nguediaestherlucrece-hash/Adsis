@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,7 +32,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionDTO getPermissionById(Long id) {
-        Permission permission = permissionRepository.findById(id)
+        Permission permission = permissionRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Permission non trouvée avec l'ID: " + id));
         return mapper.toDTO(permission);
     }

@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CorsConfig implements WebMvcConfigurer {
 
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(@org.springframework.lang.NonNull CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("*") // Autoriser toutes les origines (y compris 'null' pour les fichiers locaux)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
