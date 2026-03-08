@@ -9,5 +9,5 @@ public class FiliereUpdateDTO {
     private String description;
 
 
-    private Long cycleId;
+    private Long niveauId;
 }

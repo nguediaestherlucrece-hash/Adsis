@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,10 +24,12 @@
             border: 1px solid #f0f0f0;
             height: 100%;
         }
+
         .stat-card-new:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
         }
+
         .stat-icon {
             width: 44px;
             height: 44px;
@@ -37,30 +40,37 @@
             font-size: 1.2rem;
             flex-shrink: 0;
         }
+
         .stat-icon.blue {
             background: #eff6ff;
             color: #3b82f6;
         }
+
         .stat-icon.green {
             background: #f0fdf4;
             color: #22c55e;
         }
+
         .stat-icon.orange {
             background: #fff7ed;
             color: #f97316;
         }
+
         .stat-icon.purple {
             background: #faf5ff;
             color: #a855f7;
         }
+
         .stat-icon.red {
             background: #fef2f2;
             color: #ef4444;
         }
+
         .stat-icon.teal {
             background: #f0fdfa;
             color: #14b8a6;
         }
+
         .stat-label {
             font-size: .68rem;
             color: #94a3b8;
@@ -69,17 +79,20 @@
             letter-spacing: .4px;
             white-space: nowrap;
         }
+
         .stat-value {
             font-size: 1.8rem;
             font-weight: 800;
             color: #1e293b;
             line-height: 1;
         }
+
         .stat-sub {
             font-size: .75rem;
             color: #64748b;
             margin-top: 2px;
         }
+
         /* ── Section titles ── */
         .section-title {
             font-weight: 700;
@@ -90,9 +103,11 @@
             gap: 8px;
             margin-bottom: 16px;
         }
+
         .section-title i {
             font-size: 1.1rem;
         }
+
         /* ── Recent list cards ── */
         .entity-card {
             background: white;
@@ -106,9 +121,11 @@
             border: 1px solid #f1f5f9;
             transition: background .15s;
         }
+
         .entity-card:hover {
             background: #f8fafc;
         }
+
         .entity-avatar {
             width: 38px;
             height: 38px;
@@ -121,15 +138,18 @@
             font-size: .85rem;
             flex-shrink: 0;
         }
+
         .entity-name {
             font-weight: 600;
             font-size: .88rem;
             color: #1e293b;
         }
+
         .entity-sub {
             font-size: .75rem;
             color: #94a3b8;
         }
+
         /* ── Skeleton loader ── */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -137,14 +157,17 @@
             animation: shimmer 1.4s infinite;
             border-radius: 8px;
         }
+
         @keyframes shimmer {
             0% {
                 background-position: 100% 50%
             }
+
             100% {
                 background-position: 0 50%
             }
         }
+
         /* ── Progress bar ── */
         .prog-bar {
             height: 8px;
@@ -153,11 +176,13 @@
             overflow: hidden;
             margin-top: 6px;
         }
+
         .prog-bar-fill {
             height: 100%;
             border-radius: 4px;
             transition: width .8s ease;
         }
+
         /* ── Empty state ── */
         .empty-state {
             text-align: center;
@@ -165,11 +190,13 @@
             color: #94a3b8;
             font-size: .85rem;
         }
+
         .empty-state i {
             font-size: 2.5rem;
             display: block;
             margin-bottom: 8px;
         }
+
         /* ── Filière row ── */
         .filiere-row {
             display: flex;
@@ -178,15 +205,18 @@
             padding: 10px 0;
             border-bottom: 1px solid #f1f5f9;
         }
+
         .filiere-row:last-child {
             border-bottom: none;
         }
+
         /* ── Toast same style ── */
         #toastContainer {
             z-index: 9999;
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row min-vh-100">
@@ -235,6 +265,16 @@
                             <div>
                                 <div class="stat-label">Staff total</div>
                                 <div class="stat-value" id="kpi-staff">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="stat-card-new">
+                            <div class="stat-icon blue" style="background:#eff6ff;color:#2563eb;"><i
+                                    class="bi bi-person-video3"></i></div>
+                            <div>
+                                <div class="stat-label">Enseignants</div>
+                                <div class="stat-value" id="kpi-enseign">—</div>
                             </div>
                         </div>
                     </div>
@@ -306,17 +346,23 @@
                                 </div>
                                 <hr class="my-3">
                                 <div class="row g-2 text-center">
-                                    <div class="col-6">
-                                        <div class="rounded-3 p-3" style="background:#f0fdf4;">
-                                            <div class="fw-bold fs-4 text-success" id="big-surveil">—</div>
-                                            <div class="small text-muted">Surveillants</div>
+                                    <div class="col-4">
+                                        <div class="rounded-3 p-3" style="background:#eff6ff;">
+                                            <div class="fw-bold fs-4 text-primary" id="big-enseign">—</div>
+                                            <div class="small text-muted" style="font-size:.7rem;">Enseignants</div>
                                         </div>
                                     </div>
-                                    <div class="col-6">
+                                    <div class="col-4">
+                                        <div class="rounded-3 p-3" style="background:#f0fdf4;">
+                                            <div class="fw-bold fs-4 text-success" id="big-surveil">—</div>
+                                            <div class="small text-muted" style="font-size:.7rem;">Surveillants</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
                                         <div class="rounded-3 p-3" style="background:#faf5ff;">
                                             <div class="fw-bold fs-4 text-purple" style="color:#a855f7;" id="big-ap">—
                                             </div>
-                                            <div class="small text-muted">Assistants Péd.</div>
+                                            <div class="small text-muted" style="font-size:.7rem;">Assist. Péd.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -394,4 +440,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../script/dashboard.js"></script>
 </body>
+
 </html>

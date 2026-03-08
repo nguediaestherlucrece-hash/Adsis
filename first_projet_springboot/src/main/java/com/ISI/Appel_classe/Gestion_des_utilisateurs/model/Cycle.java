@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import jakarta.persistence.CascadeType;
 import org.antlr.v4.runtime.misc.IntegerList;
 
 import java.util.ArrayList;
@@ -31,5 +33,5 @@ public class Cycle {
 
     // 🔹 Relations JPA
     @OneToMany(mappedBy = "cycle", cascade =CascadeType.ALL)
-    private List<Filiere> filieres = new ArrayList<>();
+    private List<Niveau> Niveaux = new ArrayList<>();
 }

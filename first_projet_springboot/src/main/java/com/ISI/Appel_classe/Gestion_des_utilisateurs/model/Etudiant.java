@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.CascadeType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Etudiant extends Utilisateur {
 
+    @Column(unique = true)
     private String matricule;
+
     private String dateNaissance; // À convertir en LocalDate plus tard si nécessaire
     private String telephone;
 

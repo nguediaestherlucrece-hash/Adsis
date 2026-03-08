@@ -1,9 +1,13 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import jakarta.persistence.CascadeType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,14 +25,14 @@ public class Classe {
 
     @Column(unique = true)
     private String idClasse;
+
     private String nomClasse;
-    private String niveau;
     private String anneeAcademique;
 
     // 🔹 Relations JPA
     @ManyToOne
-    @JoinColumn(name = "filiere_id")
-    private Filiere filiere;
+    @JoinColumn(name = "specialite_id")
+    private Specialite specialite;
 
     @OneToMany(mappedBy = "classe", cascade =CascadeType.ALL)
     private List<Etudiant> etudiants = new ArrayList<>();
@@ -36,6 +40,7 @@ public class Classe {
     @ManyToMany
     @JoinTable(name = "classe_cours", joinColumns = @JoinColumn(name = "classe_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))
     private List<CoursUE> cours = new ArrayList<>();
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "emploi_du_temps_id", referencedColumnName = "id")
     private EmploiDuTemps emploiDuTemps;

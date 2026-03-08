@@ -6,8 +6,9 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.FiliereDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.FiliereMapper;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.CycleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Niveau;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.NiveauRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.FiliereService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,8 +25,8 @@ import java.util.stream.Collectors;
 public class FiliereServiceImpl implements FiliereService {
 
     private final FiliereRepository filiereRepository;
-    private final CycleRepository cycleRepository;
     private final FiliereMapper mapper;
+    private final NiveauRepository niveauRepository;
 
     @Override
     public List<FiliereDTO> getAllFilieres() {
@@ -33,7 +35,7 @@ public class FiliereServiceImpl implements FiliereService {
 
     @Override
     public FiliereDTO getFiliereById(Long id) {
-        Filiere f = filiereRepository.findById(id)
+        Filiere f = filiereRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + id));
         return mapper.toDTO(f);
     }
@@ -42,36 +44,47 @@ public class FiliereServiceImpl implements FiliereService {
     @Transactional
     public FiliereDTO createFiliere(FiliereCreateDTO dto) {
         Filiere f = mapper.fromCreateDTO(dto);
-        if (dto.getCycleId() != null) {
-            f.setCycle(cycleRepository.findById(dto.getCycleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + dto.getCycleId())));
+        // Attacher le Niveau si niveauId fourni
+        if (dto.getNiveauId() != null) {
+            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Niveau non trouvé: " + dto.getNiveauId()));
+            f.setNiveau(niveau);
         }
-        Filiere saved = filiereRepository.save(f);
+        Filiere saved = filiereRepository.save(Objects.requireNonNull(f, "Filiere cannot be null"));
         return mapper.toDTO(saved);
     }
 
     @Override
     @Transactional
     public FiliereDTO updateFiliere(Long id, FiliereUpdateDTO dto) {
-        Filiere f = filiereRepository.findById(id)
+        Filiere f = filiereRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + id));
-        mapper.updateFromDTO(f, dto);
-        if (dto.getCycleId() != null) {
-            f.setCycle(cycleRepository.findById(dto.getCycleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + dto.getCycleId())));
+
+        if (dto.getIdFiliere() != null)
+            f.setIdFiliere(dto.getIdFiliere());
+        if (dto.getNomFiliere() != null)
+            f.setNomFiliere(dto.getNomFiliere());
+        if (dto.getDescription() != null)
+            f.setDescription(dto.getDescription());
+        // Mettre à jour le niveau parent
+        if (dto.getNiveauId() != null) {
+            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Niveau non trouvé: " + dto.getNiveauId()));
+            f.setNiveau(niveau);
         } else {
-            f.setCycle(null); // Retrait explicite du cycle
+            f.setNiveau(null); // Permettre la déliaison
         }
-        Filiere updated = filiereRepository.save(f);
+
+        Filiere updated = filiereRepository.save(Objects.requireNonNull(f, "Filiere cannot be null"));
         return mapper.toDTO(updated);
     }
 
     @Override
     @Transactional
     public void deleteFiliere(Long id) {
-        if (!filiereRepository.existsById(id)) {
+        if (!filiereRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Filière non trouvée: " + id);
         }
-        filiereRepository.deleteById(id);
+        filiereRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 }

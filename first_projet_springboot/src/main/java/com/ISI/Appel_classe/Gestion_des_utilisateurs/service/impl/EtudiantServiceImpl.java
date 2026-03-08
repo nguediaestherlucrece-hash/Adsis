@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ public class EtudiantServiceImpl implements EtudiantService {
     @Override
     public EtudiantDTO getEtudiantById(Long id) {
         log.info("Récupération de l'étudiant avec id={}", id);
-        Etudiant etudiant = etudiantRepository.findById(id)
+        Etudiant etudiant = etudiantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + id));
         return mapper.toDTO(etudiant);
     }
@@ -166,7 +167,7 @@ public class EtudiantServiceImpl implements EtudiantService {
         // ========================================
 
         if (dto.getClasseId() != null) {
-            Classe classe = classeRepository.findById(dto.getClasseId())
+            Classe classe = classeRepository.findById(Objects.requireNonNull(dto.getClasseId(), "ClasseId cannot be null"))
                     .orElseThrow(
                             () -> new ResourceNotFoundException("Classe non trouvée avec l'ID: " + dto.getClasseId()));
             etudiant.setClasse(classe);
@@ -189,7 +190,7 @@ public class EtudiantServiceImpl implements EtudiantService {
         log.info("Mise à jour de l'étudiant id={}", id);
 
         // Récupérer l'étudiant existant
-        Etudiant etudiant = etudiantRepository.findById(id)
+        Etudiant etudiant = etudiantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + id));
 
         // ========================================
@@ -261,7 +262,7 @@ public class EtudiantServiceImpl implements EtudiantService {
         // ========================================
 
         if (dto.getClasseId() != null) {
-            Classe classe = classeRepository.findById(dto.getClasseId())
+            Classe classe = classeRepository.findById(Objects.requireNonNull(dto.getClasseId(), "ClasseId cannot be null"))
                     .orElseThrow(
                             () -> new ResourceNotFoundException("Classe non trouvée avec l'ID: " + dto.getClasseId()));
             etudiant.setClasse(classe);
@@ -272,7 +273,7 @@ public class EtudiantServiceImpl implements EtudiantService {
         // SAUVEGARDER LES MODIFICATIONS
         // ========================================
 
-        Etudiant updated = etudiantRepository.save(etudiant);
+        Etudiant updated = etudiantRepository.save(Objects.requireNonNull(etudiant, "Etudiant cannot be null"));
         log.info("Étudiant mis à jour avec succès");
 
         return mapper.toDTO(updated);
@@ -283,11 +284,11 @@ public class EtudiantServiceImpl implements EtudiantService {
     public void deleteEtudiant(Long id) {
         log.info("Suppression de l'étudiant id={}", id);
 
-        if (!etudiantRepository.existsById(id)) {
+        if (!etudiantRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + id);
         }
 
-        etudiantRepository.deleteById(id);
+        etudiantRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
         log.info("Étudiant supprimé avec succès");
     }
 
@@ -296,10 +297,10 @@ public class EtudiantServiceImpl implements EtudiantService {
     public EtudiantDTO assignerClasse(Long etudiantId, Long classeId) {
         log.info("Assignation de la classe id={} à l'étudiant id={}", classeId, etudiantId);
 
-        Etudiant etudiant = etudiantRepository.findById(etudiantId)
+        Etudiant etudiant = etudiantRepository.findById(Objects.requireNonNull(etudiantId, "EtudiantId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + etudiantId));
 
-        Classe classe = classeRepository.findById(classeId)
+        Classe classe = classeRepository.findById(Objects.requireNonNull(classeId, "ClasseId cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Classe non trouvée avec l'ID: " + classeId));
 
         etudiant.setClasse(classe);

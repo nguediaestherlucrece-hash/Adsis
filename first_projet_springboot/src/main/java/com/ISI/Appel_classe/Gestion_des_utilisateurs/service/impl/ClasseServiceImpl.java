@@ -6,8 +6,9 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.ClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.ClasseMapper;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.ClasseRepository;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.ClasseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,8 +25,8 @@ import java.util.stream.Collectors;
 public class ClasseServiceImpl implements ClasseService {
 
     private final ClasseRepository repository;
-    private final FiliereRepository filiereRepository;
     private final ClasseMapper mapper;
+    private final SpecialiteRepository specialiteRepository;
 
     @Override
     public List<ClasseDTO> getAllClasses() {
@@ -35,7 +37,7 @@ public class ClasseServiceImpl implements ClasseService {
 
     @Override
     public ClasseDTO getClasseById(Long id) {
-        Classe c = repository.findById(id)
+        Classe c = repository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Classe non trouvée: " + id));
         return mapper.toDTO(c);
     }
@@ -44,36 +46,48 @@ public class ClasseServiceImpl implements ClasseService {
     @Transactional
     public ClasseDTO createClasse(ClasseCreateDTO dto) {
         Classe c = mapper.fromCreateDTO(dto);
-        if (dto.getFiliereId() != null) {
-            c.setFiliere(filiereRepository.findById(dto.getFiliereId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId())));
+        if (dto.getSpecialiteId() != null) {
+            Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Spécialité non trouvée: " + dto.getSpecialiteId()));
+            c.setSpecialite(specialite);
         }
-        Classe saved = repository.save(c);
+        Classe saved = repository.save(Objects.requireNonNull(c, "Classe cannot be null"));
         return mapper.toDTO(saved);
     }
 
     @Override
     @Transactional
     public ClasseDTO updateClasse(Long id, ClasseUpdateDTO dto) {
-        Classe c = repository.findById(id)
+        Classe c = repository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Classe non trouvée: " + id));
-        mapper.updateFromDTO(c, dto);
-        if (dto.getFiliereId() != null) {
-            c.setFiliere(filiereRepository.findById(dto.getFiliereId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId())));
+
+        if (dto.getIdClasse() != null)
+            c.setIdClasse(dto.getIdClasse());
+        if (dto.getNomClasse() != null)
+            c.setNomClasse(dto.getNomClasse());
+        if (dto.getAnneeAcademique() != null)
+            c.setAnneeAcademique(dto.getAnneeAcademique());
+
+        if (dto.getSpecialiteId() != null) {
+            Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Spécialité non trouvée: " + dto.getSpecialiteId()));
+            c.setSpecialite(specialite);
         } else {
-            c.setFiliere(null); // Retrait explicite de la filière
+            c.setSpecialite(null);
         }
-        Classe updated = repository.save(c);
+
+        Classe updated = repository.save(Objects.requireNonNull(c, "Classe cannot be null"));
         return mapper.toDTO(updated);
     }
 
     @Override
     @Transactional
     public void deleteClasse(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Classe non trouvée: " + id);
         }
-        repository.deleteById(id);
+        repository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 }

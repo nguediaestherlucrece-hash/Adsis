@@ -16,12 +16,8 @@ public class ClasseMapper {
         dto.setId(classe.getId());
         dto.setIdClasse(classe.getIdClasse());
         dto.setNomClasse(classe.getNomClasse());
-        dto.setNiveau(classe.getNiveau());
         dto.setAnneeAcademique(classe.getAnneeAcademique());
-        // Mapper l'ID de la filière associée
-        if (classe.getFiliere() != null) {
-            dto.setFiliereId(classe.getFiliere().getId());
-        }
+        dto.setSpecialiteId(classe.getSpecialite() != null ? classe.getSpecialite().getId() : null);
         return dto;
     }
 
@@ -31,7 +27,6 @@ public class ClasseMapper {
         Classe c = new Classe();
         c.setIdClasse(dto.getIdClasse());
         c.setNomClasse(dto.getNomClasse());
-        c.setNiveau(dto.getNiveau());
         c.setAnneeAcademique(dto.getAnneeAcademique());
         return c;
     }
@@ -43,8 +38,6 @@ public class ClasseMapper {
             c.setIdClasse(dto.getIdClasse());
         if (dto.getNomClasse() != null)
             c.setNomClasse(dto.getNomClasse());
-        if (dto.getNiveau() != null)
-            c.setNiveau(dto.getNiveau());
         if (dto.getAnneeAcademique() != null)
             c.setAnneeAcademique(dto.getAnneeAcademique());
     }

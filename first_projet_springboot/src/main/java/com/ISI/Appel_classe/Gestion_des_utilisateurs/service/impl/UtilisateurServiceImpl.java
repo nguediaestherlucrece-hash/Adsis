@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     @Override
     public UtilisateurDTO getUtilisateurById(Long id) {
-        Utilisateur utilisateur = repository.findById(id)
+        Utilisateur utilisateur = repository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
         return mapper.toDTO(utilisateur);
     }
@@ -84,7 +85,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     @Override
     @Transactional
     public UtilisateurDTO updateUtilisateur(Long id, UtilisateurUpdateDTO dto) {
-        Utilisateur utilisateur = repository.findById(id)
+        Utilisateur utilisateur = repository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
 
         utilisateur.setNom(dto.getNom());
@@ -114,10 +115,10 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     @Override
     @Transactional
     public void deleteUtilisateur(Long id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id);
         }
-        repository.deleteById(id);
+        repository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 
     @Override

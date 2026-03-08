@@ -21,6 +21,7 @@ public class EnseignantDTO {
     private String nom;
     private String prenom;
     private String email;
+    private String matricule;
     private Statut statut;
     private Boolean enabled;
     private Boolean accountNonLocked;

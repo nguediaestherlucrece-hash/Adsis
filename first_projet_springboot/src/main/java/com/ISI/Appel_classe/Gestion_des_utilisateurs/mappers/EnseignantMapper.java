@@ -1,7 +1,7 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers;
 
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EnseignantDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.CoursUE;
+
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import org.springframework.stereotype.Component;

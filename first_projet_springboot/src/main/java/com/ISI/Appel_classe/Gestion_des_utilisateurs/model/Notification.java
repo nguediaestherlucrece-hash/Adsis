@@ -16,7 +16,9 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String idNotification;
+
     private String message;
     private String destinataire;
     private String type; // "alerte absence", "rappel", "validation justificatif"

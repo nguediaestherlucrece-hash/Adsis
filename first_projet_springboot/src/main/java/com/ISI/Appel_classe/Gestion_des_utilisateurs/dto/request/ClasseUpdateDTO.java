@@ -7,9 +7,7 @@ public class ClasseUpdateDTO {
 
     private String idClasse;
     private String nomClasse;
-    private String niveau;
     private String anneeAcademique;
 
-
-    private Long filiereId;
+    private Long specialiteId;
 }

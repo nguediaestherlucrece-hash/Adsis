@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -100,10 +101,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void deleteRole(Long id) {
-        if (!roleRepository.existsById(id)) {
+        if (!roleRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
             throw new ResourceNotFoundException("Rôle non trouvé avec l'ID: " + id);
         }
-        roleRepository.deleteById(id);
+        roleRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
         log.info("Rôle supprimé: {}", id);
     }
 

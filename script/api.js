@@ -47,7 +47,7 @@ export const Api = {
 
     // Récupère uniquement les surveillants et assistants
     async getStaff() {
-        const staffEndpoints = ["/surveillants", "/assistants-pedagogiques"];
+        const staffEndpoints = ["/enseignants", "/surveillants", "/assistants-pedagogiques"];
         try {
             const promises = staffEndpoints.map(endpoint =>
                 fetch(`${API_BASE_URL}${endpoint}`)
