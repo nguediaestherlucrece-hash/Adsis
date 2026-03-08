@@ -6,7 +6,9 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.ClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.ClasseMapper;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.ClasseRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.ClasseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class ClasseServiceImpl implements ClasseService {
 
     private final ClasseRepository repository;
     private final ClasseMapper mapper;
+    private final SpecialiteRepository specialiteRepository;
 
     @Override
     public List<ClasseDTO> getAllClasses() {
@@ -43,6 +46,12 @@ public class ClasseServiceImpl implements ClasseService {
     @Transactional
     public ClasseDTO createClasse(ClasseCreateDTO dto) {
         Classe c = mapper.fromCreateDTO(dto);
+        if (dto.getSpecialiteId() != null) {
+            Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Spécialité non trouvée: " + dto.getSpecialiteId()));
+            c.setSpecialite(specialite);
+        }
         Classe saved = repository.save(Objects.requireNonNull(c, "Classe cannot be null"));
         return mapper.toDTO(saved);
     }
@@ -53,14 +62,20 @@ public class ClasseServiceImpl implements ClasseService {
         Classe c = repository.findById(Objects.requireNonNull(id, "ID cannot be null"))
                 .orElseThrow(() -> new ResourceNotFoundException("Classe non trouvée: " + id));
 
-        if (dto.getIdClasse() != null) {
+        if (dto.getIdClasse() != null)
             c.setIdClasse(dto.getIdClasse());
-        }
-        if (dto.getNomClasse() != null) {
+        if (dto.getNomClasse() != null)
             c.setNomClasse(dto.getNomClasse());
-        }
-        if (dto.getAnneeAcademique() != null) {
+        if (dto.getAnneeAcademique() != null)
             c.setAnneeAcademique(dto.getAnneeAcademique());
+
+        if (dto.getSpecialiteId() != null) {
+            Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Spécialité non trouvée: " + dto.getSpecialiteId()));
+            c.setSpecialite(specialite);
+        } else {
+            c.setSpecialite(null);
         }
 
         Classe updated = repository.save(Objects.requireNonNull(c, "Classe cannot be null"));

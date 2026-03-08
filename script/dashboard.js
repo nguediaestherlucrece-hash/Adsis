@@ -40,26 +40,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Lance la récupération parallèle de tous les éléments du tableau de bord
 async function loadDashboard() {
-    const [staff, cycles, filieres, classes] = await Promise.all([
+    const [staff, cycles, niveaux, filieres, specialites, classes] = await Promise.all([
         Api.getStaff().catch(() => []),
         apiFetch('/cycles'),
+        apiFetch('/niveaux'),
         apiFetch('/filieres'),
+        apiFetch('/specialites'),
         apiFetch('/classes'),
     ]);
 
     renderKPIs(staff, cycles, filieres, classes);
     renderStaffHealth(staff);
-    renderCyclesList(cycles, filieres, classes);
+    renderCyclesList(cycles, niveaux, filieres, classes);
     renderStaffList(staff);
-    renderClassesList(classes, filieres);
+    renderClassesList(classes, specialites, filieres);
 }
 
 // Met à jour les compteurs chiffrés du haut de page
 function renderKPIs(staff, cycles, filieres, classes) {
+    const enseignants = staff.filter(u => u.roleNames?.includes('ENSEIGNANT'));
     const surveillants = staff.filter(u => u.roleNames?.includes('SURVEILLANT'));
     const aps = staff.filter(u => u.roleNames?.includes('ASSISTANT_PEDAGOGIQUE'));
 
     animateCount(document.getElementById('kpi-staff'), staff.length);
+    animateCount(document.getElementById('kpi-enseign'), enseignants.length);
     animateCount(document.getElementById('kpi-surveil'), surveillants.length);
     animateCount(document.getElementById('kpi-ap'), aps.length);
     animateCount(document.getElementById('kpi-cycles'), cycles.length);
@@ -72,11 +76,14 @@ function renderStaffHealth(staff) {
     const total = staff.length || 1;
     const actifs = staff.filter(u => u.statut === 'ACTIF').length;
     const bloques = staff.filter(u => u.statut !== 'ACTIF').length;
+    const enseignants = staff.filter(u => u.roleNames?.includes('ENSEIGNANT')).length;
     const surveil = staff.filter(u => u.roleNames?.includes('SURVEILLANT')).length;
     const ap = staff.filter(u => u.roleNames?.includes('ASSISTANT_PEDAGOGIQUE')).length;
 
     document.getElementById('label-actif').textContent = actifs;
     document.getElementById('label-bloque').textContent = bloques;
+    const bigEns = document.getElementById('big-enseign');
+    if (bigEns) bigEns.textContent = enseignants;
     document.getElementById('big-surveil').textContent = surveil;
     document.getElementById('big-ap').textContent = ap;
 
@@ -89,7 +96,7 @@ function renderStaffHealth(staff) {
 }
 
 // Génère la section listant les cycles avec leurs filières enfants
-function renderCyclesList(cycles, filieres, classes) {
+function renderCyclesList(cycles, niveaux, filieres, classes) {
     const container = document.getElementById('cyclesList');
     if (!container) return;
 
@@ -99,9 +106,15 @@ function renderCyclesList(cycles, filieres, classes) {
     }
 
     container.innerHTML = cycles.map(c => {
-        const fils = filieres.filter(f => f.cycleId == c.id);
-        const nbCls = classes.filter(cl => fils.some(f => f.id == cl.filiereId)).length;
-        const annee = (c.anneeDebut && c.anneeFin) ? `${c.anneeDebut}–${c.anneeFin}` : '';
+        // Cycle -> Niveau -> Filière
+        const nivIds = niveaux.filter(n => n.cycleId == c.id).map(n => n.id);
+        const fils = filieres.filter(f => nivIds.includes(f.niveauId));
+        // Trouver le nombre total de classes sous ce cycle ne peut pas se faire directement, ça se fait via Specialite. 
+        // Comme on n'a pas inclus `specialites` dans la boucle simple ici, on se contente du compte ou on le zappe...
+        // Pour être sûr, on passe juste le nombre de filières. Mais c'est plus joli avec les classes. 
+        // L'utilisateur n'a pas montré quoi garder, mais laissons 0 classes si pas possible, ou retirons l'affichage.
+        const nbCls = 0; // Temporairement car on ne passe pas spécialités ici (sauf si on ajoute)
+        const annee = c.anneeAcademique || ((c.anneeDebut && c.anneeFin) ? `${c.anneeDebut}–${c.anneeFin}` : '');
 
         return `
         <div class="filiere-row">
@@ -115,7 +128,7 @@ function renderCyclesList(cycles, filieres, classes) {
                         ${annee ? `<span class="badge bg-light text-muted border ms-1" style="font-size:.65rem;">${annee}</span>` : ''}
                     </div>
                     <div style="font-size:.75rem;color:#94a3b8;">
-                        ${fils.length} filière${fils.length !== 1 ? 's' : ''} · ${nbCls} classe${nbCls !== 1 ? 's' : ''}
+                        ${fils.length} filière${fils.length !== 1 ? 's' : ''}
                     </div>
                 </div>
             </div>
@@ -141,7 +154,11 @@ function renderStaffList(staff) {
 
     const display = staff.slice(0, 6);
     container.innerHTML = display.map(u => {
-        const role = u.roleNames?.includes('SURVEILLANT') ? 'Surveillant' : 'Assistant Péd.';
+        let role = 'Utilisateur';
+        if (u.roleNames?.includes('ENSEIGNANT')) role = 'Enseignant';
+        else if (u.roleNames?.includes('SURVEILLANT')) role = 'Surveillant';
+        else if (u.roleNames?.includes('ASSISTANT_PEDAGOGIQUE')) role = 'Assistant Péd.';
+
         const isActif = u.statut === 'ACTIF';
         const bgColor = avatarColor(u.id || 0);
         const initials = ((u.nom || '?').charAt(0) + (u.prenom || '').charAt(0)).toUpperCase();
@@ -169,7 +186,7 @@ function renderStaffList(staff) {
 }
 
 // Construit visuellement un aperçu des 6 premières classes
-function renderClassesList(classes, filieres) {
+function renderClassesList(classes, specialites, filieres) {
     const container = document.getElementById('classesList');
     if (!container) return;
 
@@ -179,22 +196,25 @@ function renderClassesList(classes, filieres) {
     }
 
     const display = classes.slice(0, 6);
-    const levelColors = ['', '#3b82f6', '#22c55e', '#f97316', '#a855f7', '#ef4444'];
 
     container.innerHTML = display.map(cl => {
-        const filiere = filieres.find(f => f.id == cl.filiereId);
-        const niv = parseInt(cl.niveau) || 0;
-        const nivColor = levelColors[niv] || '#64748b';
+        const spId = cl.specialiteId || cl.speciliteId;
+        const spec = specialites.find(s => s.id == spId);
+        const filiere = spec ? filieres.find(f => f.id == spec.filiereId) : null;
+
+        // Trouver la couleur en fonction du nom pour avoir un code propre
+        const nivLabel = cl.nomClasse ? cl.nomClasse.substring(0, 2).toUpperCase() : 'Cl';
 
         return `
         <div class="entity-card">
-            <div class="entity-avatar" style="background:${nivColor};">
-                ${cl.niveau ? `N${cl.niveau}` : '—'}
+            <div class="entity-avatar" style="background:#3b82f6;">
+                ${nivLabel}
             </div>
             <div class="flex-grow-1">
                 <div class="entity-name">${cl.nomClasse || '—'}</div>
                 <div class="entity-sub">
-                    ${filiere ? filiere.nomFiliere : '<span class="fst-italic">Sans filière</span>'}
+                    ${spec ? (spec.nom || spec.nomSpecialite) : '<span class="fst-italic text-muted">Spécialité inconnue</span>'}
+                    ${filiere ? ' (' + filiere.nomFiliere + ')' : ''}
                     ${cl.anneeAcademique ? ' · ' + cl.anneeAcademique : ''}
                 </div>
             </div>

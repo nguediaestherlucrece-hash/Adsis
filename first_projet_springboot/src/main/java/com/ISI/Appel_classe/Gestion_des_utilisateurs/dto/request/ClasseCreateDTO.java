@@ -9,6 +9,5 @@ public class ClasseCreateDTO {
     private String nomClasse;
     private String anneeAcademique;
 
-
-    private Long speciliteId;
+    private Long specialiteId;
 }

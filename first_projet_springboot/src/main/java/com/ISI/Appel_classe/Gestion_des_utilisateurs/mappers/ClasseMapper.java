@@ -17,7 +17,7 @@ public class ClasseMapper {
         dto.setIdClasse(classe.getIdClasse());
         dto.setNomClasse(classe.getNomClasse());
         dto.setAnneeAcademique(classe.getAnneeAcademique());
-        dto.setSpeciliteId(classe.getSpecialite() != null ? classe.getSpecialite().getId() : null);
+        dto.setSpecialiteId(classe.getSpecialite() != null ? classe.getSpecialite().getId() : null);
         return dto;
     }
 

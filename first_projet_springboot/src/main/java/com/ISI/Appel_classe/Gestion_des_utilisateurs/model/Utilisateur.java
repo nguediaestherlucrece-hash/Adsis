@@ -36,6 +36,8 @@ public class Utilisateur implements UserDetails {
 
     private String password;
 
+    private String matricule; // Identifiant unique commun à tous les types d'utilisateurs
+
     @Enumerated(EnumType.STRING)
     private Statut statut;
 

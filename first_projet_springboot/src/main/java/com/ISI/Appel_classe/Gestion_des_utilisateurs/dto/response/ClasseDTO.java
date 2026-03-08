@@ -10,5 +10,5 @@ public class ClasseDTO {
     private String nomClasse;
     private String anneeAcademique;
 
-    private Long speciliteId; // ID de la filière associée (relation ManyToOne)
+    private Long specialiteId; // ID de la spécialité associée (relation ManyToOne)
 }

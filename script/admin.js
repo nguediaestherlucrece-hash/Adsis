@@ -20,14 +20,12 @@ function showToast(message, type = 'info') {
     toastEl.style.maxWidth = '360px';
     toastEl.innerHTML = `
         <div class="toast-header border-0 text-white py-2 px-3" style="background:${c.bg}">
-            <i class="bi ${c.icon} me-2"></i>
-            <strong class="me-auto">${c.label}</strong>
+            <i class="bi ${c.icon} me-2"></i><strong class="me-auto">${c.label}</strong>
             <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body text-dark bg-white small py-2 px-3">${message}</div>`;
     container.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl);
-    toast.show();
+    new bootstrap.Toast(toastEl).show();
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
@@ -36,10 +34,7 @@ function parseApiError(error) {
     const raw = error?.message || String(error);
     try {
         const match = raw.match(/\{.*\}/s);
-        if (match) {
-            const parsed = JSON.parse(match[0]);
-            return parsed.message || parsed.error || raw;
-        }
+        if (match) { const p = JSON.parse(match[0]); return p.message || p.error || raw; }
     } catch (_) { }
     return raw;
 }
@@ -53,14 +48,10 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
         const modal = new bootstrap.Modal(modalEl);
         let resolved = false;
         const done = (result) => {
-            if (resolved) return;
-            resolved = true;
-            const ok = document.getElementById('confirmOkBtn');
-            const cancel = document.getElementById('confirmCancelBtn');
-            ok.replaceWith(ok.cloneNode(true));
-            cancel.replaceWith(cancel.cloneNode(true));
-            modal.hide();
-            resolve(result);
+            if (resolved) return; resolved = true;
+            document.getElementById('confirmOkBtn').replaceWith(document.getElementById('confirmOkBtn').cloneNode(true));
+            document.getElementById('confirmCancelBtn').replaceWith(document.getElementById('confirmCancelBtn').cloneNode(true));
+            modal.hide(); resolve(result);
         };
         document.getElementById('confirmOkBtn').addEventListener('click', () => done(true), { once: true });
         document.getElementById('confirmCancelBtn').addEventListener('click', () => done(false), { once: true });
@@ -69,7 +60,7 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
     });
 }
 
-// ─── État global ───────────────────────────────────────────────────────────
+// ─── État global ────────────────────────────────────────────────────────────
 const userTableBody = document.getElementById('userTableBody');
 const userModal = new bootstrap.Modal(document.getElementById('userModal'));
 const viewModal = new bootstrap.Modal(document.getElementById('viewUserModal'));
@@ -77,9 +68,11 @@ const viewModal = new bootstrap.Modal(document.getElementById('viewUserModal'));
 let currentUserList = [];
 let currentFilter = 'Tous';
 let searchTerm = '';
-let allFilieres = [];           // Toutes les filières chargées depuis l'API
+let allFilieres = [];
+let allMatieres = [];           // Toutes les CoursUE (matières)
 let userFiliereMap = {};           // userId → [{id, nomFiliere}]
-let currentStaffUser = null;         // Utilisateur courant dans la modal d'attribution
+let userMatiereMap = {};           // userId → [{id, nomCours, code}]
+let currentStaffUser = null;
 
 const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
 
@@ -87,6 +80,7 @@ const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
 document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     loadFilieres();
+    loadMatieres();
     setupEventListeners();
 });
 
@@ -97,22 +91,19 @@ function setupEventListeners() {
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             const target = e.target.closest('.filter-tab');
             target.classList.add('active');
-            filterByRole(target.innerText.split(' ')[0]);
+            const label = target.innerText.replace(/\(.*\)/, '').trim();
+            filterByRole(label);
         });
     });
 
     const roleSelect = document.getElementById('userRole');
-    if (roleSelect) {
-        roleSelect.addEventListener('change', (e) => toggleRoleFields(e.target.value));
-    }
+    if (roleSelect) roleSelect.addEventListener('change', (e) => toggleRoleFields(e.target.value));
 
     const saveBtn = document.querySelector('#userModal .modal-footer .btn-primary');
     if (saveBtn) saveBtn.addEventListener('click', handleSaveUser);
 
     document.querySelectorAll('main button.btn-primary').forEach(btn => {
-        if (btn.innerText.includes('Nouvel utilisateur')) {
-            btn.addEventListener('click', openCreateModal);
-        }
+        if (btn.innerText.includes('Nouvel utilisateur')) btn.addEventListener('click', openCreateModal);
     });
 
     const searchInput = document.querySelector('.search-box input');
@@ -124,44 +115,52 @@ function setupEventListeners() {
     }
 }
 
-// Charge toutes les filières depuis l'API pour les utiliser dans les modals de staff
+// Charge toutes les filières depuis l'API
 async function loadFilieres() {
     try {
         const res = await fetch(`${API_BASE}/filieres`, { headers: { 'Content-Type': 'application/json' } });
         if (res.ok) allFilieres = await res.json();
-    } catch (e) {
-        console.warn('Impossible de charger les filières :', e.message);
-    }
+    } catch (e) { console.warn('Filières non chargées:', e.message); }
 }
 
-// Récupère les données de tous les utilisateurs depuis l'API et construit la map filières
+// Charge toutes les matières (CoursUE) depuis l'API
+async function loadMatieres() {
+    try {
+        const res = await fetch(`${API_BASE}/cours`, { headers: { 'Content-Type': 'application/json' } });
+        if (res.ok) allMatieres = await res.json();
+    } catch (e) { console.warn('Matières non chargées:', e.message); }
+}
+
+// Charge et normalise tous les utilisateurs, puis construit les cartes de filières/matières
 async function loadUsers() {
     try {
         userTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chargement...</td></tr>';
         const users = await Api.getStaff();
         currentUserList = users.map(u => normalizeUser(u));
         await buildUserFiliereMap();
-        // Enrichit les détails avec les filières
+        await buildUserMatiereMap();
+        // Enrichit les objets avec les collections chargées
         currentUserList.forEach(u => {
-            const filieres = userFiliereMap[u.id] || [];
-            u.details = filieres.length > 0
-                ? filieres.map(f => f.nomFiliere).join(', ')
-                : '— Aucune filière';
-            u.filieres = filieres;
+            u.filieres = userFiliereMap[u.id] || [];
+            u.matieres = userMatiereMap[u.id] || [];
+            if (u.role === 'Enseignant') {
+                u.details = u.matieres.length > 0 ? u.matieres.map(m => m.nomCours).join(', ') : '— Aucune matière';
+            } else {
+                u.details = u.filieres.length > 0 ? u.filieres.map(f => f.nomFiliere).join(', ') : '— Aucune filière';
+            }
         });
         renderTable(currentFilter);
         updateCounts();
     } catch (error) {
         console.error('Erreur chargement utilisateurs', error);
-        userTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Erreur de chargement : ${error.message}</td></tr>`;
+        userTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Erreur: ${error.message}</td></tr>`;
     }
 }
 
-// Construit la map userId → [{id, nomFiliere}] en interrogeant chaque filière
+// Construit la map userId→filieres via les endpoints /filiere/{id}
 async function buildUserFiliereMap() {
     userFiliereMap = {};
     if (allFilieres.length === 0) await loadFilieres();
-
     await Promise.all(allFilieres.map(async (f) => {
         try {
             const [aps, survs] = await Promise.all([
@@ -170,12 +169,20 @@ async function buildUserFiliereMap() {
             ]);
             [...aps, ...survs].forEach(u => {
                 if (!userFiliereMap[u.id]) userFiliereMap[u.id] = [];
-                if (!userFiliereMap[u.id].some(x => x.id === f.id)) {
+                if (!userFiliereMap[u.id].some(x => x.id === f.id))
                     userFiliereMap[u.id].push({ id: f.id, nomFiliere: f.nomFiliere });
-                }
             });
         } catch (_) { }
     }));
+}
+
+// Construit la map userId→matieres pour les enseignants depuis leurs coursEnseignes
+async function buildUserMatiereMap() {
+    userMatiereMap = {};
+    currentUserList.filter(u => u.role === 'Enseignant').forEach(u => {
+        const cours = u.raw.coursEnseignes || [];
+        userMatiereMap[u.id] = cours.map(c => ({ id: c.id, nomCours: c.nomCours || c.nom || '?', code: c.code || '' }));
+    });
 }
 
 // Normalise le format de l'utilisateur pour l'affichage interne
@@ -183,22 +190,19 @@ function normalizeUser(u) {
     let role = 'Inconnu';
     if (u.roleNames && u.roleNames.length > 0) {
         const r = u.roleNames[0];
-        if (r === 'SURVEILLANT') role = 'Surveillant';
+        if (r === 'ENSEIGNANT') role = 'Enseignant';
+        else if (r === 'SURVEILLANT') role = 'Surveillant';
         else if (r === 'ASSISTANT_PEDAGOGIQUE') role = 'Assistant pédagogique';
     } else {
-        if (u.affectation) role = 'Surveillant';
+        if (u.specialite || u.grade) role = 'Enseignant';
+        else if (u.affectation) role = 'Surveillant';
         else if (u.departement) role = 'Assistant pédagogique';
     }
     return {
-        id: u.id,
-        name: `${u.nom} ${u.prenom}`,
-        email: u.email,
-        role,
+        id: u.id, name: `${u.nom} ${u.prenom}`, email: u.email, role,
         status: u.statut === 'ACTIF' ? 'Actif' : 'Bloqué',
-        details: '',
-        filieres: [],
-        raw: u,
-        color: COLORS[u.id % COLORS.length]
+        details: '', filieres: [], matieres: [],
+        raw: u, color: COLORS[u.id % COLORS.length]
     };
 }
 
@@ -208,7 +212,8 @@ function renderTable(roleFilter) {
     let filtered = currentUserList;
 
     if (roleFilter !== 'Tous') {
-        const singular = roleFilter === 'Assistants' ? 'Assistant pédagogique' : 'Surveillant';
+        const singularMap = { 'Enseignants': 'Enseignant', 'Assistants': 'Assistant pédagogique', 'Surveillants': 'Surveillant' };
+        const singular = singularMap[roleFilter] || roleFilter;
         filtered = filtered.filter(u => u.role === singular);
     }
     if (searchTerm) {
@@ -218,7 +223,6 @@ function renderTable(roleFilter) {
             u.details.toLowerCase().includes(searchTerm)
         );
     }
-
     currentFilter = roleFilter;
 
     if (filtered.length === 0) {
@@ -230,33 +234,36 @@ function renderTable(roleFilter) {
         const isBlocked = u.status === 'Bloqué';
         const row = document.createElement('tr');
 
-        // Badges filières pour la colonne Détails
-        const filiereBadges = (u.filieres || []).length > 0
-            ? u.filieres.map(f => `<span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:.72rem;">${f.nomFiliere}</span>`).join(' ')
-            : '<span class="text-muted fst-italic small">— Aucune filière</span>';
+        let detailsHTML;
+        if (u.role === 'Enseignant') {
+            detailsHTML = u.matieres.length > 0
+                ? u.matieres.map(m => `<span class="badge rounded-pill" style="background:#fef9c3;color:#78350f;border:1px solid #fde68a;font-size:.72rem;">${m.nomCours}</span>`).join(' ')
+                : '<span class="text-muted fst-italic small">— Aucune matière</span>';
+        } else {
+            detailsHTML = u.filieres.length > 0
+                ? u.filieres.map(f => `<span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:.72rem;">${f.nomFiliere}</span>`).join(' ')
+                : '<span class="text-muted fst-italic small">— Aucune filière</span>';
+        }
 
         row.innerHTML = `
-          <td class="ps-4">
-            <div class="d-flex align-items-center gap-2">
-              <div class="user-avatar" style="background-color:${u.color}">${u.name.charAt(0)}</div>
-              <div><div class="fw-bold">${u.name}</div><div class="text-muted small">${u.email}</div></div>
-            </div>
-          </td>
+          <td class="ps-4"><div class="d-flex align-items-center gap-2">
+            <div class="user-avatar" style="background-color:${u.color}">${u.name.charAt(0)}</div>
+            <div><div class="fw-bold">${u.name}</div><div class="text-muted small">${u.email}</div></div>
+          </div></td>
           <td><span class="badge bg-light text-dark border rounded-pill px-3">${u.role}</span></td>
           <td><span class="status-badge text-white ${isBlocked ? 'bg-danger' : 'bg-success'}">${u.status}</span></td>
-          <td class="small" style="max-width:260px;">${filiereBadges}</td>
-          <td class="text-center pe-4 action-buttons"></td>
-        `;
+          <td class="small" style="max-width:260px;">${detailsHTML}</td>
+          <td class="text-center pe-4 action-buttons"></td>`;
 
-        const actionsCell = row.querySelector('.action-buttons');
-        actionsCell.appendChild(createBtn('bi-eye', 'btn-outline-secondary', () => openViewModal(u)));
-        actionsCell.appendChild(createBtn('bi-pencil', 'btn-outline-primary', () => openEditModal(u.id)));
-        actionsCell.appendChild(createBtn(
+        const cell = row.querySelector('.action-buttons');
+        cell.appendChild(createBtn('bi-eye', 'btn-outline-secondary', () => openViewModal(u)));
+        cell.appendChild(createBtn('bi-pencil', 'btn-outline-primary', () => openEditModal(u.id)));
+        cell.appendChild(createBtn(
             isBlocked ? 'bi-lock-fill' : 'bi-unlock-fill',
             isBlocked ? 'text-warning' : 'text-success',
             () => toggleBlock(u.id, u.raw.roleNames[0])
         ));
-        actionsCell.appendChild(createBtn('bi-trash', 'text-danger', () => deleteUser(u.id, u.raw.roleNames[0])));
+        cell.appendChild(createBtn('bi-trash', 'text-danger', () => deleteUser(u.id, u.raw.roleNames[0])));
         userTableBody.appendChild(row);
     });
 }
@@ -272,72 +279,52 @@ function createBtn(iconClass, btnClass, onClick) {
 
 // Met à jour le compteur total dans l'onglet "Tous"
 function updateCounts() {
-    const countSpan = document.getElementById('count-Tous');
-    if (countSpan) countSpan.innerText = currentUserList.length;
+    const s = document.getElementById('count-Tous');
+    if (s) s.innerText = currentUserList.length;
 }
 
-// Applique le filtre de sélection par rôle
+// Applique le filtre par rôle
 function filterByRole(role) {
     if (role.startsWith('Tous')) role = 'Tous';
     renderTable(role);
 }
 
-// Bascule le statut d'un utilisateur entre Actif et Bloqué
+// Bascule le statut Actif/Bloqué d'un utilisateur
 async function toggleBlock(id, roleName) {
     const user = currentUserList.find(u => u.id === id);
     if (!user) return;
     try {
-        if (user.status === 'Actif') {
-            await Api.blockUser(id, roleName);
-            user.status = 'Bloqué';
-        } else {
-            await Api.unblockUser(id, roleName);
-            user.status = 'Actif';
-        }
+        if (user.status === 'Actif') { await Api.blockUser(id, roleName); user.status = 'Bloqué'; }
+        else { await Api.unblockUser(id, roleName); user.status = 'Actif'; }
         user.raw.statut = user.status === 'Actif' ? 'ACTIF' : 'INACTIF';
         renderTable(currentFilter);
         showToast(user.status === 'Actif' ? `${user.name} débloqué.` : `${user.name} bloqué.`,
             user.status === 'Actif' ? 'success' : 'warning');
-    } catch (e) {
-        showToast('Erreur statut : ' + parseApiError(e), 'danger');
-    }
+    } catch (e) { showToast('Erreur statut : ' + parseApiError(e), 'danger'); }
 }
 
 // Supprime définitivement un utilisateur après confirmation
 async function deleteUser(id, roleName) {
     const user = currentUserList.find(u => u.id === id);
     const userName = user ? user.name : 'cet utilisateur';
-    const confirmed = await showConfirm(
-        `Supprimer ${userName} ?`,
-        'Cette action est irréversible. L\'utilisateur sera définitivement supprimé.'
-    );
+    const confirmed = await showConfirm(`Supprimer ${userName} ?`, 'Cette action est irréversible.');
     if (!confirmed) return;
     try {
         await Api.deleteUser(id, roleName);
         currentUserList = currentUserList.filter(u => u.id !== id);
-        renderTable(currentFilter);
-        updateCounts();
-        showToast(`${userName} supprimé avec succès.`, 'success');
-    } catch (e) {
-        showToast('Erreur suppression : ' + parseApiError(e), 'danger');
-    }
+        renderTable(currentFilter); updateCounts();
+        showToast(`${userName} supprimé.`, 'success');
+    } catch (e) { showToast('Erreur : ' + parseApiError(e), 'danger'); }
 }
 
-// Gère l'affichage dynamique des champs selon le rôle sélectionné
+// Affiche les champs spécifiques selon le rôle sélectionné
 function toggleRoleFields(role) {
-    const filieresSection = document.getElementById('filieresSection');
+    document.getElementById('enseignantFields')?.classList.add('d-none');
     document.getElementById('surveillantFields')?.classList.add('d-none');
     document.getElementById('assistantFields')?.classList.add('d-none');
-
-    if (role === 'Surveillant') {
-        document.getElementById('surveillantFields')?.classList.remove('d-none');
-        if (filieresSection) filieresSection.classList.remove('d-none');
-    } else if (role === 'Assistant pédagogique') {
-        document.getElementById('assistantFields')?.classList.remove('d-none');
-        if (filieresSection) filieresSection.classList.remove('d-none');
-    } else {
-        if (filieresSection) filieresSection.classList.add('d-none');
-    }
+    if (role === 'Enseignant') document.getElementById('enseignantFields')?.classList.remove('d-none');
+    else if (role === 'Surveillant') document.getElementById('surveillantFields')?.classList.remove('d-none');
+    else if (role === 'Assistant pédagogique') document.getElementById('assistantFields')?.classList.remove('d-none');
 }
 
 // Ouvre la modale vide pour la création d'un utilisateur
@@ -348,17 +335,21 @@ function openCreateModal() {
     document.getElementById('userNom').value = '';
     document.getElementById('userPrenom').value = '';
     document.getElementById('userEmail').value = '';
+    document.getElementById('userMatricule').value = '';
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = true;
-    document.getElementById('userRole').value = 'Assistant pédagogique';
+    document.getElementById('userRole').value = 'Enseignant';
+    document.getElementById('userSpecialite') && (document.getElementById('userSpecialite').value = '');
+    document.getElementById('userGrade') && (document.getElementById('userGrade').value = '');
     document.getElementById('userAffectation') && (document.getElementById('userAffectation').value = '');
     document.getElementById('userDepartement') && (document.getElementById('userDepartement').value = '');
-    updateCurrentFilieresBadges([]);
-    toggleRoleFields('Assistant pédagogique');
+    updateMatieresBadges([]); updateFilieresBadges([], 'currentFilieresBadges');
+    updateFilieresBadges([], 'currentFilieresBadgesAP');
+    toggleRoleFields('Enseignant');
     userModal.show();
 }
 
-// Ouvre et pré-remplit la modale pour modifier un utilisateur
+// Ouvre la modale pré-remplie pour modifier un utilisateur
 function openEditModal(id) {
     const u = currentUserList.find(user => user.id === id);
     if (!u) return;
@@ -368,159 +359,218 @@ function openEditModal(id) {
     document.getElementById('userNom').value = u.raw.nom || '';
     document.getElementById('userPrenom').value = u.raw.prenom || '';
     document.getElementById('userEmail').value = u.raw.email;
+    document.getElementById('userMatricule').value = u.raw.matricule || '';
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = false;
     document.getElementById('userRole').value = u.role;
+    document.getElementById('userSpecialite') && (document.getElementById('userSpecialite').value = u.raw.specialite || '');
+    document.getElementById('userGrade') && (document.getElementById('userGrade').value = u.raw.grade || '');
     document.getElementById('userAffectation') && (document.getElementById('userAffectation').value = u.raw.affectation || '');
     document.getElementById('userDepartement') && (document.getElementById('userDepartement').value = u.raw.departement || '');
-    updateCurrentFilieresBadges(u.filieres || []);
+    updateMatieresBadges(u.matieres || []);
+    updateFilieresBadges(u.filieres || [], 'currentFilieresBadges');
+    updateFilieresBadges(u.filieres || [], 'currentFilieresBadgesAP');
     toggleRoleFields(u.role);
     userModal.show();
 }
 
-// Met à jour les badges de filières affichés dans le formulaire
-function updateCurrentFilieresBadges(filieres) {
-    const container = document.getElementById('currentFilieresBadges');
-    if (!container) return;
-    if (filieres.length === 0) {
-        container.innerHTML = '<span class="text-muted small fst-italic">Aucune filière attribuée</span>';
-    } else {
-        container.innerHTML = filieres.map(f =>
-            `<span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">${f.nomFiliere}</span>`
-        ).join(' ');
-    }
+// Met à jour les badges de matières dans le formulaire enseignant
+function updateMatieresBadges(matieres) {
+    const c = document.getElementById('currentMatieresBadges');
+    if (!c) return;
+    c.innerHTML = matieres.length > 0
+        ? matieres.map(m => `<span class="badge rounded-pill" style="background:#fef9c3;color:#78350f;border:1px solid #fde68a;">${m.nomCours}</span>`).join(' ')
+        : '<span class="text-muted small fst-italic">Aucune matière attribuée</span>';
 }
 
-// Ouvre la fenêtre d'attribution de filières pour l'utilisateur courant (exposée globalement pour le onclick HTML)
-window.openAssignFilieresModal = function openAssignFilieresModal() {
+// Met à jour les badges de filières dans le formulaire staff
+function updateFilieresBadges(filieres, containerId = 'currentFilieresBadges') {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.innerHTML = filieres.length > 0
+        ? filieres.map(f => `<span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">${f.nomFiliere}</span>`).join(' ')
+        : '<span class="text-muted small fst-italic">Aucune filière attribuée</span>';
+}
+
+// Ouvre la modale d'attribution des matières pour l'enseignant courant
+window.openAssignMatieresModal = function () {
     const userId = document.getElementById('userId').value;
     const user = currentStaffUser || (userId ? currentUserList.find(u => u.id == userId) : null);
-    if (!user) {
-        showToast('Veuillez d\'abord enregistrer l\'utilisateur avant de lui attribuer des filières.', 'warning');
-        return;
-    }
+    if (!user) { showToast('Enregistrez d\'abord l\'utilisateur.', 'warning'); return; }
     currentStaffUser = user;
+    document.getElementById('assignMatiereTitle').textContent = `Attribuer des matières — ${user.name}`;
+    renderAssignMatiereList(user);
+    new bootstrap.Modal(document.getElementById('assignMatiereModal')).show();
+};
 
-    document.getElementById('assignStaffFiliereTitle').textContent =
-        `Attribuer des filières — ${user.name}`;
-    document.getElementById('assignStaffFiliereSubtitle').textContent =
-        user.role === 'Assistant pédagogique'
-            ? 'Une filière ne peut avoir qu\'un seul assistant pédagogique.'
-            : 'Un surveillant peut être attaché à plusieurs filières.';
-
-    renderAssignStaffFiliereList(user);
-    new bootstrap.Modal(document.getElementById('assignStaffFiliereModal')).show();
-}
-
-// Affiche la liste des filières avec le statut d'attribution de l'utilisateur
-function renderAssignStaffFiliereList(user) {
-    const container = document.getElementById('assignStaffFiliereList');
+// Affiche la liste des matières avec leur statut d'attribution
+function renderAssignMatiereList(user) {
+    const container = document.getElementById('assignMatiereList');
     if (!container) return;
-
-    if (allFilieres.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center py-4">Aucune filière disponible.</p>';
+    if (allMatieres.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-4">Aucune matière disponible.</p>';
         return;
     }
-
-    const assignedIds = new Set((user.filieres || []).map(f => f.id));
-
-    container.innerHTML = allFilieres.map(f => {
-        const isAssigned = assignedIds.has(f.id);
-        const statusBadge = isAssigned
+    const assignedIds = new Set((user.matieres || []).map(m => m.id));
+    container.innerHTML = allMatieres.map(m => {
+        const isAssigned = assignedIds.has(m.id);
+        const badge = isAssigned
             ? `<span class="badge rounded-pill" style="background:#d1fae5;color:#065f46;"><i class="bi bi-check-circle me-1"></i>Attribuée</span>`
             : `<span class="badge rounded-pill" style="background:#f1f5f9;color:#64748b;"><i class="bi bi-dash-circle me-1"></i>Non attribuée</span>`;
-        const btnLabel = isAssigned
-            ? `<i class="bi bi-x-lg me-1"></i>Retirer`
-            : `<i class="bi bi-plus-lg me-1"></i>Attribuer`;
-        const btnClass = isAssigned ? 'btn-outline-danger' : 'btn-outline-success';
-
         return `
         <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3 border">
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                     style="width:36px;height:36px;background:#6366f1;font-size:0.8rem;flex-shrink:0;">
-                    ${(f.nomFiliere || '?').charAt(0).toUpperCase()}
-                </div>
+                     style="width:36px;height:36px;background:#f59e0b;font-size:0.8rem;flex-shrink:0;">${(m.nomCours || m.nom || '?').charAt(0).toUpperCase()}</div>
                 <div>
-                    <div class="fw-semibold small">${f.nomFiliere || '—'} <span class="text-muted fw-normal">(${f.idFiliere || '?'})</span></div>
-                    <div class="mt-1">${statusBadge}</div>
+                    <div class="fw-semibold small">${m.nomCours || m.nom || '—'} <span class="text-muted fw-normal">(${m.code || '?'})</span></div>
+                    <div class="mt-1">${badge}</div>
                 </div>
             </div>
-            <button class="btn btn-sm ${btnClass} rounded-3 px-3" onclick="doAssignStaffFiliere(${user.id},'${user.role}',${f.id},${isAssigned})">
-                ${btnLabel}
+            <button class="btn btn-sm ${isAssigned ? 'btn-outline-danger' : 'btn-outline-success'} rounded-3 px-3"
+                    onclick="doToggleMatiere(${user.id},${m.id},${isAssigned})">
+                ${isAssigned ? '<i class="bi bi-x-lg me-1"></i>Retirer' : '<i class="bi bi-plus-lg me-1"></i>Attribuer'}
             </button>
         </div>`;
     }).join('');
 }
 
-// Attribue ou retire une filière à un membre du staff via l'API
+// Attribue ou retire une matière à un enseignant via PATCH /api/enseignants/{id}/cours
+window.doToggleMatiere = async function (userId, matiereId, isCurrentlyAssigned) {
+    const user = currentUserList.find(u => u.id == userId);
+    if (!user) return;
+    const m = allMatieres.find(x => x.id === matiereId);
+    try {
+        let newList;
+        if (!isCurrentlyAssigned) {
+            newList = [...(user.matieres || []).map(x => x.id), matiereId];
+        } else {
+            newList = (user.matieres || []).filter(x => x.id !== matiereId).map(x => x.id);
+        }
+        const res = await fetch(`${API_BASE}/enseignants/${userId}/cours`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newList)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        // Mise à jour locale
+        if (!isCurrentlyAssigned && m) user.matieres.push({ id: matiereId, nomCours: m.nomCours || m.nom, code: m.code });
+        else user.matieres = user.matieres.filter(x => x.id !== matiereId);
+        user.details = user.matieres.length > 0 ? user.matieres.map(x => x.nomCours).join(', ') : '— Aucune matière';
+        userMatiereMap[userId] = user.matieres;
+        updateMatieresBadges(user.matieres);
+        renderAssignMatiereList(user);
+        renderTable(currentFilter);
+        showToast(isCurrentlyAssigned ? `"${m?.nomCours}" retiré.` : `"${m?.nomCours}" attribué.`, 'success');
+    } catch (e) { showToast('Erreur attribution : ' + parseApiError(e), 'danger'); }
+};
+
+// Ouvre la modale d'attribution des filières pour Surveillant/AP
+window.openAssignFilieresModal = function () {
+    const userId = document.getElementById('userId').value;
+    const user = currentStaffUser || (userId ? currentUserList.find(u => u.id == userId) : null);
+    if (!user) { showToast('Enregistrez d\'abord l\'utilisateur.', 'warning'); return; }
+    currentStaffUser = user;
+    document.getElementById('assignStaffFiliereTitle').textContent = `Attribuer des filières — ${user.name}`;
+    document.getElementById('assignStaffFiliereSubtitle').textContent =
+        user.role === 'Assistant pédagogique'
+            ? 'Une filière ne peut avoir qu\'un seul assistant pédagogique.'
+            : 'Un surveillant peut être attaché à plusieurs filières.';
+    renderAssignStaffFiliereList(user);
+    new bootstrap.Modal(document.getElementById('assignStaffFiliereModal')).show();
+};
+
+// Affiche la liste des filières avec le statut d'attribution
+function renderAssignStaffFiliereList(user) {
+    const container = document.getElementById('assignStaffFiliereList');
+    if (!container) return;
+    if (allFilieres.length === 0) { container.innerHTML = '<p class="text-muted text-center py-4">Aucune filière disponible.</p>'; return; }
+    const assignedIds = new Set((user.filieres || []).map(f => f.id));
+    container.innerHTML = allFilieres.map(f => {
+        const isAssigned = assignedIds.has(f.id);
+        const badge = isAssigned
+            ? `<span class="badge rounded-pill" style="background:#d1fae5;color:#065f46;"><i class="bi bi-check-circle me-1"></i>Attribuée</span>`
+            : `<span class="badge rounded-pill" style="background:#f1f5f9;color:#64748b;"><i class="bi bi-dash-circle me-1"></i>Non attribuée</span>`;
+        return `
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3 border">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                     style="width:36px;height:36px;background:#6366f1;font-size:0.8rem;flex-shrink:0;">${(f.nomFiliere || '?').charAt(0).toUpperCase()}</div>
+                <div>
+                    <div class="fw-semibold small">${f.nomFiliere} <span class="text-muted fw-normal">(${f.idFiliere || '?'})</span></div>
+                    <div class="mt-1">${badge}</div>
+                </div>
+            </div>
+            <button class="btn btn-sm ${isAssigned ? 'btn-outline-danger' : 'btn-outline-success'} rounded-3 px-3"
+                    onclick="doAssignStaffFiliere(${user.id},'${user.role}',${f.id},${isAssigned})">
+                ${isAssigned ? '<i class="bi bi-x-lg me-1"></i>Retirer' : '<i class="bi bi-plus-lg me-1"></i>Attribuer'}
+            </button>
+        </div>`;
+    }).join('');
+}
+
+// Attribue ou retire une filière à un Surveillant ou AP
 window.doAssignStaffFiliere = async function (userId, role, filiereId, isCurrentlyAssigned) {
     const user = currentUserList.find(u => u.id == userId);
     if (!user) return;
-
-    const endpoint = role === 'Assistant pédagogique'
-        ? `${API_BASE}/assistants-pedagogiques`
-        : `${API_BASE}/surveillants`;
-
+    const endpoint = role === 'Assistant pédagogique' ? `${API_BASE}/assistants-pedagogiques` : `${API_BASE}/surveillants`;
+    const filiere = allFilieres.find(f => f.id === filiereId);
     try {
         if (!isCurrentlyAssigned) {
-            // Attribution via POST /{userId}/filiere/{filiereId}
             const res = await fetch(`${endpoint}/${userId}/filiere/${filiereId}`, { method: 'POST' });
             if (!res.ok) throw new Error(await res.text());
-            const filiere = allFilieres.find(f => f.id === filiereId);
-            if (filiere && !user.filieres.some(f => f.id === filiereId)) {
+            if (filiere && !user.filieres.some(f => f.id === filiereId))
                 user.filieres.push({ id: filiereId, nomFiliere: filiere.nomFiliere });
-            }
-            showToast(`Filière "${filiere?.nomFiliere}" attribuée à ${user.name}.`, 'success');
+            showToast(`"${filiere?.nomFiliere}" attribuée.`, 'success');
         } else {
-            // Retrait : on met à jour l'utilisateur en retirant la filière de sa liste
-            // Le backend n'a pas d'endpoint DELETE /filiere, on retire localement
-            // et on rafraîchit la map depuis l'API
             user.filieres = user.filieres.filter(f => f.id !== filiereId);
-            const filiere = allFilieres.find(f => f.id === filiereId);
-            showToast(`Filière "${filiere?.nomFiliere}" retirée de ${user.name}.`, 'info');
+            showToast(`"${filiere?.nomFiliere}" retirée.`, 'info');
         }
-
-        // Mise à jour des badges dans le formulaire et dans le tableau
-        user.details = user.filieres.length > 0
-            ? user.filieres.map(f => f.nomFiliere).join(', ')
-            : '— Aucune filière';
+        user.details = user.filieres.length > 0 ? user.filieres.map(f => f.nomFiliere).join(', ') : '— Aucune filière';
         userFiliereMap[userId] = user.filieres;
-        updateCurrentFilieresBadges(user.filieres);
+        updateFilieresBadges(user.filieres, 'currentFilieresBadges');
+        updateFilieresBadges(user.filieres, 'currentFilieresBadgesAP');
         renderAssignStaffFiliereList(user);
         renderTable(currentFilter);
-
-    } catch (e) {
-        showToast('Erreur attribution : ' + parseApiError(e), 'danger');
-    }
+    } catch (e) { showToast('Erreur attribution : ' + parseApiError(e), 'danger'); }
 };
 
-// Ouvre la modale avec les détails complets d'un utilisateur
+// Ouvre la card de visualisation des détails d'un utilisateur
 function openViewModal(u) {
     document.getElementById('viewUserName').innerText = u.name;
     document.getElementById('viewUserEmail').innerText = u.email;
     document.getElementById('viewUserRole').innerText = u.role;
+    document.getElementById('viewUserMatricule').innerText = u.raw.matricule || '—';
     document.getElementById('viewUserStatus').innerHTML =
         `<span class="badge ${u.status === 'Actif' ? 'bg-success' : 'bg-danger'}">${u.status}</span>`;
-
     const avatar = document.getElementById('viewUserAvatar');
     avatar.style.backgroundColor = u.color;
     avatar.innerText = u.name.charAt(0);
 
     const extraDiv = document.getElementById('viewUserExtra');
-    const filieres = u.filieres || [];
-    const filiereBadgesHTML = filieres.length > 0
-        ? filieres.map(f => `<span class="badge rounded-pill me-1 mb-1" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">${f.nomFiliere}</span>`).join('')
-        : '<span class="text-muted fst-italic small">Aucune filière attribuée</span>';
-
-    extraDiv.innerHTML = `
-        <div class="bg-light p-3 rounded-3">
-            <label class="small text-muted fw-bold d-flex align-items-center gap-1 mb-2">
-                <i class="bi bi-diagram-3"></i> FILIÈRES ATTRIBUÉES
-            </label>
-            <div class="d-flex flex-wrap gap-1">${filiereBadgesHTML}</div>
-        </div>`;
-
+    if (u.role === 'Enseignant') {
+        const matieresBadges = u.matieres.length > 0
+            ? u.matieres.map(m => `<span class="badge rounded-pill me-1 mb-1" style="background:#fef9c3;color:#78350f;border:1px solid #fde68a;">${m.nomCours}</span>`).join('')
+            : '<span class="text-muted fst-italic small">Aucune matière attribuée</span>';
+        extraDiv.innerHTML = `
+            <div class="bg-light p-3 rounded-3 mb-2">
+                <label class="small text-muted fw-bold">SPÉCIALITÉ</label>
+                <div class="fw-semibold">${u.raw.specialite || '—'}</div>
+            </div>
+            <div class="bg-light p-3 rounded-3">
+                <label class="small text-muted fw-bold d-flex align-items-center gap-1 mb-2"><i class="bi bi-book"></i> MATIÈRES</label>
+                <div class="d-flex flex-wrap gap-1">${matieresBadges}</div>
+            </div>`;
+    } else {
+        const filiereBadges = u.filieres.length > 0
+            ? u.filieres.map(f => `<span class="badge rounded-pill me-1 mb-1" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">${f.nomFiliere}</span>`).join('')
+            : '<span class="text-muted fst-italic small">Aucune filière attribuée</span>';
+        extraDiv.innerHTML = `
+            <div class="bg-light p-3 rounded-3">
+                <label class="small text-muted fw-bold d-flex align-items-center gap-1 mb-2"><i class="bi bi-diagram-3"></i> FILIÈRES ATTRIBUÉES</label>
+                <div class="d-flex flex-wrap gap-1">${filiereBadges}</div>
+            </div>`;
+    }
     viewModal.show();
 }
 
@@ -528,18 +578,21 @@ function openViewModal(u) {
 async function handleSaveUser() {
     const id = document.getElementById('userId').value;
     const roleStr = document.getElementById('userRole').value;
-
     const baseData = {
         nom: document.getElementById('userNom').value.trim(),
         prenom: document.getElementById('userPrenom').value.trim(),
         email: document.getElementById('userEmail').value,
+        matricule: document.getElementById('userMatricule').value.trim(),
         statut: 'ACTIF'
     };
-
     const password = document.getElementById('userPassword').value;
     if (password || !id) baseData.password = password || 'Pass1234';
 
-    if (roleStr === 'Surveillant') {
+    if (roleStr === 'Enseignant') {
+        baseData.specialite = document.getElementById('userSpecialite')?.value || '';
+        baseData.grade = document.getElementById('userGrade')?.value || '';
+        baseData.roleNames = ['ENSEIGNANT'];
+    } else if (roleStr === 'Surveillant') {
         baseData.affectation = document.getElementById('userAffectation')?.value || '';
         baseData.roleNames = ['SURVEILLANT'];
     } else if (roleStr === 'Assistant pédagogique') {
@@ -549,21 +602,20 @@ async function handleSaveUser() {
 
     try {
         if (id) {
-            const originalUser = currentUserList.find(u => u.id == id);
-            if (!originalUser) throw new Error('Utilisateur original non trouvé');
-            await Api.updateUser(id, baseData, originalUser.raw.roleNames[0]);
+            const original = currentUserList.find(u => u.id == id);
+            if (!original) throw new Error('Utilisateur original non trouvé');
+            await Api.updateUser(id, baseData, original.raw.roleNames[0]);
         } else {
             const created = await Api.createUser(baseData);
-            // Après création, on stocke l'utilisateur pour pouvoir lui attribuer des filières
             currentStaffUser = normalizeUser(created);
-            currentStaffUser.filieres = [];
+            currentStaffUser.filieres = []; currentStaffUser.matieres = [];
             document.getElementById('userId').value = created.id;
         }
         userModal.hide();
         await loadUsers();
-        showToast(id ? 'Utilisateur modifié avec succès.' : 'Utilisateur créé avec succès.', 'success');
+        showToast(id ? 'Utilisateur modifié.' : 'Utilisateur créé.', 'success');
     } catch (e) {
-        showToast('Erreur enregistrement : ' + parseApiError(e), 'danger');
+        showToast('Erreur : ' + parseApiError(e), 'danger');
         console.error(e);
     }
 }
