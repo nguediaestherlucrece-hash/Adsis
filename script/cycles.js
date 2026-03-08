@@ -260,7 +260,7 @@ async function saveCycle() {
     };
     if (!payload.nomCycle) { showToast('Le nom du cycle est requis.', 'warning'); return; }
     const btn = document.getElementById('cycleSubmitBtn');
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
     try {
         if (id) {
             const updated = await apiFetch(`/cycles/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
@@ -274,7 +274,7 @@ async function saveCycle() {
         bootstrap.Modal.getInstance(document.getElementById('cycleModal'))?.hide();
         updateCounts(); renderCurrentTab();
     } catch (e) { showToast('Erreur : ' + parseError(e), 'danger'); }
-    finally { btn.disabled = false; }
+    finally { if (btn) btn.disabled = false; }
 }
 
 // Supprime un cycle après confirmation
