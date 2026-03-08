@@ -69,9 +69,9 @@ let currentUserList = [];
 let currentFilter = 'Tous';
 let searchTerm = '';
 let allFilieres = [];
-let allMatieres = [];           // Toutes les CoursUE (matières)
-let userFiliereMap = {};           // userId → [{id, nomFiliere}]
-let userMatiereMap = {};           // userId → [{id, nomCours, code}]
+let allMatieres = [];
+let userFiliereMap = {};
+let userMatiereMap = {};
 let currentStaffUser = null;
 
 const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
