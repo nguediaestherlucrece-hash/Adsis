@@ -25,11 +25,11 @@ public class EmploiDuTemps {
     @Column(unique = true)
     private String idEmploi;
 
-    private String periode; // Ex: "Semestre 1 2023-2024"
-    private String creneaux; // JSON ou texte structuré
+    private String periode; 
+    private String creneaux;
 
-    // 🔹 Relations JPA
-    @OneToOne(mappedBy = "emploiDuTemps") // Classe reference EmploiDuTemps via emploiDuTemps
+    
+    @OneToOne(mappedBy = "emploiDuTemps") 
     private Classe classe;
 
     @ManyToOne
@@ -39,12 +39,9 @@ public class EmploiDuTemps {
     @OneToMany(mappedBy = "emploiDuTemps")
     private List<Seance> seances = new ArrayList<>();
 
-    // 🔹 Méthodes de logique métier
     public void planifierSeance() {
-        // TODO: logique de planification de séance
     }
 
     public void modifierSeance() {
-        // TODO: logique de modification de séance
     }
 }

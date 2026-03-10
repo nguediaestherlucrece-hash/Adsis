@@ -43,10 +43,10 @@ public class CoursUE {
 
     // 🔹 Méthodes de logique métier
     public void associerClasse() {
-        // TODO: logique d'association avec une classe
+        
     }
 
     public void associerEnseignant() {
-        // TODO: logique d'association avec un enseignant
+       
     }
 }
