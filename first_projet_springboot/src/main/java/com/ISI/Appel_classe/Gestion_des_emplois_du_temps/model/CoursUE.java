@@ -31,7 +31,7 @@ public class CoursUE {
     private String intitule;
     private Integer volumeHoraire;
 
-    // 🔹 Relations JPA
+    // Relations 
     @ManyToMany(mappedBy = "cours")
     private List<Classe> classes = new ArrayList<>();
 
@@ -41,7 +41,7 @@ public class CoursUE {
     @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL)
     private List<Seance> seances = new ArrayList<>();
 
-    // 🔹 Méthodes de logique métier
+    // methode 
     public void associerClasse() {
         
     }

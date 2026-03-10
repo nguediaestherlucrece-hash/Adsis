@@ -11,19 +11,19 @@ public class EmploiDuTempsDTO {
     private String creneaux;
 
     /**
-     * Informations simplifiées sur la classe.
+     * Informations simplifiees sur la classe.
      */
     private Long classeId;
     private String classeNom;
 
     /**
-     * Informations simplifiées sur le gestionnaire.
+     * Informations simplifiees sur le gestionnaire.
      */
     private Long gestionnaireId;
     private String gestionnaireNomComplet;
 
     /**
-     * Nombre de séances planifiées sur cet emploi du temps.
+     * Nombre de séances planifiees de l'emploi du temps.
      */
     private Integer nombreSeances;
 }
