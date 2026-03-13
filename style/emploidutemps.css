@@ -1,0 +1,451 @@
+/* Style général */
+body {
+    background-color: #f4f7fb;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Sidebar - Responsive */
+.sidebar {
+    background-color: white;
+    min-height: 100vh;
+    border-right: 1px solid #dee7f0;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid #dee7f0;
+    }
+}
+
+.sidebar-brand {
+    background-color: #ffffff;
+    color: rgb(101, 101, 246);
+    font-weight: 600;
+    font-size: 1.25rem;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 20px 0;
+    border-bottom: 1px solid #f1f3f9;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.brand-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #2c3e50;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+/* MENU items */
+.nav-link {
+    color: #5a5c69;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+    color: #b7b9cc;
+    margin-right: 12px;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    background-color: #f8f9fc;
+    color: #4e73df;
+}
+
+.nav-link:hover i {
+    color: #4e73df;
+}
+
+.nav-link.active {
+    background-color: #4e73df;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.25);
+}
+
+.nav-link.active i {
+    color: #ffffff;
+}
+
+.admin-profile {
+    background-color: #f8fafd;
+    padding: 0.75rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 500;
+    color: #0d3b66;
+}
+
+.admin-profile i {
+    font-size: 1.4rem;
+    margin-right: 6px;
+}
+
+/* Contenu principal */
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.main-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 576px) {
+    .main-header {
+        padding: 1rem;
+    }
+}
+
+.header-title {
+    color: #0d3b66;
+    font-size: 1.1rem;
+}
+
+.select-custom {
+    width: auto;
+    border-radius: 30px;
+    background: #f0f5fa;
+    border: none;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Période */
+.periode-container {
+    display: flex;
+    align-items: center;
+    background: #f0f5fa;
+    border-radius: 30px;
+    padding: 0.2rem 0.8rem;
+}
+
+.periode-container input[type="week"] {
+    border: none;
+    background: transparent;
+    width: 120px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 576px) {
+    .periode-container input[type="week"] {
+        width: 100px;
+    }
+}
+
+.periode-display {
+    font-size: 0.9rem;
+    padding: 0.3rem 1rem;
+    background: #f8fafd;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Boutons */
+.btn-export-pdf, .btn-save {
+    border: 1px solid #ced8e6;
+    background: white;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-weight: 500;
+    color: #5f48f7;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-export-pdf:hover {
+    background: #e2eaf3;
+}
+
+.btn-save {
+    background: #2953ef;
+    color: white;
+    border: none;
+}
+
+.btn-save:hover {
+    background: #8979ff;
+}
+
+/* Cartes d'éléments */
+.elements-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.2rem;
+    box-shadow: 0 6px 14px rgba(0,20,40,0.05);
+}
+
+@media (max-width: 768px) {
+    .elements-card {
+        padding: 1rem;
+    }
+}
+
+.elements-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.elements-list.horizontal-scroll {
+    max-height: none;
+}
+
+@media (max-width: 768px) {
+    .elements-list.mobile-horizontal {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding-bottom: 5px;
+    }
+}
+
+.elements-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.elements-list::-webkit-scrollbar-thumb {
+    background: #ced8e6;
+    border-radius: 10px;
+}
+
+/* Badges */
+.element-pill {
+    border-radius: 40px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: white;
+    border: none;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    cursor: grab;
+    transition: 0.1s;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .element-pill {
+        width: auto;
+        flex-shrink: 0;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+}
+
+.element-pill i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+    width: 20px;
+}
+
+
+.element-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+}
+
+/* Carte emploi du temps */
+.card-timetable {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem 1.2rem;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.04);
+}
+
+@media (max-width: 768px) {
+    .card-timetable {
+        padding: 1rem;
+    }
+}
+
+.timetable-icon {
+    color: #0d3b66;
+}
+
+/* Tableau */
+.table-timetable {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.table-timetable th {
+    background-color: #f8fafd;
+    color: #1e2f4a;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.9rem 0.2rem;
+}
+
+.table-timetable td {
+    text-align: center;
+    vertical-align: middle;
+    min-height: 80px;
+    background-color: white;
+    border: 1px solid #eaeef2;
+    padding: 0.25rem;
+    position: relative;
+}
+
+.table-timetable td.dropzone {
+    cursor: copy;
+}
+
+.table-timetable td.droppable-hover {
+    background-color: #e9f2fa !important;
+    border: 2px dashed #0d6efd;
+}
+
+.table-timetable td.resize-active {
+    background-color: #fff3cd !important;
+    border: 2px solid #ffc107;
+}
+
+/* Cellule de cours */
+.course-slot {
+    border-radius: 8px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-break: break-word;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    height: 100%;
+    width: 100%;
+    position: relative;
+    cursor: default;
+}
+
+.course-slot .matiere-nom {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.course-slot .enseignants {
+    font-size: 0.65rem;
+    opacity: 0.9;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+}
+
+/* Poignées d'étirement */
+.resize-handle {
+    position: absolute;
+    background-color: rgba(255,255,255,0.3);
+    transition: background-color 0.2s;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background-color: rgba(255,255,255,0.8);
+}
+
+.resize-handle.vertical {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    cursor: s-resize;
+    border-radius: 0 0 8px 8px;
+}
+
+.resize-handle.horizontal {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: e-resize;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Couleurs des matières - exactement comme définies dans le JS */
+.bg-matiere-1 { background: #0f22f1; } /* Algorithmique */
+.bg-matiere-2 { background: #2d6a4f; } /* Bases de données */
+.bg-matiere-3 { background: #eb1919; } /* Réseaux */
+.bg-matiere-4 { background: #ab1be4; } /* Systèmes d'exploitation */
+.bg-matiere-5 { background: #f6940a; } /* Programmation Web */
+.bg-matiere-6 { background: #1093fe; } /* Anglais */
+.bg-matiere-7 { background: #f318aa; } /* Math Discrètes */
+.bg-evenement { background: #d97706; }
+/* Styles pour les nouveaux éléments */
+#coursesContainer {
+    background-color: #f8fafd;
+    border: 1px dashed #ced8e6;
+}
+
+#coursesContainer .element-pill {
+    width: auto;
+    margin-bottom: 0;
+    cursor: grab;
+}
+
+#coursesContainer .element-pill:active {
+    cursor: grabbing;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2e59d9;
+}
+
+#saveSelect {
+    max-width: 200px;
+}
+.btn-new {
+    border: 1px solid #ced8e6;
+    background: white;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-weight: 500;
+    color: #28a745;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+.btn-new:hover {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}

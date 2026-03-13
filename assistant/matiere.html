@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADSIS - Gestion des matières</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../style/matiere.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR - identique à l'interface précédente -->
+            <div class="col-lg-2 col-md-3 col-sm-12 p-0 sidebar">
+                <div class="sidebar-brand">
+                    <div class="logo-box mb-4 pb-3 border-bottom">
+                        <img src="../assets/image.png" alt="Logo ADSIS" class="logo" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%234e73df%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3EADSIS%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                        <h5 class="brand-name m-0 ms-2">ADSIS</h5>
+                    </div>
+                </div>
+                <nav class="nav flex-column gap-2">
+                    <a class="nav-link" href="tableaudebordass.html"><i class="bi bi-grid"></i>Tableau de bord</a>
+                    <a class="nav-link active" href="matiere.html"><i class="bi bi-book"></i>Matiere</a>
+                    <a class="nav-link" href="emploidutemps.html"><i class="bi bi-calendar3"></i>Emploi du temps</a>
+                </nav>
+                </nav>
+                <hr class="mx-3 d-none d-md-block">
+                <div class="admin-profile mx-3 mt-4 d-none d-md-flex">
+                    <i class="fas fa-user"></i>Assistant pedagogique
+                </div>
+            </div>
+
+            <!-- CONTENU PRINCIPAL -->
+            <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
+                <!-- En-tête -->
+                <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0 fw-semibold header-title">Gestion des matières</h5>
+                    <div class="d-flex gap-2">
+                        <span class="text-muted">Gérez les matières et leur volume horaire</span>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'ajout -->
+                <div class="card-course-add mb-4">
+                    <h6 class="fw-semibold mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter une matière</h6>
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" id="codeInput" placeholder="Code (ex: MATH)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="nomInput" placeholder="Nom de la matière">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" id="heuresInput" placeholder="Heures/semaine" step="0.5" min="0">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="parentSelect">
+                                <option value="">-- Aucun parent (matière principale) --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary w-100" id="ajouterBtn">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liste des matières -->
+                <div class="card-timetable">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-semibold mb-0"><i class="fas fa-list me-2"></i>Matières</h5>
+                        <span class="badge bg-secondary" id="totalMatieres">8</span>
+                    </div>
+                    <div id="matieresContainer" class="matieres-list">
+                        <!-- Les matières seront injectées ici par JavaScript -->
+                    </div>
+                    <!-- Résumé -->
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">Total matières</p>
+                            <h4 id="totalMatieresFooter">8</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">Heures totales / semaine</p>
+                            <h4 id="totalHeures">29h</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">Moyenne h/matière</p>
+                            <h4 id="moyenneHeures">3.6h</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../script/matiere.js"></script>
+</body>
+</html>
