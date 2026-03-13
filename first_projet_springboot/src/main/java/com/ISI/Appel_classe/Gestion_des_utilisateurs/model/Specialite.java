@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,5 +34,8 @@ public class Specialite {
 
     @OneToMany(mappedBy = "specialite", cascade =CascadeType.ALL)
     private List<Classe> classes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "specialite", cascade =CascadeType.ALL)
+    private List<CoursUE> cours = new ArrayList<>();
 
 }

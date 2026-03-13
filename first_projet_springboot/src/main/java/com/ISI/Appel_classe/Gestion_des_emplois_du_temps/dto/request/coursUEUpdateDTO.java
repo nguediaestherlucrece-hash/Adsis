@@ -9,4 +9,6 @@ public class coursUEUpdateDTO {
     private String codeUE;
     private String intitule;
     private Integer volumeHoraire;
+
+    private Long specialiteId;
 }

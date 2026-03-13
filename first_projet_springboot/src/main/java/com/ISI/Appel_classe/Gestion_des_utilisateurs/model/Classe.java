@@ -37,10 +37,6 @@ public class Classe {
     @OneToMany(mappedBy = "classe", cascade =CascadeType.ALL)
     private List<Etudiant> etudiants = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(name = "classe_cours", joinColumns = @JoinColumn(name = "classe_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))
-    private List<CoursUE> cours = new ArrayList<>();
-
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "emploi_du_temps_id", referencedColumnName = "id")
     private EmploiDuTemps emploiDuTemps;

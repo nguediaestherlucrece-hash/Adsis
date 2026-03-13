@@ -29,9 +29,8 @@ public class Filiere {
 
     // 🔹 Relations JPA
 
-    @ManyToOne
-    @JoinColumn(name = "niveau_id")
-    private Niveau niveau;
+    @ManyToMany(mappedBy = "filieres")
+    private List<Niveau> niveaux = new ArrayList<>();
 
     @OneToMany(mappedBy = "filiere", cascade =CascadeType.ALL)
     private List<Specialite> specialites = new ArrayList<>();

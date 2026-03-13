@@ -9,6 +9,4 @@ public class FiliereDTO {
     private String nomFiliere;
     private String description;
 
-
-    private Long niveauId;
 }

@@ -17,7 +17,6 @@ public class FiliereMapper {
         dto.setIdFiliere(filiere.getIdFiliere());
         dto.setNomFiliere(filiere.getNomFiliere());
         dto.setDescription(filiere.getDescription());
-        dto.setNiveauId(filiere.getNiveau() != null ? filiere.getNiveau().getId() : null);
         return dto;
     }
 

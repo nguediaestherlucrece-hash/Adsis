@@ -5,7 +5,9 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.request.EmploiDuTem
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.EmploiDuTempsDTO;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.mappers.EmploiDuTempsMapper;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Semestre;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.EmploiDuTempsRepository;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.SemestreRepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface.EmploiDuTempsService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
 public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
 
     private final EmploiDuTempsRepository emploiDuTempsRepository;
+    private final SemestreRepository semestreRepository;
     private final ClasseRepository classeRepository;
     private final AssistantPedagogiqueRepository assistantPedagogiqueRepository;
     private final EmploiDuTempsMapper mapper;
@@ -59,8 +62,14 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
     public EmploiDuTempsDTO createEmploi(EmploiDuTempsCreateDTO dto) {
         EmploiDuTemps emploi = new EmploiDuTemps();
         emploi.setIdEmploi(dto.getIdEmploi());
-        emploi.setPeriode(dto.getPeriode());
-        emploi.setCreneaux(dto.getCreneaux());
+        emploi.setDateDebut(dto.getDateDebut());
+        emploi.setDateFin(dto.getDateFin());
+
+        if (dto.getSemestreId() != null) {
+            Semestre semestre = semestreRepository.findById(dto.getClasseId())
+                    .orElseThrow(() -> new RuntimeException("Semestre non trouvée avec l'id: " + dto.getSemestreId()));
+            emploi.setSemestre(semestre);
+        }
 
         if (dto.getClasseId() != null) {
             Classe classe = classeRepository.findById(dto.getClasseId())
@@ -85,8 +94,14 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
                 .orElseThrow(() -> new RuntimeException("Emploi du temps non trouvé avec l'id: " + id));
 
         emploi.setIdEmploi(dto.getIdEmploi());
-        emploi.setPeriode(dto.getPeriode());
-        emploi.setCreneaux(dto.getCreneaux());
+        emploi.setDateDebut(dto.getDateDebut());
+        emploi.setDateFin(dto.getDateFin());
+
+        if (dto.getSemestreId() != null) {
+            Semestre semestre = semestreRepository.findById(dto.getClasseId())
+                    .orElseThrow(() -> new RuntimeException("Semestre non trouvée avec l'id: " + dto.getSemestreId()));
+            emploi.setSemestre(semestre);
+        }
 
         if (dto.getClasseId() != null) {
             Classe classe = classeRepository.findById(dto.getClasseId())

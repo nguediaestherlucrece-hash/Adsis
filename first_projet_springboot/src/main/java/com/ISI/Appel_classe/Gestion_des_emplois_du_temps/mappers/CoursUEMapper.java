@@ -7,23 +7,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class CoursUEMapper {
 
-    public CoursUEDTO toDTO(CoursUE entity) {
-        if (entity == null) return null;
+    public CoursUEDTO toDTO(CoursUE cours) {
+        if (cours == null) return null;
 
         CoursUEDTO dto = new CoursUEDTO();
-        dto.setId(entity.getId());
-        dto.setIdCours(entity.getIdCours());
-        dto.setCodeUE(entity.getCodeUE());
-        dto.setIntitule(entity.getIntitule());
-        dto.setVolumeHoraire(entity.getVolumeHoraire());
-
-        if (entity.getClasses() != null) {
-            dto.setNombreClasses(entity.getClasses().size());
-        }
-
-        if (entity.getEnseignants() != null) {
-            dto.setNombreEnseignants(entity.getEnseignants().size());
-        }
+        dto.setId(cours.getId());
+        dto.setIdCours(cours.getIdCours());
+        dto.setCodeUE(cours.getCodeUE());
+        dto.setIntitule(cours.getIntitule());
+        dto.setVolumeHoraire(cours.getVolumeHoraire());
+        dto.setSpecialiteId(cours.getSpecialite() != null ? cours.getSpecialite().getId() : null);
 
         return dto;
     }

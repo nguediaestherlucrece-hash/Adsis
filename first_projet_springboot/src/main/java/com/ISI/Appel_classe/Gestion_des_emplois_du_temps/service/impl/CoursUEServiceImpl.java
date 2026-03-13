@@ -7,6 +7,8 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.mappers.CoursUEMapper;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.CoursUERepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface.CourUEService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class CoursUEServiceImpl implements CourUEService {
 
     private final CoursUERepository coursUERepository;
+    private final SpecialiteRepository specialiteRepository;
     private final CoursUEMapper mapper;
 
     @Override
@@ -60,6 +63,10 @@ public class CoursUEServiceImpl implements CourUEService {
         cours.setIntitule(dto.getIntitule());
         cours.setVolumeHoraire(dto.getVolumeHoraire());
 
+        Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));
+        cours.setSpecialite(specialite);
+
         CoursUE saved = coursUERepository.save(cours);
         log.info("Cours UE créé avec l'id {}", saved.getId());
         return mapper.toDTO(saved);
@@ -74,6 +81,10 @@ public class CoursUEServiceImpl implements CourUEService {
         cours.setCodeUE(dto.getCodeUE());
         cours.setIntitule(dto.getIntitule());
         cours.setVolumeHoraire(dto.getVolumeHoraire());
+
+        Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));
+        cours.setSpecialite(specialite);
 
         CoursUE updated = coursUERepository.save(cours);
         log.info("Cours UE mis à jour avec l'id {}", updated.getId());

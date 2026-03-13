@@ -1,8 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Seance;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,9 +29,10 @@ public class CoursUE {
     private String intitule;
     private Integer volumeHoraire;
 
-    // Relations 
-    @ManyToMany(mappedBy = "cours")
-    private List<Classe> classes = new ArrayList<>();
+    // Relations
+    @ManyToOne
+    @JoinColumn(name = "specialite_id")
+    private Specialite specialite;
 
     @ManyToMany(mappedBy = "coursEnseignes")
     private List<Enseignant> enseignants = new ArrayList<>();

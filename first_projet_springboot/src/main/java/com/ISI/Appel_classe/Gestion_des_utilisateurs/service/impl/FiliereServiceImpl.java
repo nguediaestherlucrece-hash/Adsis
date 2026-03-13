@@ -45,11 +45,6 @@ public class FiliereServiceImpl implements FiliereService {
     public FiliereDTO createFiliere(FiliereCreateDTO dto) {
         Filiere f = mapper.fromCreateDTO(dto);
         // Attacher le Niveau si niveauId fourni
-        if (dto.getNiveauId() != null) {
-            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Niveau non trouvé: " + dto.getNiveauId()));
-            f.setNiveau(niveau);
-        }
         Filiere saved = filiereRepository.save(Objects.requireNonNull(f, "Filiere cannot be null"));
         return mapper.toDTO(saved);
     }
@@ -67,13 +62,6 @@ public class FiliereServiceImpl implements FiliereService {
         if (dto.getDescription() != null)
             f.setDescription(dto.getDescription());
         // Mettre à jour le niveau parent
-        if (dto.getNiveauId() != null) {
-            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Niveau non trouvé: " + dto.getNiveauId()));
-            f.setNiveau(niveau);
-        } else {
-            f.setNiveau(null); // Permettre la déliaison
-        }
 
         Filiere updated = filiereRepository.save(Objects.requireNonNull(f, "Filiere cannot be null"));
         return mapper.toDTO(updated);

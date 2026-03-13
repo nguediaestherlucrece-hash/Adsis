@@ -2,12 +2,13 @@ package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Seance;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +26,12 @@ public class EmploiDuTemps {
     @Column(unique = true)
     private String idEmploi;
 
-    private String periode; 
-    private String creneaux;
+    private LocalDate dateDebut;
+    private LocalTime dateFin;
 
+    @ManyToOne
+    @JoinColumn(name = "semestre_id")
+    private Semestre semestre;
     
     @OneToOne(mappedBy = "emploiDuTemps") 
     private Classe classe;

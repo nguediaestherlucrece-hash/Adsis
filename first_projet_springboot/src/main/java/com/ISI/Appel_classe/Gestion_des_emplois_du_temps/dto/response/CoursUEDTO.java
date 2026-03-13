@@ -11,6 +11,5 @@ public class CoursUEDTO {
     private String intitule;
     private Integer volumeHoraire;
 
-    private Integer nombreClasses;
-    private Integer nombreEnseignants;
+    private Long specialiteId;
 }
