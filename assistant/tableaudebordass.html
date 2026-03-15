@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADSIS - Tableau de bord</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Style principal -->
+    <link rel="stylesheet" href="../style/tableaudebordass.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR -->
+            <div class="col-lg-2 col-md-3 col-sm-12 p-0 sidebar">
+                <div class="sidebar-brand">
+                    <div class="logo-box mb-4 pb-3 border-bottom">
+                        <img src="../assets/image.png" alt="Logo ADSIS" class="logo" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%234e73df%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3EADSIS%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                        <h5 class="brand-name m-0 ms-2">ADSIS</h5>
+                    </div>
+                </div>
+                <nav class="nav flex-column gap-2">
+                     <a class="nav-link  active" href="tableaudebordass.html"><i class="bi bi-grid"></i>Tableau de bord</a>
+                    <a class="nav-link" href="matiere.html"><i class="bi bi-book"></i>Matiere</a>
+                    <a class="nav-link" href="emploidutemps.html"><i class="bi bi-calendar3"></i>Emploi du temps</a>
+                </nav>
+                <hr class="mx-3 d-none d-md-block">
+                <div class="admin-profile mx-3 mt-4 d-none d-md-flex">
+                    <i class="fas fa-user"></i> Assistant pedagogique
+                </div>
+            </div>
+
+            <!-- CONTENU PRINCIPAL -->
+            <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
+                <!-- En-tête -->
+                <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0 fw-semibold header-title">Tableau de bord</h5>
+                    <div class="d-flex gap-2">
+                        <span class="text-muted" id="currentDate"></span>
+                    </div>
+                </div>
+
+                <!-- Statistiques principales -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon bg-primary-soft me-3">
+                                <i class="fas fa-users" style="color: #0d3b66;"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-0">Étudiants</p>
+                                <h3 class="fw-bold mb-0">1 234</h3>
+                                <small class="text-success">+12%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon bg-success-soft me-3">
+                                <i class="fas fa-chalkboard-teacher" style="color: #0fd43d;"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-0">Enseignants</p>
+                                <h3 class="fw-bold mb-0">87</h3>
+                                <small class="text-success">+5%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon bg-warning-soft me-3">
+                                <i class="fas fa-book-open" style="color: #edb611;"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-0">Matières</p>
+                                <h3 class="fw-bold mb-0">42</h3>
+                                <small class="text-muted">+3</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon bg-info-soft me-3">
+                                <i class="fas fa-clock" style="color: #0ed3f5;"></i>
+                            </div>
+                            <div>
+                                <p class="text-muted mb-0">Cours cette semaine</p>
+                                <h3 class="fw-bold mb-0">168</h3>
+                                <small class="text-muted">heures</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deux colonnes : Activités récentes et Annonces (remplace le graphique) -->
+                <div class="row g-4">
+                    <!-- Dernières activités -->
+                    <div class="col-md-6">
+                        <div class="card-timetable">
+                            <h5 class="fw-semibold mb-3"><i class="fas fa-history me-2"></i>Activités récentes</h5>
+                            <div id="activityList">
+                                <div class="activity-item d-flex align-items-center">
+                                    <i class="fas fa-user-plus text-success me-3"></i>
+                                    <div>
+                                        <p class="mb-0"><strong>Dr. Martin</strong> a rejoint l'équipe</p>
+                                        <small class="text-muted">Il y a 5 minutes</small>
+                                    </div>
+                                </div>
+                                <div class="activity-item d-flex align-items-center">
+                                    <i class="fas fa-calendar-plus text-primary me-3"></i>
+                                    <div>
+                                        <p class="mb-0"><strong>Conférence IA</strong> ajoutée à l'emploi du temps</p>
+                                        <small class="text-muted">Il y a 1 heure</small>
+                                    </div>
+                                </div>
+                                <div class="activity-item d-flex align-items-center">
+                                    <i class="fas fa-pen text-warning me-3"></i>
+                                    <div>
+                                        <p class="mb-0"><strong>Mme. Lambert</strong> a modifié son cours</p>
+                                        <small class="text-muted">Il y a 3 heures</small>
+                                    </div>
+                                </div>
+                                <div class="activity-item d-flex align-items-center">
+                                    <i class="fas fa-file-export text-info me-3"></i>
+                                    <div>
+                                        <p class="mb-0">Export PDF de l'emploi du temps</p>
+                                        <small class="text-muted">Hier</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Annonces -->
+                    <div class="col-md-6">
+                        <div class="card-timetable">
+                            <h5 class="fw-semibold mb-3"><i class="fas fa-bullhorn me-2"></i>Annonces</h5>
+                            <div class="alert alert-primary" role="alert">
+                                <strong>Réunion pédagogique</strong> – Vendredi 14h en salle 101.
+                            </div>
+                            <div class="alert alert-success" role="alert">
+                                <strong>Mise à jour</strong> – Nouvelle fonctionnalité d'export disponible.
+                            </div>
+                            <div class="alert alert-warning" role="alert">
+                                <strong>Maintenance</strong> – Le serveur sera indisponible samedi de 10h à 12h.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taux de progression par cycle -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card-timetable">
+                            <h5 class="fw-semibold mb-3"><i class="fas fa-layer-group me-2"></i>Progression par cycle</h5>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>L1 - Génie Informatique</span>
+                                    <span>75%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: 75%;"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>L2 - Génie Informatique</span>
+                                    <span>60%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 60%;"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>L3 - Génie Informatique</span>
+                                    <span>45%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: 45%;"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>M1 - Génie Logiciel</span>
+                                    <span>30%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: 30%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Espace supplémentaire ou autres infos (optionnel) -->
+                    <div class="col-md-6">
+                        <div class="card-timetable">
+                            <h5 class="fw-semibold mb-3"><i class="fas fa-calendar-check me-2"></i>Événements à venir</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="far fa-dot-circle text-primary me-2"></i> 20 mars : Conseil de classe L1</li>
+                                <li class="mb-2"><i class="far fa-dot-circle text-primary me-2"></i> 22 mars : Sortie pédagogique</li>
+                                <li class="mb-2"><i class="far fa-dot-circle text-primary me-2"></i> 25 mars : Remise des notes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../script/tableaudebordass.js"></script>
+</body>
+</html>
