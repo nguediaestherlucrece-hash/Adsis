@@ -35,6 +35,7 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     private final UtilisateurRepository utilisateurRepository;
     private final AssistantPedagogiqueMapper mapper;
     private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
+    private final PermissionOverrideHelper permissionOverrideHelper;
 
     @Override
     public List<AssistantPedagogiqueDTO> getAllAssistants() {
@@ -105,6 +106,9 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         }
         assistant.setRoles(roles);
 
+        // Appliquer les permissions retirées
+        permissionOverrideHelper.applyRemovedPermissions(assistant, dto.getRemovedPermissions());
+
         AssistantPedagogique saved = assistantRepository.save(assistant);
         log.info("Assistant pédagogique créé - ID: {}", saved.getId());
 
@@ -147,6 +151,9 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
             assistant.getRoles().clear();
             assistant.setRoles(roles);
         }
+
+        // Mettre à jour les permissions retirées
+        permissionOverrideHelper.updateRemovedPermissions(assistant, dto.getRemovedPermissions());
 
         AssistantPedagogique updated = assistantRepository.save(Objects.requireNonNull(assistant, "AssistantPedagogique cannot be null"));
         return mapper.toDTO(updated);

@@ -19,4 +19,7 @@ public class SurveillantCreateDTO {
 
     // Attributs spécifiques à Surveillant
     private String affectation; // Ex: "Bâtiment A", "Département Informatique"
+
+    // Permissions retirées
+    private Set<String> removedPermissions;
 }

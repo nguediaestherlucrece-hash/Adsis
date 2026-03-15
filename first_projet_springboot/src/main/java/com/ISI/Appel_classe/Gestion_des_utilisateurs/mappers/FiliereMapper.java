@@ -17,7 +17,9 @@ public class FiliereMapper {
         dto.setIdFiliere(filiere.getIdFiliere());
         dto.setNomFiliere(filiere.getNomFiliere());
         dto.setDescription(filiere.getDescription());
-        dto.setNiveauId(filiere.getNiveau() != null ? filiere.getNiveau().getId() : null);
+        if (filiere.getNiveaux() != null && !filiere.getNiveaux().isEmpty()) {
+            dto.setNiveauIds(filiere.getNiveaux().stream().map(com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Niveau::getId).collect(java.util.stream.Collectors.toList()));
+        }
         return dto;
     }
 

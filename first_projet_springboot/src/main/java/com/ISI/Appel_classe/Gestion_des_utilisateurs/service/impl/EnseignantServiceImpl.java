@@ -42,6 +42,7 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final EnseignantMapper mapper;
+    private final PermissionOverrideHelper permissionOverrideHelper;
 
     @Override
     public List<EnseignantDTO> getAllEnseignants() {
@@ -138,6 +139,9 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.setCoursEnseignes(cours);
         }
 
+        // Appliquer les permissions retirées
+        permissionOverrideHelper.applyRemovedPermissions(enseignant, dto.getRemovedPermissions());
+
         Enseignant saved = enseignantRepository.save(enseignant);
         log.info("Enseignant créé avec succès - ID: {}", saved.getId());
 
@@ -200,6 +204,9 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.getCoursEnseignes().clear();
             enseignant.setCoursEnseignes(cours);
         }
+
+        // Mettre à jour les permissions retirées
+        permissionOverrideHelper.updateRemovedPermissions(enseignant, dto.getRemovedPermissions());
 
         Enseignant updated = enseignantRepository.save(Objects.requireNonNull(enseignant, "Enseignant cannot be null"));
         log.info("Enseignant mis à jour avec succès");

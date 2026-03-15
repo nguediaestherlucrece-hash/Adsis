@@ -29,6 +29,11 @@ public class EnseignantDTO {
     private LocalDateTime createdAt;
     private Set<String> roleNames;
 
+    // Permissions
+    private Set<String> rolePermissions;
+    private Set<String> removedPermissions;
+    private Set<String> effectivePermissions;
+
     // ========================================
     // CHAMPS SPÉCIFIQUES À ENSEIGNANT
     // ========================================

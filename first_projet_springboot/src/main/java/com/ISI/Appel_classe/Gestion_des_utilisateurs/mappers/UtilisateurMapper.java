@@ -1,10 +1,12 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers;
 
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.UtilisateurDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Permission;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,7 +30,27 @@ public class UtilisateurMapper {
                 .collect(Collectors.toSet());
         dto.setRoleNames(roleNames);
 
+        // Permissions du rôle
+        Set<String> rolePermissions = utilisateur.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(Permission::getName)
+                .collect(Collectors.toSet());
+        dto.setRolePermissions(rolePermissions);
+
+        // Permissions retirées
+        Set<String> removedPermissions = new HashSet<>();
+        if (utilisateur.getPermissionOverrides() != null) {
+            removedPermissions = utilisateur.getPermissionOverrides().stream()
+                    .map(o -> o.getPermission().getName())
+                    .collect(Collectors.toSet());
+        }
+        dto.setRemovedPermissions(removedPermissions);
+
+        // Permissions effectives = rôle - retirées
+        Set<String> effectivePermissions = new HashSet<>(rolePermissions);
+        effectivePermissions.removeAll(removedPermissions);
+        dto.setEffectivePermissions(effectivePermissions);
+
         return dto;
     }
 }
-

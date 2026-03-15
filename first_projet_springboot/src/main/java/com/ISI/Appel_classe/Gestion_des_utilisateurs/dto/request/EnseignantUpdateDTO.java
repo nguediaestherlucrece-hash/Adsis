@@ -34,4 +34,7 @@ public class EnseignantUpdateDTO {
     // ========================================
 
     private List<Long> coursIds;
+
+    // Permissions retirées
+    private Set<String> removedPermissions;
 }

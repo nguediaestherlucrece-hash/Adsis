@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class Niveau {
     @JoinColumn(name = "cycle_id")
     private Cycle cycle;
 
-    @OneToMany(mappedBy = "niveau", cascade =CascadeType.ALL)
+    @ManyToMany
+    @JoinTable(name = "niveau_filiere", joinColumns = @JoinColumn(name = "niveau_id"), inverseJoinColumns = @JoinColumn(name = "filiere_id"))
     private List<Filiere> filieres = new ArrayList<>();
 }

@@ -35,6 +35,7 @@ public class SurveillantServiceImpl implements SurveillantService {
     private final UtilisateurRepository utilisateurRepository;
     private final SurveillantMapper mapper;
     private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
+    private final PermissionOverrideHelper permissionOverrideHelper;
 
     @Override
     public List<SurveillantDTO> getAllSurveillants() {
@@ -105,6 +106,9 @@ public class SurveillantServiceImpl implements SurveillantService {
         }
         surveillant.setRoles(roles);
 
+        // Appliquer les permissions retirées
+        permissionOverrideHelper.applyRemovedPermissions(surveillant, dto.getRemovedPermissions());
+
         Surveillant saved = surveillantRepository.save(surveillant);
         log.info("Surveillant créé - ID: {}", saved.getId());
 
@@ -147,6 +151,9 @@ public class SurveillantServiceImpl implements SurveillantService {
             surveillant.getRoles().clear();
             surveillant.setRoles(roles);
         }
+
+        // Mettre à jour les permissions retirées
+        permissionOverrideHelper.updateRemovedPermissions(surveillant, dto.getRemovedPermissions());
 
         Surveillant updated = surveillantRepository.save(Objects.requireNonNull(surveillant, "Surveillant cannot be null"));
         return mapper.toDTO(updated);

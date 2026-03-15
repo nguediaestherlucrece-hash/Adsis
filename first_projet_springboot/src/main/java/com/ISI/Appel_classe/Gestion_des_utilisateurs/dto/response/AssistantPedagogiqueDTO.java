@@ -22,6 +22,11 @@ public class AssistantPedagogiqueDTO {
     private LocalDateTime createdAt;
     private Set<String> roleNames;
 
+    // Permissions
+    private Set<String> rolePermissions;
+    private Set<String> removedPermissions;
+    private Set<String> effectivePermissions;
+
     // Attributs spécifiques
     private String departement;
 

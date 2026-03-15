@@ -7,7 +7,5 @@ public class FiliereUpdateDTO {
     private String idFiliere;
     private String nomFiliere;
     private String description;
-
-
-    private Long niveauId;
+    private java.util.List<Long> niveauIds;
 }

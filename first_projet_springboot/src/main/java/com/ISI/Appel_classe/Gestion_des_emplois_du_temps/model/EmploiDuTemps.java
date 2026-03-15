@@ -2,12 +2,13 @@ package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Seance;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,11 +26,14 @@ public class EmploiDuTemps {
     @Column(unique = true)
     private String idEmploi;
 
-    private String periode; // Ex: "Semestre 1 2023-2024"
-    private String creneaux; // JSON ou texte structuré
+    private LocalDate dateDebut;
+    private LocalTime dateFin;
 
-    // 🔹 Relations JPA
-    @OneToOne(mappedBy = "emploiDuTemps") // Classe reference EmploiDuTemps via emploiDuTemps
+    @ManyToOne
+    @JoinColumn(name = "semestre_id")
+    private Semestre semestre;
+    
+    @OneToOne(mappedBy = "emploiDuTemps") 
     private Classe classe;
 
     @ManyToOne
@@ -39,12 +43,9 @@ public class EmploiDuTemps {
     @OneToMany(mappedBy = "emploiDuTemps")
     private List<Seance> seances = new ArrayList<>();
 
-    // 🔹 Méthodes de logique métier
     public void planifierSeance() {
-        // TODO: logique de planification de séance
     }
 
     public void modifierSeance() {
-        // TODO: logique de modification de séance
     }
 }

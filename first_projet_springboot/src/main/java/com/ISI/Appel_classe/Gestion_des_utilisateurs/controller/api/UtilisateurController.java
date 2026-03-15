@@ -6,6 +6,9 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.UtilisateurDTO
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +23,18 @@ public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
 
+    /**
+     * Rechercher les utilisateurs avec filtres
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<UtilisateurDTO>> searchWithFilters(
+            @RequestParam(required = false) String recherche,
+            @RequestParam String type,
+            @RequestParam(required = false) Long filiere,
+            @PageableDefault(size = 10) Pageable pageable) {
+        log.info("Recherche d'utilisateurs avec filtres: recherche={}, type={}, filiere={}", recherche, type, filiere);
+        return ResponseEntity.ok(utilisateurService.searchWithFilters(recherche, type, filiere, pageable));
+    }
     /**
      * Récupérer la liste de tous les utilisateurs
      */

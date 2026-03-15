@@ -1,7 +1,9 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model;
 
-import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
-import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Appel;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,7 +33,7 @@ public class Seance {
     private LocalDate date; // Changé de String à LocalDate
     private LocalTime heureDebut; // Changé de String à LocalTime
     private LocalTime heureFin; // Changé de String à LocalTime
-    private String statut; // "ouverte", "clôturée"
+    private boolean statut; // "ouverte", "clôturée"
 
     // 🔹 Relations JPA
     @ManyToOne

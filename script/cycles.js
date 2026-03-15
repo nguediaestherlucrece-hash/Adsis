@@ -182,7 +182,6 @@ function renderCurrentTab() {
     if (activeTab === 'classes') renderClasses();
 }
 
-// ─── CYCLES ─────────────────────────────────────────────────────────────────
 
 // Affiche la liste des cycles dans le tableau
 function renderCycles() {
@@ -421,16 +420,17 @@ async function deleteNiveau(id) {
 }
 
 // Remplit la liste déroulante des niveaux (objets avec id, nom, cycleId)
-function populateNiveauSelect(selectId, selectedId = null) {
+function populateNiveauSelect(selectId, selectedIds = []) {
     const sel = document.getElementById(selectId);
     if (!sel) return;
-    sel.innerHTML = `<option value="">-- Sélectionnez un niveau --</option>`;
+    sel.innerHTML = sel.multiple ? '' : `<option value="">-- Sélectionnez un niveau --</option>`;
+    const idsArray = Array.isArray(selectedIds) ? selectedIds : (selectedIds ? [selectedIds] : []);
     niveaux.forEach(n => {
         const cycle = cycles.find(c => c.id == n.cycleId);
         const opt = document.createElement('option');
         opt.value = n.id;
         opt.textContent = cycle ? `${n.nom || n.nomNiveau} (${cycle.nomCycle})` : (n.nom || n.nomNiveau);
-        if (selectedId != null && n.id == selectedId) opt.selected = true;
+        if (idsArray.includes(n.id)) opt.selected = true;
         sel.appendChild(opt);
     });
 }
@@ -509,10 +509,13 @@ function renderFilieres() {
             <td class="ps-4 fw-semibold">${f.nomFiliere || '—'}</td>
             <td><span class="badge bg-info text-dark">${f.idFiliere || '—'}</span></td>
             <td>${(() => {
-                const niv = niveaux.find(n => n.id == f.niveauId);
-                return niv
-                    ? `<span class="badge" style="background:#7c3aed;color:white;">${niv.nom || niv.nomNiveau}</span>`
-                    : '<span class="text-muted fst-italic">—</span>';
+                if (!f.niveauIds || f.niveauIds.length === 0) {
+                    return '<span class="text-muted fst-italic">—</span>';
+                }
+                return f.niveauIds.map(nid => {
+                    const niv = niveaux.find(n => n.id == nid);
+                    return niv ? `<span class="badge me-1 mb-1" style="background:#7c3aed;color:white;">${niv.nom || niv.nomNiveau}</span>` : '';
+                }).join('');
             })()
             }
             </td>
@@ -546,7 +549,7 @@ function openCreateFiliere() {
     document.getElementById('filiereIdFiliere').value = '';
     document.getElementById('filiereNom').value = '';
     document.getElementById('filiereDescription').value = '';
-    populateNiveauSelect('filiereNiveauId');
+    populateNiveauSelect('filiereNiveauId', []);
     new bootstrap.Modal(document.getElementById('filiereModal')).show();
 }
 
@@ -559,33 +562,35 @@ function openEditFiliere(id) {
     document.getElementById('filiereIdFiliere').value = f.idFiliere || '';
     document.getElementById('filiereNom').value = f.nomFiliere || '';
     document.getElementById('filiereDescription').value = f.description || '';
-    // filiereNiveauId attendu = id de l'objet Niveau
-    populateNiveauSelect('filiereNiveauId', f.niveauId);
+    // filiereNiveauId attend un tableau d'ids de niveaux
+    populateNiveauSelect('filiereNiveauId', f.niveauIds || []);
     new bootstrap.Modal(document.getElementById('filiereModal')).show();
 }
 
-// Enregistre une filière (création ou modification) — niveauId = id de l'objet Niveau
+// Enregistre une filière (création ou modification) — avec gestion de niveaux multiples
 async function saveFiliere() {
     const id = document.getElementById('filiereId').value;
-    const niveauId = document.getElementById('filiereNiveauId').value;
-    if (!niveauId) { showToast('Veuillez sélectionner un niveau.', 'warning'); return; }
+    const niveauSelect = document.getElementById('filiereNiveauId');
+    const selectedNiveauIds = Array.from(niveauSelect.selectedOptions).map(opt => parseInt(opt.value)).filter(v => !isNaN(v));
+
+    if (selectedNiveauIds.length === 0) { showToast('Veuillez sélectionner au moins un niveau.', 'warning'); return; }
     const nom = document.getElementById('filiereNom').value.trim();
     if (!nom) { showToast('Le nom de la filière est requis.', 'warning'); return; }
     const payload = {
         idFiliere: document.getElementById('filiereIdFiliere').value.trim(),
         nomFiliere: nom,
         description: document.getElementById('filiereDescription').value.trim(),
-        niveauId: parseInt(niveauId),   // FK vers l'objet Niveau
+        niveauIds: selectedNiveauIds,   // Liste de FK vers les objets Niveau
     };
     try {
         if (id) {
             const updated = await apiFetch(`/filieres/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-            updated.niveauId = payload.niveauId;
+            updated.niveauIds = payload.niveauIds;
             filieres = filieres.map(f => f.id == id ? updated : f);
             showToast('Filière modifiée.', 'success');
         } else {
             const created = await apiFetch('/filieres', { method: 'POST', body: JSON.stringify(payload) });
-            if (!created.niveauId) created.niveauId = payload.niveauId;
+            if (!created.niveauIds) created.niveauIds = payload.niveauIds;
             filieres.push(created);
             showToast('Filière créée.', 'success');
         }
@@ -612,7 +617,9 @@ function populateFiliereSelect(selectId, selectedId = null) {
     if (!sel) return;
     sel.innerHTML = `<option value="">-- Sélectionnez une filière --</option>`;
     filieres.forEach(f => {
-        const niveau = niveaux.find(n => n.id == f.niveauId);
+        // Find the "primary" niveau for display if multiple exist
+        const primaryNiveauId = (f.niveauIds && f.niveauIds.length > 0) ? f.niveauIds[0] : null;
+        const niveau = niveaux.find(n => n.id == primaryNiveauId);
         const opt = document.createElement('option');
         opt.value = f.id;
         opt.textContent = niveau ? `${f.nomFiliere} — ${niveau.nom || niveau.nomNiveau}` : f.nomFiliere;
@@ -637,9 +644,13 @@ function renderAssignFiliereList(niveauId) {
         container.innerHTML = `<p class="text-muted text-center py-4">Aucune filière disponible.</p>`;
         return;
     }
-    const sorted = [...filieres].sort((a, b) => (b.niveauId == niveauId) - (a.niveauId == niveauId));
+    const sorted = [...filieres].sort((a, b) => {
+        const aAssigned = a.niveauIds && a.niveauIds.includes(niveauId);
+        const bAssigned = b.niveauIds && b.niveauIds.includes(niveauId);
+        return bAssigned - aAssigned;
+    });
     container.innerHTML = sorted.map(f => {
-        const isAssigned = f.niveauId == niveauId;
+        const isAssigned = f.niveauIds && f.niveauIds.includes(niveauId);
         const badge = isAssigned
             ? `<span class="badge rounded-pill" style="background:#d1fae5;color:#065f46;"><i class="bi bi-check-circle me-1"></i>Attribuée</span>`
             : `<span class="badge rounded-pill" style="background:#f1f5f9;color:#64748b;"><i class="bi bi-dash-circle me-1"></i>Non attribuée</span>`;
@@ -667,10 +678,19 @@ function renderAssignFiliereList(niveauId) {
 async function doAssignFiliere(filiereId, newNiveauId, currentNiveauId) {
     const f = filieres.find(x => x.id == filiereId);
     if (!f) return;
-    const payload = { idFiliere: f.idFiliere, nomFiliere: f.nomFiliere, description: f.description || '', niveauId: newNiveauId };
+
+    // Manage array composition instead of simple overwrite
+    let updatedNiveauIds = Array.isArray(f.niveauIds) ? [...f.niveauIds] : [];
+    if (newNiveauId) {
+        if (!updatedNiveauIds.includes(newNiveauId)) updatedNiveauIds.push(newNiveauId);
+    } else {
+        updatedNiveauIds = updatedNiveauIds.filter(id => id !== currentNiveauId);
+    }
+
+    const payload = { idFiliere: f.idFiliere, nomFiliere: f.nomFiliere, description: f.description || '', niveauIds: updatedNiveauIds };
     try {
         const updated = await apiFetch(`/filieres/${filiereId}`, { method: 'PUT', body: JSON.stringify(payload) });
-        updated.niveauId = newNiveauId;
+        updated.niveauIds = updatedNiveauIds;
         filieres = filieres.map(x => x.id == filiereId ? updated : x);
         showToast(`Filière "${f.nomFiliere}" ${newNiveauId ? 'attribuée' : 'retirée'}.`, 'success');
         renderAssignFiliereList(currentNiveauId);

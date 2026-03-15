@@ -13,6 +13,8 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepos
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.UtilisateurMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,14 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     private final UtilisateurRepository repository;
     private final RoleRepository roleRepository;
+    private final PermissionOverrideHelper permissionOverrideHelper;
     private final UtilisateurMapper mapper;
+
+    @Override
+    public Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Long filiere, Pageable pageable) {
+        Page<Utilisateur> utilisateurs = repository.searchWithFilters(recherche, type, filiere, pageable);
+        return utilisateurs.map(mapper::toDTO);
+    }
 
     @Override
     public List<UtilisateurDTO> getAllUtilisateurs() {
@@ -78,6 +87,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setRoles(roles);
         }
 
+        // Appliquer les permissions retirées
+        permissionOverrideHelper.applyRemovedPermissions(utilisateur, dto.getRemovedPermissions());
+
         Utilisateur saved = repository.save(utilisateur);
         return mapper.toDTO(saved);
     }
@@ -108,6 +120,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setStatut(dto.getStatut());
         }
 
+        // Mettre à jour les permissions retirées
+        permissionOverrideHelper.updateRemovedPermissions(utilisateur, dto.getRemovedPermissions());
+
         Utilisateur updated = repository.save(utilisateur);
         return mapper.toDTO(updated);
     }
@@ -135,4 +150,3 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
 }
-
