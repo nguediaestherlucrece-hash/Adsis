@@ -58,6 +58,13 @@ public class SeanceController {
         return ResponseEntity.ok(updated);
     }
 
+    @GetMapping("/emploi-du-temps/{edtId}")
+    @PreAuthorize("hasAuthority('SEANCE_READ')")
+    public ResponseEntity<List<SeanceDTO>> getSeancesByEmploiDuTemps(@PathVariable Long edtId) {
+        List<SeanceDTO> seances = seanceService.getSeancesByEmploiDuTempsId(edtId);
+        return ResponseEntity.ok(seances);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SEANCE_DELETE')")
     public ResponseEntity<Void> deleteSeance(@PathVariable Long id) {

@@ -14,6 +14,8 @@ public interface CourUEService {
 
     CoursUEDTO getCoursByCode(String idCours);
 
+    List<CoursUEDTO> getCoursBySpecialite(Long specialiteId);
+
     CoursUEDTO createCours(coursUECreateDTO dto);
 
     CoursUEDTO updateCours(Long id, coursUEUpdateDTO dto);

@@ -142,4 +142,13 @@ public class SeanceServiceImpl implements SeanceService {
         seanceRepository.deleteById(id);
         log.info("Séance supprimée avec l'id {}", id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeanceDTO> getSeancesByEmploiDuTempsId(Long emploiDuTempsId) {
+        return seanceRepository.findByEmploiDuTempsId(emploiDuTempsId)
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

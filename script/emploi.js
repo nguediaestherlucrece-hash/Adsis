@@ -1,312 +1,816 @@
-// ==================== DONNÉES ====================
-const matieres = [
-    { id: 1, nom: "Algorithmique", couleur: "#0f22f1", bgClass: "bg-matiere-1" },
-    { id: 2, nom: "Bases de données", couleur: "#2d6a4f", bgClass: "bg-matiere-2" },
-    { id: 3, nom: "Réseaux", couleur: "#eb1919", bgClass: "bg-matiere-3" },
-    { id: 4, nom: "Systèmes d'exploitation", couleur: "#ab1be4", bgClass: "bg-matiere-4" },
-    { id: 5, nom: "Programmation Web", couleur: "#f6940a", bgClass: "bg-matiere-5" },
-    { id: 6, nom: "Anglais", couleur: "#1093fe", bgClass: "bg-matiere-6" },
-    { id: 7, nom: "Math Discrètes", couleur: "#f318aa", bgClass: "bg-matiere-7" }
+
+const API_BASE_URL = 'http://localhost:8081/api';
+
+let isEditorMode = false;
+let currentEdt = null;
+let matieres = [];
+let specialites = [];
+let classes = [];
+let semestres = [];
+
+// Créneaux horaires (index → heure réelle)
+const horaires = [
+    { label: "08:00 - 09:00", debut: "08:00:00", fin: "09:00:00" },
+    { label: "09:00 - 10:00", debut: "09:00:00", fin: "10:00:00" },
+    { label: "10:00 - 11:00", debut: "10:00:00", fin: "11:00:00" },
+    { label: "11:00 - 12:00", debut: "11:00:00", fin: "12:00:00" },
+    { label: "12:00 - 13:00", debut: "12:00:00", fin: "13:00:00" },
+    { label: "13:00 - 14:00", debut: "13:00:00", fin: "14:00:00" },
+    { label: "14:00 - 15:00", debut: "14:00:00", fin: "15:00:00" },
+    { label: "15:00 - 16:00", debut: "15:00:00", fin: "16:00:00" },
+    { label: "16:00 - 17:00", debut: "16:00:00", fin: "17:00:00" }
 ];
 
-const enseignants = [
-    { id: 101, nom: "Dr. Martin",   couleur: "#b15e5e", matieres: [1, 3, 5] }, // Algo, Réseaux, Web
-    { id: 102, nom: "Prof. Dubois", couleur: "#b15e5e", matieres: [2, 4] },    // BD, Systèmes
-    { id: 103, nom: "Mme. Lambert", couleur: "#b15e5e", matieres: [6] },       // Anglais
-    { id: 104, nom: "M. Chevalier", couleur: "#b15e5e", matieres: [7] },       // Maths
-    { id: 105, nom: "Pr. Bernard",  couleur: "#b15e5e", matieres: [1, 2] }     // Algo et BD
-];
+const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-const evenements = [
-    { id: 201, nom: "Pause déjeuner",    couleur: "#d97706", bgClass: "bg-evenement" },
-    { id: 202, nom: "Journée culturelle", couleur: "#059669", bgClass: "bg-evenement" },
-    { id: 203, nom: "Conférence",        couleur: "#7c3aed", bgClass: "bg-evenement" },
-    { id: 204, nom: "Atelier",           couleur: "#b45309", bgClass: "bg-evenement" }
-];
+const colors = ["#0f22f1", "#2d6a4f", "#eb1919", "#ab1be4", "#f6940a", "#1093fe", "#f318aa", "#b15e5e", "#059669"];
 
-let coursesList = [];            // badges disponibles
-let resizeState = {
-    active: false, type: null, startCell: null, startElement: null,
-    startJour: 0, startHoraire: 0, startRowspan: 1, startColspan: 1, currentCell: null
+// Références DOM
+const listingView = document.getElementById('listingView');
+const editorView = document.getElementById('editorView');
+const edtListContainer = document.getElementById('edtListContainer');
+const backToListBtn = document.getElementById('backToListBtn');
+
+// Modal DOM
+const modalClasse = document.getElementById('modalClasse');
+const modalDateDebut = document.getElementById('modalDateDebut');
+const modalDateFin = document.getElementById('modalDateFin');
+const modalNbJours = document.getElementById('modalNbJours');
+const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+const modalEdtId = document.getElementById('modalEdtId');
+const edtModalTitle = document.getElementById('edtModalTitle');
+const modalSemestre = document.getElementById('modalSemestre');
+
+// Editor DOM
+const timetableBody = document.getElementById('timetableBody');
+const timetableHeaders = document.getElementById('timetableHeaders');
+const classeDisplay = document.getElementById('editorClasseBadge');
+const debutSemaineText = document.getElementById('debutSemaine');
+const finSemaineText = document.getElementById('finSemaine');
+const matieresContainerEditor = document.getElementById('matieresContainer');
+const enseignantsContainer = document.getElementById('enseignantsContainer');
+
+function showToast(message, type = 'info') {
+    const config = {
+        success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
+        danger: { icon: 'bi-x-circle-fill', label: 'Erreur', bg: '#c0392b', delay: 6000 },
+        warning: { icon: 'bi-exclamation-triangle-fill', label: 'Attention', bg: '#d68910', delay: 5000 },
+        info: { icon: 'bi-info-circle-fill', label: 'Info', bg: '#1a6fa8', delay: 4000 },
+    };
+    const c = config[type] || config.info;
+    const container = document.getElementById('toastContainer');
+    const toastEl = document.createElement('div');
+    toastEl.className = 'toast border-0 rounded-3 shadow-lg overflow-hidden';
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('data-bs-delay', c.delay);
+    toastEl.style.minWidth = '280px';
+    toastEl.style.maxWidth = '360px';
+    toastEl.innerHTML = `
+        <div class="toast-header border-0 text-white py-2 px-3" style="background:${c.bg}">
+            <i class="bi ${c.icon} me-2"></i><strong class="me-auto">${c.label}</strong>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body text-dark bg-white small py-2 px-3">${message}</div>`;
+    container.appendChild(toastEl);
+    new bootstrap.Toast(toastEl).show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
+    return new Promise((resolve) => {
+        const modalEl = document.getElementById('confirmModal');
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+        const modal = new bootstrap.Modal(modalEl);
+        let resolved = false;
+        const done = (result) => {
+            if (resolved) return; resolved = true;
+            document.getElementById('confirmOkBtn').replaceWith(document.getElementById('confirmOkBtn').cloneNode(true));
+            document.getElementById('confirmCancelBtn').replaceWith(document.getElementById('confirmCancelBtn').cloneNode(true));
+            modal.hide(); resolve(result);
+        };
+        document.getElementById('confirmOkBtn').addEventListener('click', () => done(true), { once: true });
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => done(false), { once: true });
+        modalEl.addEventListener('hidden.bs.modal', () => done(false), { once: true });
+        modal.show();
+    });
+}
+
+
+// ==================== UTILITAIRES ====================
+function formatDate(dateStr) {
+    if (!dateStr) return '...';
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: 'long', year: 'numeric'
+    });
+}
+
+/** Calcule la date de fin à partir de dateDebut + nombreJours (jours ouvrés Lun-Sam) */
+function calculateDateFin(dateDebut, nbJours) {
+    const d = new Date(dateDebut);
+    let count = 0;
+    while (count < nbJours) {
+        const dow = d.getDay(); // 0=dim, 1=lun .. 6=sam
+        if (dow >= 1 && dow <= 6) count++;
+        if (count < nbJours) d.setDate(d.getDate() + 1);
+    }
+    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+/** Retourne la date réelle d'un jour de la grille (index 0=Lundi) en fonction de dateDebut */
+function getDateForJour(jourIdx) {
+    if (!currentEdt || !currentEdt.dateDebut) return null;
+    const d = new Date(currentEdt.dateDebut);
+    const dow = d.getDay();
+    if (dow === 0) d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate() + jourIdx);
+    return d.toISOString().split('T')[0];
+}
+
+/** Trouve le jour index (0-5) et l'horaire index (0-8) à partir d'une date et heureDebut */
+function findGridPosition(seanceDate, heureDebut) {
+    let jourIdx = -1;
+    if (currentEdt && currentEdt.dateDebut) {
+        const base = new Date(currentEdt.dateDebut);
+        const baseDow = base.getDay();
+        if (baseDow === 0) base.setDate(base.getDate() + 1);
+        const seanceD = new Date(seanceDate);
+        const diffDays = Math.round((seanceD - base) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays < 6) jourIdx = diffDays;
+    }
+
+    let horaireIdx = -1;
+    if (heureDebut) {
+        const hStr = heureDebut.substring(0, 5);
+        horaireIdx = horaires.findIndex(h => h.debut.substring(0, 5) === hStr);
+    }
+    return { jourIdx, horaireIdx };
+}
+
+/** Calcule la durée en créneaux entre heureDebut et heureFin */
+function calculateDuration(heureDebut, heureFin) {
+    if (!heureDebut || !heureFin) return 1;
+    const [h1, m1] = heureDebut.split(':').map(Number);
+    const [h2, m2] = heureFin.split(':').map(Number);
+    return Math.max(1, (h2 * 60 + m2 - h1 * 60 - m1) / 60);
+}
+
+/** Retourne le nom de la classe à partir de classeId */
+function getClasseNom(edt) {
+    if (edt.classeNom) return edt.classeNom;
+    if (edt.classeId) {
+        const c = classes.find(cl => cl.id == edt.classeId);
+        if (c) return c.nomClasse;
+    }
+    return 'Classe inconnue';
+}
+
+/** Retourne l'année académique depuis le DTO (ou via la list semestres) */
+function getAnneeNom(edt) {
+    if (edt.anneeNom) return edt.anneeNom;
+    if (edt.semestreId && semestres.length > 0) {
+        const sem = semestres.find(s => s.id == edt.semestreId);
+        if (sem && sem.anneeNom) return sem.anneeNom;
+    }
+    return null;
+}
+
+/** Retourne le nom du semestre depuis le DTO (ou via la list semestres) */
+function getSemestreNom(edt) {
+    if (edt.semestreNom) return edt.semestreNom;
+    if (edt.semestreId && semestres.length > 0) {
+        const sem = semestres.find(s => s.id == edt.semestreId);
+        if (sem) return sem.nomSemestre || sem.idSemestre;
+    }
+    return null;
+}
+
+
+async function init() {
+    const safeLoad = (path) => fetch(`${API_BASE_URL}${path}`).then(r => r.ok ? r.json() : []).catch(() => []);
+    [classes, specialites, semestres] = await Promise.all([
+        safeLoad('/classes'),
+        safeLoad('/specialites'),
+        safeLoad('/semestres'),
+    ]);
+    populateModalClasse();
+    populateModalSemestre();
+    await fetchEmploisDuTemps();
+
+    // Auto-calcul dateFin quand dateDebut ou nbJours change
+    modalDateDebut.addEventListener('change', autoCalcDateFin);
+    modalNbJours.addEventListener('change', autoCalcDateFin);
+}
+
+function autoCalcDateFin() {
+    const debut = modalDateDebut.value;
+    const nb = parseInt(modalNbJours.value);
+    if (debut && nb > 0) {
+        modalDateFin.value = calculateDateFin(debut, nb);
+    }
+}
+
+function populateModalClasse() {
+    modalClasse.innerHTML = '<option value="">-- Sélectionnez une classe --</option>';
+    classes.forEach(c => {
+        const sp = specialites.find(s => s.id == c.specialiteId);
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = sp ? `${c.nomClasse} (${sp.nom || sp.nomSpecialite || sp.idSpecialite})` : c.nomClasse;
+        opt.dataset.specialiteId = c.specialiteId || '';
+        modalClasse.appendChild(opt);
+    });
+}
+
+function populateModalSemestre() {
+    if (!modalSemestre) return;
+    modalSemestre.innerHTML = '<option value="">-- Sélectionnez un semestre --</option>';
+    semestres.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        const anneeLabel = s.anneeNom ? ` (${s.anneeNom})` : '';
+        opt.textContent = (s.nomSemestre || s.idSemestre || `Semestre ${s.id}`) + anneeLabel;
+        modalSemestre.appendChild(opt);
+    });
+}
+
+async function fetchEmploisDuTemps() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/emplois-du-temps`);
+        if (response.ok) {
+            const edts = await response.json();
+            renderEdtList(edts);
+        } else {
+            edtListContainer.innerHTML = `<div class="col-12 text-center text-muted p-5"><p>Erreur de chargement (${response.status}).</p></div>`;
+        }
+    } catch (e) {
+        console.error("Erreur API EDT", e);
+        edtListContainer.innerHTML = `<div class="col-12 text-center text-muted p-5"><p>Erreur réseau.</p></div>`;
+    }
+}
+
+function renderEdtList(edts) {
+    if (edts.length === 0) {
+        edtListContainer.innerHTML = `<div class="col-12 text-center text-muted p-5"><p>Aucun emploi du temps. Cliquez sur "+ Nouvel emploi du temps" pour commencer.</p></div>`;
+        return;
+    }
+
+    let html = '';
+    edts.forEach(edt => {
+        const classeNom = getClasseNom(edt);
+        const anneeNom = getAnneeNom(edt);
+        const semestreNom = getSemestreNom(edt);
+        let annSemText = '';
+        if (anneeNom && semestreNom) annSemText = `${anneeNom} | ${semestreNom}`;
+        else if (anneeNom) annSemText = anneeNom;
+        else if (semestreNom) annSemText = semestreNom;
+        else annSemText = 'Non assigné';
+
+        html += `
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card edt-card h-100 shadow-sm border-0">
+                    <div class="card-body" onclick="openEditor(${edt.id})" style="cursor:pointer;">
+                        <h6 class="card-title fw-bold text-primary mb-2">${classeNom}</h6>
+                        <p class="text-muted mb-1 small"><i class="fas fa-calendar-alt me-2"></i>Du ${formatDate(edt.dateDebut)} au ${formatDate(edt.dateFin)}</p>
+                        <p class="text-muted mb-1 small"><i class="fas fa-th me-2"></i>${edt.nombreJours || 6} Jours</p>
+                        <p class="text-muted mb-0 small"><i class="fas fa-graduation-cap me-2"></i>${annSemText}</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 d-flex justify-content-end gap-2 py-2 px-3">
+                        <button class="btn btn-sm btn-outline-primary" title="Modifier les infos" onclick="event.stopPropagation(); openEditEdtModal(${edt.id})">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" title="Supprimer" onclick="event.stopPropagation(); deleteEdt(${edt.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    edtListContainer.innerHTML = html;
+}
+
+
+modalSubmitBtn.addEventListener('click', async () => {
+    const classeId = modalClasse.value;
+    const dateDebut = modalDateDebut.value;
+    const nbJours = parseInt(modalNbJours.value);
+    const editId = modalEdtId.value;
+    const semestreId = modalSemestre ? modalSemestre.value : null;
+
+    if (!classeId || !dateDebut || !nbJours) {
+        showToast("Veuillez remplir tous les champs obligatoires (classe, date, nombre de jours).", "warning");
+        return;
+    }
+
+    // Auto-calcul dateFin
+    const dateFin = calculateDateFin(dateDebut, nbJours);
+
+    const dto = {
+        idEmploi: `EDT-${Date.now()}`,
+        dateDebut: dateDebut,
+        dateFin: dateFin,
+        nombreJours: nbJours,
+        classeId: parseInt(classeId)
+    };
+    if (semestreId) dto.semestreId = parseInt(semestreId);
+
+    try {
+        let response;
+        if (editId) {
+            response = await fetch(`${API_BASE_URL}/emplois-du-temps/${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+        } else {
+            response = await fetch(`${API_BASE_URL}/emplois-du-temps`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+        }
+        if (response.ok) {
+            const result = await response.json();
+            bootstrap.Modal.getInstance(document.getElementById('createEdtModal'))?.hide();
+            showToast(editId ? "Emploi du temps modifié." : "Emploi du temps créé.", "success");
+            if (editId) {
+                switchToList();
+            } else {
+                openEditor(result.id, result);
+            }
+        } else {
+            const errText = await response.text();
+            console.error("Erreur création/modif EDT:", errText);
+            showToast("Erreur : " + errText, "danger");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Erreur réseau", "danger");
+    }
+});
+
+// Ouvrir le modal en mode édition (bouton crayon)
+window.openEditEdtModal = async function (edtId) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/emplois-du-temps/${edtId}`);
+        if (!res.ok) return;
+        const edt = await res.json();
+
+        edtModalTitle.textContent = "Modifier l'emploi du temps";
+        modalEdtId.value = edt.id;
+        modalDateDebut.value = edt.dateDebut;
+        modalDateFin.value = edt.dateFin;
+        modalNbJours.value = edt.nombreJours || 6;
+        modalSubmitBtn.textContent = "Enregistrer";
+
+        if (edt.classeId) {
+            modalClasse.value = edt.classeId;
+        } else {
+            const classeData = classes.find(c => c.nomClasse === edt.classeNom);
+            if (classeData) modalClasse.value = classeData.id;
+        }
+
+        if (modalSemestre && edt.semestreId) {
+            modalSemestre.value = edt.semestreId;
+        }
+
+        new bootstrap.Modal(document.getElementById('createEdtModal')).show();
+    } catch (e) { console.error(e); }
 };
 
-// Créneaux horaires
-const horaires = [
-    "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00",
-    "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00",
-    "15:00 - 16:00", "16:00 - 17:00"
-];
+// Réinitialiser le modal quand il se ferme
+document.getElementById('createEdtModal').addEventListener('hidden.bs.modal', () => {
+    edtModalTitle.textContent = "Créer un emploi du temps";
+    modalEdtId.value = '';
+    modalSubmitBtn.textContent = "Créer et Éditer";
+    modalClasse.value = '';
+    modalDateDebut.value = '';
+    modalDateFin.value = '';
+    modalNbJours.value = 6;
+    if (modalSemestre) modalSemestre.value = '';
+});
 
-// ==================== INITIALISATION TABLEAU ====================
-const tbody = document.getElementById('timetableBody');
-const classeDisplay = document.getElementById('classeDisplay');
-const classeSelect = document.getElementById('classeSelect');
+// Supprimer un EDT
+window.deleteEdt = async function (edtId) {
+    const confirmed = await showConfirm("Supprimer l'emploi du temps ?", "Cette action supprimera cet emploi du temps et toutes ses séances de façon irréversible.");
+    if (!confirmed) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/emplois-du-temps/${edtId}`, { method: 'DELETE' });
+        if (res.ok || res.status === 204) {
+            showToast("Emploi du temps supprimé.", "success");
+            await fetchEmploisDuTemps();
+        } else {
+            const errText = await res.text();
+            console.error("Erreur suppression EDT:", errText);
+            showToast("Erreur lors de la suppression : " + errText, "danger");
+        }
+    } catch (e) { console.error(e); showToast("Erreur réseau", "danger"); }
+};
 
-function renderTable() {
-    tbody.innerHTML = '';
+
+function switchToEditor() {
+    listingView.classList.remove('active');
+    editorView.classList.add('active');
+    isEditorMode = true;
+}
+
+function switchToList() {
+    editorView.classList.remove('active');
+    listingView.classList.add('active');
+    isEditorMode = false;
+    currentEdt = null;
+    fetchEmploisDuTemps();
+}
+
+backToListBtn.addEventListener('click', switchToList);
+
+window.openEditor = async function (edtId, edtDataPreloaded = null) {
+    switchToEditor();
+    timetableBody.innerHTML = '<tr><td colspan="7" class="text-center p-5"><i class="fas fa-spinner fa-spin"></i> Chargement...</td></tr>';
+
+    try {
+        if (!edtDataPreloaded) {
+            const res = await fetch(`${API_BASE_URL}/emplois-du-temps/${edtId}`);
+            if (res.ok) currentEdt = await res.json();
+            else throw new Error("EDT introuvable");
+        } else {
+            currentEdt = edtDataPreloaded;
+        }
+
+        // MAJ infos header
+        const classeNom = getClasseNom(currentEdt);
+        classeDisplay.textContent = classeNom;
+        debutSemaineText.textContent = formatDate(currentEdt.dateDebut);
+        finSemaineText.textContent = formatDate(currentEdt.dateFin);
+
+        // Afficher année et semestre dans le header
+        const anneeBadge = document.getElementById('editorAnneeBadge');
+        const semestreBadge = document.getElementById('editorSemestreBadge');
+        const anneeNom = getAnneeNom(currentEdt);
+        const semestreNom = getSemestreNom(currentEdt);
+        if (anneeNom && anneeBadge) {
+            anneeBadge.textContent = anneeNom;
+            anneeBadge.style.display = '';
+        } else if (anneeBadge) {
+            anneeBadge.style.display = 'none';
+        }
+        if (semestreNom && semestreBadge) {
+            semestreBadge.textContent = semestreNom;
+            semestreBadge.style.display = '';
+        } else if (semestreBadge) {
+            semestreBadge.style.display = 'none';
+        }
+
+        // Charger les matières par spécialité de la classe
+        let specId = null;
+        if (currentEdt.classeId) {
+            const c = classes.find(cl => cl.id == currentEdt.classeId);
+            if (c) specId = c.specialiteId;
+        }
+        if (!specId) {
+            const c = classes.find(cl => cl.nomClasse === currentEdt.classeNom);
+            if (c) specId = c.specialiteId;
+        }
+
+        if (specId) {
+            await fetchMatieresBySpecialite(specId);
+        } else {
+            await fetchAllMatieres();
+        }
+
+        // Build grid
+        buildTimetableGrid(currentEdt.nombreJours || 6);
+
+        // Fetch seances existantes
+        await fetchSeancesForEdt(currentEdt.id);
+
+    } catch (e) {
+        console.error("Erreur openEditor:", e);
+        switchToList();
+    }
+};
+
+
+async function fetchMatieresBySpecialite(specId) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/cours-ue/specialite/${specId}`);
+        if (res.ok) {
+            matieres = await res.json();
+        } else {
+            await fetchAllMatieres();
+            return;
+        }
+    } catch (e) { console.error(e); }
+    renderMatiereBadges();
+}
+
+async function fetchAllMatieres() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/cours-ue`);
+        if (res.ok) matieres = await res.json();
+    } catch (e) { console.error(e); }
+    renderMatiereBadges();
+}
+
+
+function renderMatiereBadges() {
+    matieresContainerEditor.innerHTML = '';
+    if (matieres.length === 0) {
+        matieresContainerEditor.innerHTML = '<p class="text-muted small mb-0">Aucune matière pour cette spécialité.</p>';
+        return;
+    }
+    matieres.forEach((m, idx) => {
+        const color = colors[idx % colors.length];
+        const badge = document.createElement('span');
+        badge.className = 'element-pill';
+        badge.style.backgroundColor = color;
+        badge.setAttribute('draggable', 'true');
+        badge.dataset.json = JSON.stringify({
+            type: 'matiere', id: m.id, nom: m.intitule, couleur: color, codeUE: m.codeUE,
+            enseignants: m.enseignants || []
+        });
+        badge.innerHTML = `<i class="fas fa-book me-1"></i> ${m.intitule}`;
+        matieresContainerEditor.appendChild(badge);
+    });
+}
+
+
+function renderEnseignantBadgesForMatiere(matiereId) {
+    const matiere = matieres.find(m => m.id == matiereId);
+    enseignantsContainer.innerHTML = '';
+    if (!matiere || !matiere.enseignants || matiere.enseignants.length === 0) {
+        enseignantsContainer.innerHTML = '<p class="text-muted small mb-0">Aucun enseignant assigné à cette matière.</p>';
+        return;
+    }
+    matiere.enseignants.forEach(e => {
+        const badge = document.createElement('span');
+        badge.className = 'element-pill enseignant-sub-pill';
+        badge.style.backgroundColor = '#5a5c69';
+        badge.setAttribute('draggable', 'true');
+        badge.dataset.json = JSON.stringify({
+            type: 'enseignant', id: e.id, nom: `${e.nom} ${e.prenom || ''}`.trim(), matiereId: matiereId
+        });
+        badge.innerHTML = `<i class="fas fa-chalkboard-teacher me-1"></i> ${e.nom} ${e.prenom || ''}`;
+        enseignantsContainer.appendChild(badge);
+    });
+}
+
+
+function buildTimetableGrid(nbJours) {
+    timetableHeaders.innerHTML = '<th style="min-width: 100px;">Horaires</th>';
+    for (let i = 0; i < nbJours; i++) {
+        const th = document.createElement('th');
+        th.style.minWidth = '100px';
+        th.textContent = joursSemaine[i];
+        timetableHeaders.appendChild(th);
+    }
+
+    timetableBody.innerHTML = '';
     horaires.forEach((h, idx) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="fw-semibold text-secondary">${h}</td>`;
-        for (let j = 0; j < 6; j++) {
+        tr.innerHTML = `<td class="fw-semibold text-secondary">${h.label}</td>`;
+        for (let j = 0; j < nbJours; j++) {
             const td = document.createElement('td');
             td.dataset.horaire = idx;
             td.dataset.jour = j;
             td.classList.add('dropzone');
             tr.appendChild(td);
         }
-        tbody.appendChild(tr);
+        timetableBody.appendChild(tr);
     });
-}
-renderTable();
 
-// ==================== SÉLECTEURS ====================
-const matiereSelect = document.getElementById('matiereSelect');
-const enseignantSelect = document.getElementById('enseignantSelect');
-const evenementSelect = document.getElementById('evenementSelect');
-
-// Remplir matières
-matieres.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = m.nom;
-    opt.dataset.couleur = m.couleur;
-    opt.dataset.bgClass = m.bgClass;
-    matiereSelect.appendChild(opt);
-});
-
-// Remplir événements
-evenements.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value = e.id;
-    opt.textContent = e.nom;
-    opt.dataset.couleur = e.couleur;
-    opt.dataset.bgClass = e.bgClass;
-    evenementSelect.appendChild(opt);
-});
-
-// Fonction de filtrage des enseignants selon la matière sélectionnée
-function filterEnseignantsByMatiere(matiereId) {
-    enseignantSelect.innerHTML = ''; // vider
-    if (!matiereId) return;
-    const filtered = enseignants.filter(e => e.matieres.includes(parseInt(matiereId)));
-    filtered.forEach(e => {
-        const opt = document.createElement('option');
-        opt.value = e.id;
-        opt.textContent = e.nom;
-        opt.dataset.couleur = e.couleur;
-        opt.dataset.matiereId = matiereId; // on stocke la matière associée
-        enseignantSelect.appendChild(opt);
-    });
+    attachDropzoneListeners();
 }
 
-// Filtre initial
-if (matiereSelect.options.length > 0) {
-    filterEnseignantsByMatiere(matiereSelect.value);
+async function fetchSeancesForEdt(edtId) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/seances/emploi-du-temps/${edtId}`);
+        if (res.ok) {
+            const seances = await res.json();
+            seances.forEach(s => {
+                const { jourIdx, horaireIdx } = findGridPosition(s.date, s.heureDebut);
+                if (jourIdx < 0 || horaireIdx < 0) return;
+
+                const cell = document.querySelector(`td[data-jour="${jourIdx}"][data-horaire="${horaireIdx}"]`);
+                if (!cell) return;
+
+                const matiere = matieres.find(m => m.id == s.coursId);
+                const colorIdx = matiere ? matieres.indexOf(matiere) % colors.length : 0;
+                const duration = calculateDuration(s.heureDebut, s.heureFin);
+
+                const data = {
+                    dbId: s.id,
+                    type: 'matiere',
+                    matiere: matiere ? matiere.intitule : 'Séance',
+                    matiereId: s.coursId,
+                    enseignants: [],
+                    couleur: colors[colorIdx]
+                };
+
+                if (s.enseignantId) {
+                    if (matiere && matiere.enseignants) {
+                        const ens = matiere.enseignants.find(e => e.id == s.enseignantId);
+                        if (ens) data.enseignants = [`${ens.nom} ${ens.prenom || ''}`];
+                    }
+                }
+
+                createCourseElement(cell, data, duration, 1);
+            });
+        }
+    } catch (e) { console.error("Erreur fetch seances:", e); }
 }
 
-// Mise à jour du filtre à chaque changement de matière
-matiereSelect.addEventListener('change', function() {
-    filterEnseignantsByMatiere(this.value);
-});
 
-// ==================== BOUTONS D'AJOUT ====================
-document.getElementById('addMatiereBtn').addEventListener('click', () => {
-    const opt = matiereSelect.options[matiereSelect.selectedIndex];
-    const matiere = {
-        nom: opt.textContent,
-        type: 'matiere',
-        couleur: opt.dataset.couleur,
-        bgClass: opt.dataset.bgClass,
-        id: opt.value,
-        matiereId: opt.value   // pour identification
-    };
-    coursesList.push(matiere);
-    renderCoursesDraggable();
-});
-
-document.getElementById('addEnseignantBtn').addEventListener('click', () => {
-    if (!matiereSelect.value) {
-        alert("Veuillez d'abord sélectionner une matière.");
-        return;
-    }
-    const opt = enseignantSelect.options[enseignantSelect.selectedIndex];
-    if (!opt) {
-        alert("Aucun enseignant disponible pour cette matière.");
-        return;
-    }
-    const enseignant = {
-        nom: opt.textContent,
-        type: 'enseignant',
-        couleur: opt.dataset.couleur,
-        bgClass: '',
-        id: opt.value,
-        matiereId: matiereSelect.value   // matière associée
-    };
-    coursesList.push(enseignant);
-    renderCoursesDraggable();
-});
-
-document.getElementById('addEvenementBtn').addEventListener('click', () => {
-    const opt = evenementSelect.options[evenementSelect.selectedIndex];
-    const evenement = {
-        nom: opt.textContent,
-        type: 'evenement',
-        couleur: opt.dataset.couleur,
-        bgClass: opt.dataset.bgClass,
-        id: opt.value
-    };
-    coursesList.push(evenement);
-    renderCoursesDraggable();
-});
-
-// ==================== AFFICHAGE DES BADGES ====================
-function renderCoursesDraggable() {
-    const container = document.getElementById('coursesContainer');
-    container.innerHTML = '';
-    coursesList.forEach((item, index) => {
-        const badge = document.createElement('span');
-        badge.className = `element-pill ${item.type}`;
-        if (item.bgClass) badge.classList.add(item.bgClass);
-        badge.style.backgroundColor = item.couleur;
-        badge.setAttribute('draggable', 'true');
-        badge.dataset.nom = item.nom;
-        badge.dataset.type = item.type;
-        badge.dataset.couleur = item.couleur;
-        badge.dataset.bgClass = item.bgClass || '';
-        if (item.matiereId) badge.dataset.matiereId = item.matiereId;
-        badge.dataset.index = index;
-        const icon = item.type === 'matiere' ? 'fa-book' : (item.type === 'enseignant' ? 'fa-chalkboard-teacher' : 'fa-calendar-alt');
-        badge.innerHTML = `<i class="fas ${icon}"></i> ${item.nom}`;
-        container.appendChild(badge);
-    });
-}
-
-// ==================== DRAG & DROP ====================
 document.addEventListener('dragstart', (e) => {
     if (e.target.classList.contains('element-pill')) {
-        const el = e.target;
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-            nom: el.dataset.nom,
-            type: el.dataset.type,
-            couleur: el.dataset.couleur,
-            bgClass: el.dataset.bgClass,
-            matiereId: el.dataset.matiereId
-        }));
+        e.dataTransfer.setData('text/plain', e.target.dataset.json);
         e.dataTransfer.effectAllowed = 'move';
     }
 });
 
-document.querySelectorAll('.dropzone').forEach(zone => {
-    zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        zone.classList.add('droppable-hover');
+function attachDropzoneListeners() {
+    document.querySelectorAll('.dropzone').forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('droppable-hover');
+        });
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('droppable-hover');
+        });
+        zone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            zone.classList.remove('droppable-hover');
+            try {
+                const rawData = e.dataTransfer.getData('text/plain');
+                if (!rawData) return;
+                const element = JSON.parse(rawData);
+                await handleDropOnCell(zone, element);
+            } catch (error) { console.error("Erreur drop:", error); }
+        });
     });
-    zone.addEventListener('dragleave', () => {
-        zone.classList.remove('droppable-hover');
-    });
-    zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('droppable-hover');
-        try {
-            const element = JSON.parse(e.dataTransfer.getData('text/plain'));
-            handleDropOnCell(zone, element);
-        } catch (error) {}
-    });
-});
-
-function handleDropOnCell(cell, element) {
-    if (element.type === 'matiere') {
-        if (!isCellFree(cell)) {
-            alert("Cette case est déjà occupée");
-            return;
-        }
-        createCourseElement(cell, {
-            type: 'matiere',
-            matiere: element.nom,
-            enseignants: [],
-            couleur: element.couleur,
-            bgClass: element.bgClass,
-            matiereId: element.matiereId
-        }, 1, 1);
-    }
-    else if (element.type === 'enseignant') {
-        if (cell.children.length === 0) {
-            alert("Déposez d'abord une matière");
-            return;
-        }
-        const cours = cell.children[0];
-        if (cours.dataset.type !== 'matiere') {
-            alert("On ne peut ajouter un enseignant que sur une matière");
-            return;
-        }
-        // Vérifier que l'enseignant est bien associé à cette matière
-        if (element.matiereId && element.matiereId !== cours.dataset.matiereId) {
-            alert("Cet enseignant n'enseigne pas cette matière");
-            return;
-        }
-        let enseignantsList = cours.dataset.enseignants ? cours.dataset.enseignants.split(',') : [];
-        if (!enseignantsList.includes(element.nom)) {
-            enseignantsList.push(element.nom);
-            cours.dataset.enseignants = enseignantsList.join(',');
-            let ensDiv = cours.querySelector('.enseignants');
-            if (ensDiv) {
-                ensDiv.innerHTML = enseignantsList.map(e => `<span>${e}</span>`).join(' / ');
-            } else {
-                const newDiv = document.createElement('div');
-                newDiv.className = 'enseignants';
-                newDiv.innerHTML = enseignantsList.map(e => `<span>${e}</span>`).join(' / ');
-                cours.appendChild(newDiv);
-            }
-        }
-    }
-    else if (element.type === 'evenement') {
-        if (!isCellFree(cell)) {
-            alert("Cette case est déjà occupée");
-            return;
-        }
-        createCourseElement(cell, {
-            type: 'evenement',
-            matiere: element.nom,
-            enseignants: [],
-            couleur: element.couleur,
-            bgClass: element.bgClass
-        }, 1, 1);
-    }
 }
 
 function isCellFree(cell) {
     return cell.children.length === 0 && cell.style.display !== 'none';
 }
 
-// ==================== CRÉATION D'UN COURS AVEC FUSION ====================
+async function handleDropOnCell(cell, element) {
+    if (element.type === 'matiere') {
+        if (!isCellFree(cell)) {
+            showToast("Cette case est déjà occupée.", "warning");
+            return;
+        }
+
+        const jourIdx = parseInt(cell.dataset.jour);
+        const horaireIdx = parseInt(cell.dataset.horaire);
+        const dateSeance = getDateForJour(jourIdx);
+        const heureDebut = horaires[horaireIdx].debut;
+        const heureFin = horaires[horaireIdx].fin;
+
+        if (!dateSeance) {
+            showToast("Impossible de déterminer la date pour ce jour.", "warning");
+            return;
+        }
+
+        const dto = {
+            idSeance: `S-${Date.now()}`,
+            date: dateSeance,
+            heureDebut: heureDebut,
+            heureFin: heureFin,
+            statut: false,
+            coursId: parseInt(element.id),
+            enseignantId: null,
+            emploiDuTempsId: currentEdt.id
+        };
+
+        console.log("Création séance:", dto);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/seances`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                createCourseElement(cell, {
+                    dbId: created.id,
+                    type: 'matiere',
+                    matiere: element.nom,
+                    matiereId: element.id,
+                    enseignants: [],
+                    couleur: element.couleur
+                }, 1, 1);
+                showToast(`${element.nom} ajouté.`, "success");
+            } else {
+                const errText = await res.text();
+                console.error("Erreur création séance:", errText);
+                showToast("Erreur : " + errText, "danger");
+            }
+        } catch (e) { console.error(e); showToast("Erreur réseau", "danger"); }
+    }
+    else if (element.type === 'enseignant') {
+        if (cell.children.length === 0) {
+            showToast("Déposez d'abord une matière sur cette case.", "warning");
+            return;
+        }
+        const coursBlock = cell.children[0];
+
+        if (coursBlock.dataset.matiereId != element.matiereId) {
+            showToast("Cet enseignant n'est pas assigné à la matière de cette séance.", "warning");
+            return;
+        }
+
+        const dbId = coursBlock.dataset.dbId;
+        if (!dbId) return;
+
+        try {
+            const resGet = await fetch(`${API_BASE_URL}/seances/${dbId}`);
+            if (!resGet.ok) return;
+            const seance = await resGet.json();
+
+            const updateDto = {
+                idSeance: seance.idSeance,
+                date: seance.date,
+                heureDebut: seance.heureDebut,
+                heureFin: seance.heureFin,
+                statut: seance.statut,
+                coursId: seance.coursId,
+                enseignantId: parseInt(element.id),
+                emploiDuTempsId: seance.emploiDuTempsId
+            };
+
+            const resPut = await fetch(`${API_BASE_URL}/seances/${dbId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateDto)
+            });
+
+            if (resPut.ok) {
+                coursBlock.dataset.enseignants = element.nom;
+                let ensDiv = coursBlock.querySelector('.enseignants');
+                if (ensDiv) {
+                    ensDiv.innerHTML = `<span>${element.nom}</span>`;
+                } else {
+                    const newDiv = document.createElement('div');
+                    newDiv.className = 'enseignants';
+                    newDiv.innerHTML = `<span>${element.nom}</span>`;
+                    coursBlock.appendChild(newDiv);
+                }
+                showToast(`Enseignant ${element.nom} assigné.`, "success");
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+
+
 function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
     cell.innerHTML = '';
     const div = document.createElement('div');
-    div.className = `course-slot ${data.bgClass || ''}`;
+    div.className = 'course-slot';
     div.style.backgroundColor = data.couleur;
     div.dataset.type = data.type;
     div.dataset.matiere = data.matiere || '';
+    div.dataset.matiereId = data.matiereId || '';
     div.dataset.enseignants = data.enseignants ? data.enseignants.join(',') : '';
-    if (data.matiereId) div.dataset.matiereId = data.matiereId;
     div.dataset.rowspan = rowspan;
     div.dataset.colspan = colspan;
+    div.dataset.dbId = data.dbId;
+    div.dataset.linkedIds = data.linkedIds ? JSON.stringify(data.linkedIds) : JSON.stringify([data.dbId]);
 
     let content = `<div class="matiere-nom">${data.matiere}</div>`;
-    if (data.enseignants && data.enseignants.length > 0) {
+    if (data.enseignants && data.enseignants.length > 0 && data.enseignants[0]) {
         content += `<div class="enseignants">${data.enseignants.map(e => `<span>${e}</span>`).join(' / ')}</div>`;
     }
-    if (rowspan > 1 || colspan > 1) {
-        if (rowspan > 1) content += `<span style="font-size:0.6rem; display:block;">${rowspan}h</span>`;
-        if (colspan > 1) content += `<span style="font-size:0.6rem; display:block;">${colspan}j</span>`;
+
+    const durationLabel = [];
+    if (rowspan > 1) durationLabel.push(`${rowspan}h`);
+    if (colspan > 1) durationLabel.push(`${colspan}j`);
+    if (durationLabel.length > 0) {
+        content += `<span style="font-size:0.6rem; display:block;">${durationLabel.join(' × ')}</span>`;
     }
-    content += `<div class="resize-handle vertical" title="Étirer verticalement"></div><div class="resize-handle horizontal" title="Étirer horizontalement"></div>`;
+
+    content += `<div class="resize-handle rh-top" title="Étirer vers le haut"></div>`;
+    content += `<div class="resize-handle rh-bottom" title="Étirer vers le bas"></div>`;
+    content += `<div class="resize-handle rh-left" title="Étirer vers la gauche"></div>`;
+    content += `<div class="resize-handle rh-right" title="Étirer vers la droite"></div>`;
+
     div.innerHTML = content;
     cell.appendChild(div);
+
+    div.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (data.matiereId) {
+            renderEnseignantBadgesForMatiere(data.matiereId);
+        }
+    });
 
     if (rowspan > 1 || colspan > 1) {
         mergeCells(cell, rowspan, colspan);
     }
-    addResizeListeners(div, cell);
+
+    attachResizeHandlers(div, cell);
 }
 
 function mergeCells(startCell, rowspan, colspan) {
@@ -326,288 +830,328 @@ function mergeCells(startCell, rowspan, colspan) {
     if (colspan > 1) startCell.colSpan = colspan;
 }
 
-// ==================== GESTIONNAIRES D'ÉTIREMENT ====================
-function addResizeListeners(element, cell) {
-    const v = element.querySelector('.resize-handle.vertical');
-    const h = element.querySelector('.resize-handle.horizontal');
-    if (v) v.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); startResize('vertical', cell, element); });
-    if (h) h.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); startResize('horizontal', cell, element); });
+function unmergeCells(startCell, rowspan, colspan) {
+    const sj = parseInt(startCell.dataset.jour);
+    const sh = parseInt(startCell.dataset.horaire);
+    for (let h = 0; h < rowspan; h++) {
+        for (let j = 0; j < colspan; j++) {
+            const cell = document.querySelector(`td[data-horaire="${sh + h}"][data-jour="${sj + j}"]`);
+            if (cell) {
+                if (h !== 0 || j !== 0) {
+                    cell.innerHTML = '';
+                    cell.style.display = '';
+                }
+                cell.rowSpan = 1;
+                cell.colSpan = 1;
+            }
+        }
+    }
+    startCell.rowSpan = 1;
+    startCell.colSpan = 1;
 }
 
-function startResize(type, startCell, element) {
-    resizeState = {
-        active: true, type, startCell, startElement: element,
-        startJour: parseInt(startCell.dataset.jour),
-        startHoraire: parseInt(startCell.dataset.horaire),
-        startRowspan: parseInt(element.dataset.rowspan) || 1,
-        startColspan: parseInt(element.dataset.colspan) || 1,
-        currentCell: null
+
+
+let resizeState = {
+    active: false,
+    direction: null,
+    anchorCell: null,
+    element: null,
+    origJour: 0,
+    origHoraire: 0,
+    origRowspan: 1,
+    origColspan: 1,
+    previewRowspan: 1,
+    previewColspan: 1,
+    previewJour: 0,
+    previewHoraire: 0
+};
+
+function attachResizeHandlers(element, cell) {
+    const handleMap = {
+        '.rh-top': 'top',
+        '.rh-bottom': 'bottom',
+        '.rh-left': 'left',
+        '.rh-right': 'right'
     };
+    Object.entries(handleMap).forEach(([selector, direction]) => {
+        const handle = element.querySelector(selector);
+        if (handle) {
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                startResize(direction, cell, element);
+            });
+        }
+    });
+}
+
+function startResize(direction, cell, element) {
+    const origJour = parseInt(cell.dataset.jour);
+    const origHoraire = parseInt(cell.dataset.horaire);
+    const origRowspan = parseInt(element.dataset.rowspan) || 1;
+    const origColspan = parseInt(element.dataset.colspan) || 1;
+
+    resizeState = {
+        active: true,
+        direction,
+        anchorCell: cell,
+        element,
+        origJour,
+        origHoraire,
+        origRowspan,
+        origColspan,
+        previewRowspan: origRowspan,
+        previewColspan: origColspan,
+        previewJour: origJour,
+        previewHoraire: origHoraire
+    };
+
     document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', stopResize);
+    document.addEventListener('mouseup', handleResizeEnd);
+    document.body.style.userSelect = 'none';
 }
 
 function handleResizeMove(e) {
     if (!resizeState.active) return;
-    const targetCell = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('dropzone') && el.style.display !== 'none');
+
+    const els = document.elementsFromPoint(e.clientX, e.clientY);
+    const targetCell = els.find(el => el.tagName === 'TD' && el.dataset.jour !== undefined);
     if (!targetCell) return;
-    const targetJour = parseInt(targetCell.dataset.jour);
-    const targetHoraire = parseInt(targetCell.dataset.horaire);
-    document.querySelectorAll('.dropzone').forEach(cell => cell.classList.remove('resize-active'));
-    if (resizeState.type === 'vertical') {
-        const start = resizeState.startHoraire;
-        const end = targetHoraire;
-        const maxRows = horaires.length - start;
-        const newRowspan = Math.min(Math.abs(end - start) + 1, maxRows);
+
+    const targetJ = parseInt(targetCell.dataset.jour);
+    const targetH = parseInt(targetCell.dataset.horaire);
+    const { origJour, origHoraire, origRowspan, origColspan, direction } = resizeState;
+    const nbJours = currentEdt ? (currentEdt.nombreJours || 6) : 6;
+
+    let newJour = resizeState.previewJour;
+    let newHoraire = resizeState.previewHoraire;
+    let newRowspan = resizeState.previewRowspan;
+    let newColspan = resizeState.previewColspan;
+
+    if (direction === 'bottom') {
+        newJour = origJour;
+        newHoraire = origHoraire;
+        newRowspan = Math.max(1, targetH - origHoraire + 1);
+        newRowspan = Math.min(newRowspan, horaires.length - origHoraire);
+        newColspan = origColspan;
+    } else if (direction === 'top') {
+        const bottomH = origHoraire + origRowspan - 1;
+        newHoraire = Math.min(targetH, bottomH);
+        newHoraire = Math.max(0, newHoraire);
+        newRowspan = bottomH - newHoraire + 1;
+        newRowspan = Math.max(1, newRowspan);
+        newJour = origJour;
+        newColspan = origColspan;
+    } else if (direction === 'right') {
+        newJour = origJour;
+        newHoraire = origHoraire;
+        newColspan = Math.max(1, targetJ - origJour + 1);
+        newColspan = Math.min(newColspan, nbJours - origJour);
+        newRowspan = origRowspan;
+    } else if (direction === 'left') {
+        const rightJ = origJour + origColspan - 1;
+        newJour = Math.min(targetJ, rightJ);
+        newJour = Math.max(0, newJour);
+        newColspan = rightJ - newJour + 1;
+        newColspan = Math.max(1, newColspan);
+        newHoraire = origHoraire;
+        newRowspan = origRowspan;
+    }
+
+    if (newRowspan !== resizeState.previewRowspan || newColspan !== resizeState.previewColspan ||
+        newJour !== resizeState.previewJour || newHoraire !== resizeState.previewHoraire) {
+
+        document.querySelectorAll('.dropzone').forEach(c => c.classList.remove('resize-active'));
+
+        let canResize = true;
         for (let h = 0; h < newRowspan; h++) {
-            const cell = document.querySelector(`td[data-horaire="${start + h}"][data-jour="${resizeState.startJour}"]`);
-            if (cell && cell.style.display !== 'none') cell.classList.add('resize-active');
-        }
-    } else {
-        const start = resizeState.startJour;
-        const end = targetJour;
-        const maxCols = 6 - start;
-        const newColspan = Math.min(Math.abs(end - start) + 1, maxCols);
-        for (let j = 0; j < newColspan; j++) {
-            const cell = document.querySelector(`td[data-horaire="${resizeState.startHoraire}"][data-jour="${start + j}"]`);
-            if (cell && cell.style.display !== 'none') cell.classList.add('resize-active');
-        }
-    }
-    resizeState.currentCell = targetCell;
-}
-
-function stopResize(e) {
-    if (!resizeState.active || !resizeState.currentCell) { cleanupResize(); return; }
-    const targetCell = resizeState.currentCell;
-    const targetJour = parseInt(targetCell.dataset.jour);
-    const targetHoraire = parseInt(targetCell.dataset.horaire);
-    if (resizeState.type === 'vertical') {
-        const start = resizeState.startHoraire;
-        const end = targetHoraire;
-        const maxRows = horaires.length - start;
-        const newRowspan = Math.min(Math.abs(end - start) + 1, maxRows);
-        if (newRowspan > 1) {
-            let canResize = true;
-            for (let h = 0; h < newRowspan; h++) {
-                const cell = document.querySelector(`td[data-horaire="${start + h}"][data-jour="${resizeState.startJour}"]`);
-                if (cell && cell.children.length > 0 && cell !== resizeState.startCell) canResize = false;
-                if (cell && cell.style.display === 'none' && cell !== resizeState.startCell) canResize = false;
-            }
-            if (canResize) {
-                const data = {
-                    type: resizeState.startElement.dataset.type,
-                    matiere: resizeState.startElement.dataset.matiere,
-                    enseignants: resizeState.startElement.dataset.enseignants ? resizeState.startElement.dataset.enseignants.split(',') : [],
-                    couleur: resizeState.startElement.style.backgroundColor,
-                    bgClass: resizeState.startElement.className.split(' ')[1],
-                    matiereId: resizeState.startElement.dataset.matiereId
-                };
-                for (let h = 0; h < newRowspan; h++) {
-                    const cell = document.querySelector(`td[data-horaire="${start + h}"][data-jour="${resizeState.startJour}"]`);
-                    if (cell && cell !== resizeState.startCell) {
-                        cell.innerHTML = '';
-                        cell.style.display = '';
-                        cell.rowSpan = 1; cell.colSpan = 1;
-                    }
-                }
-                resizeState.startCell.innerHTML = '';
-                resizeState.startCell.rowSpan = 1; resizeState.startCell.colSpan = 1;
-                createCourseElement(resizeState.startCell, data, newRowspan, resizeState.startColspan);
-            }
-        }
-    } else {
-        const start = resizeState.startJour;
-        const end = targetJour;
-        const maxCols = 6 - start;
-        const newColspan = Math.min(Math.abs(end - start) + 1, maxCols);
-        if (newColspan > 1) {
-            let canResize = true;
             for (let j = 0; j < newColspan; j++) {
-                const cell = document.querySelector(`td[data-horaire="${resizeState.startHoraire}"][data-jour="${start + j}"]`);
-                if (cell && cell.children.length > 0 && cell !== resizeState.startCell) canResize = false;
-                if (cell && cell.style.display === 'none' && cell !== resizeState.startCell) canResize = false;
-            }
-            if (canResize) {
-                const data = {
-                    type: resizeState.startElement.dataset.type,
-                    matiere: resizeState.startElement.dataset.matiere,
-                    enseignants: resizeState.startElement.dataset.enseignants ? resizeState.startElement.dataset.enseignants.split(',') : [],
-                    couleur: resizeState.startElement.style.backgroundColor,
-                    bgClass: resizeState.startElement.className.split(' ')[1],
-                    matiereId: resizeState.startElement.dataset.matiereId
-                };
-                for (let j = 0; j < newColspan; j++) {
-                    const cell = document.querySelector(`td[data-horaire="${resizeState.startHoraire}"][data-jour="${start + j}"]`);
-                    if (cell && cell !== resizeState.startCell) {
-                        cell.innerHTML = '';
-                        cell.style.display = '';
-                        cell.rowSpan = 1; cell.colSpan = 1;
-                    }
+                const c = document.querySelector(`td[data-horaire="${newHoraire + h}"][data-jour="${newJour + j}"]`);
+                if (!c) { canResize = false; break; }
+                const isPartOfCurrent = isWithinBlock(c, origJour, origHoraire, origColspan, origRowspan);
+                if (!isPartOfCurrent && (c.children.length > 0 || (c.style.display === 'none'))) {
+                    canResize = false;
                 }
-                resizeState.startCell.innerHTML = '';
-                resizeState.startCell.rowSpan = 1; resizeState.startCell.colSpan = 1;
-                createCourseElement(resizeState.startCell, data, resizeState.startRowspan, newColspan);
+                if (canResize) c.classList.add('resize-active');
             }
+            if (!canResize) break;
+        }
+
+        if (canResize) {
+            resizeState.previewRowspan = newRowspan;
+            resizeState.previewColspan = newColspan;
+            resizeState.previewJour = newJour;
+            resizeState.previewHoraire = newHoraire;
         }
     }
-    cleanupResize();
 }
 
-function cleanupResize() {
-    document.querySelectorAll('.dropzone').forEach(cell => cell.classList.remove('resize-active'));
-    resizeState.active = false;
+function isWithinBlock(cell, blockJour, blockHoraire, blockColspan, blockRowspan) {
+    const cj = parseInt(cell.dataset.jour);
+    const ch = parseInt(cell.dataset.horaire);
+    return cj >= blockJour && cj < blockJour + blockColspan &&
+        ch >= blockHoraire && ch < blockHoraire + blockRowspan;
+}
+
+async function handleResizeEnd() {
     document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', stopResize);
+    document.removeEventListener('mouseup', handleResizeEnd);
+    document.body.style.userSelect = '';
+    document.querySelectorAll('.dropzone').forEach(c => c.classList.remove('resize-active'));
+
+    if (!resizeState.active) return;
+    resizeState.active = false;
+
+    const { anchorCell, element, origJour, origHoraire, origRowspan, origColspan,
+        previewRowspan, previewColspan, previewJour, previewHoraire } = resizeState;
+
+    if (previewRowspan === origRowspan && previewColspan === origColspan &&
+        previewJour === origJour && previewHoraire === origHoraire) return;
+
+    const dataSlot = {
+        dbId: element.dataset.dbId,
+        type: element.dataset.type,
+        matiere: element.dataset.matiere,
+        matiereId: element.dataset.matiereId,
+        enseignants: element.dataset.enseignants ? element.dataset.enseignants.split(',').filter(e => e) : [],
+        couleur: element.style.backgroundColor,
+        linkedIds: JSON.parse(element.dataset.linkedIds || '[]')
+    };
+
+    unmergeCells(anchorCell, origRowspan, origColspan);
+
+    const newHeureDebut = horaires[previewHoraire].debut;
+    const newHeureFin = horaires[Math.min(previewHoraire + previewRowspan - 1, horaires.length - 1)].fin;
+
+    const oldDays = [];
+    for (let j = 0; j < origColspan; j++) oldDays.push(origJour + j);
+    const newDays = [];
+    for (let j = 0; j < previewColspan; j++) newDays.push(previewJour + j);
+
+    const addedDays = newDays.filter(d => !oldDays.includes(d));
+    const removedDays = oldDays.filter(d => !newDays.includes(d));
+    const keptDays = newDays.filter(d => oldDays.includes(d));
+
+    let jourToId = {};
+    try {
+        const primaryId = dataSlot.linkedIds[0] || dataSlot.dbId;
+        const resPrimary = await fetch(`${API_BASE_URL}/seances/${primaryId}`);
+        if (!resPrimary.ok) throw new Error("Séance primaire introuvable");
+        const primarySeance = await resPrimary.json();
+
+        for (let i = 0; i < dataSlot.linkedIds.length; i++) {
+            if (i < oldDays.length) jourToId[oldDays[i]] = dataSlot.linkedIds[i];
+        }
+
+        for (const day of keptDays) {
+            const seanceId = jourToId[day];
+            if (!seanceId) continue;
+            const dateForDay = getDateForJour(day);
+            const updateDto = {
+                idSeance: primarySeance.idSeance + (day !== origJour ? `-${day}` : ''),
+                date: dateForDay,
+                heureDebut: newHeureDebut,
+                heureFin: newHeureFin,
+                statut: primarySeance.statut,
+                coursId: primarySeance.coursId,
+                enseignantId: primarySeance.enseignantId,
+                emploiDuTempsId: primarySeance.emploiDuTempsId
+            };
+            await fetch(`${API_BASE_URL}/seances/${seanceId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateDto)
+            });
+        }
+
+        for (const day of addedDays) {
+            const dateForDay = getDateForJour(day);
+            const createDto = {
+                idSeance: `S-${Date.now()}-${day}`,
+                date: dateForDay,
+                heureDebut: newHeureDebut,
+                heureFin: newHeureFin,
+                statut: primarySeance.statut,
+                coursId: primarySeance.coursId,
+                enseignantId: primarySeance.enseignantId,
+                emploiDuTempsId: primarySeance.emploiDuTempsId
+            };
+            const res = await fetch(`${API_BASE_URL}/seances`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(createDto)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                jourToId[day] = created.id;
+            }
+        }
+
+        for (const day of removedDays) {
+            const seanceId = jourToId[day];
+            if (!seanceId) continue;
+            await fetch(`${API_BASE_URL}/seances/${seanceId}`, { method: 'DELETE' });
+            delete jourToId[day];
+        }
+
+    } catch (e) {
+        console.error("Erreur resize API:", e);
+    }
+
+    const newLinkedIds = newDays.map(d => jourToId[d]).filter(id => id);
+    const newCell = document.querySelector(`td[data-horaire="${previewHoraire}"][data-jour="${previewJour}"]`);
+    if (newCell) {
+        dataSlot.linkedIds = newLinkedIds;
+        dataSlot.dbId = newLinkedIds[0] || dataSlot.dbId;
+        createCourseElement(newCell, dataSlot, previewRowspan, previewColspan);
+    }
 }
 
-// ==================== SUPPRESSION PAR DOUBLE-CLIC ====================
-tbody.addEventListener('dblclick', function(e) {
+
+timetableBody.addEventListener('dblclick', async function (e) {
     const td = e.target.closest('td');
     if (td && td.children.length) {
+        const confirmed = await showConfirm("Supprimer cette séance ?", "La séance sera supprimée définitivement.");
+        if (!confirmed) return;
+
         const cours = td.children[0];
+        const linkedIds = JSON.parse(cours.dataset.linkedIds || '[]');
         const rowspan = parseInt(cours.dataset.rowspan) || 1;
         const colspan = parseInt(cours.dataset.colspan) || 1;
-        const sj = parseInt(td.dataset.jour);
-        const sh = parseInt(td.dataset.horaire);
-        for (let h = 0; h < rowspan; h++) {
-            for (let j = 0; j < colspan; j++) {
-                const cell = document.querySelector(`td[data-horaire="${sh + h}"][data-jour="${sj + j}"]`);
-                if (cell) {
-                    cell.innerHTML = '';
-                    cell.style.display = '';
-                    cell.rowSpan = 1; cell.colSpan = 1;
-                }
-            }
+
+        for (const id of linkedIds) {
+            try {
+                await fetch(`${API_BASE_URL}/seances/${id}`, { method: 'DELETE' });
+            } catch (err) { console.error(err); }
         }
+
+        unmergeCells(td, rowspan, colspan);
+        td.innerHTML = '';
+        showToast("Séance supprimée.", "success");
     }
 });
 
-// ==================== GESTION DE LA CLASSE ET DE LA SEMAINE ====================
-classeSelect.addEventListener('change', function() {
-    classeDisplay.textContent = this.value;
-});
 
-const semaineInput = document.getElementById('semaineInput');
-const debutSemaine = document.getElementById('debutSemaine');
-const finSemaine = document.getElementById('finSemaine');
-
-function updateSemaineDates() {
-    const weekValue = semaineInput.value;
-    if (weekValue) {
-        const [year, week] = weekValue.split('-W');
-        const firstDay = new Date(year, 0, 1);
-        firstDay.setDate(firstDay.getDate() + (week - 1) * 7);
-        const lastDay = new Date(firstDay);
-        lastDay.setDate(lastDay.getDate() + 6);
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        debutSemaine.textContent = firstDay.toLocaleDateString('fr-FR', options);
-        finSemaine.textContent = lastDay.toLocaleDateString('fr-FR', options);
-    }
-}
-semaineInput.addEventListener('change', updateSemaineDates);
-updateSemaineDates();
-
-// ==================== SAUVEGARDE ET CHARGEMENT ====================
-document.getElementById('saveBtn').addEventListener('click', function() {
-    const courses = {};
-    document.querySelectorAll('.course-slot').forEach(cours => {
-        const cell = cours.closest('td');
-        if (cell) {
-            const jour = cell.dataset.jour;
-            const horaire = cell.dataset.horaire;
-            courses[`${jour}-${horaire}`] = {
-                type: cours.dataset.type,
-                matiere: cours.dataset.matiere,
-                enseignants: cours.dataset.enseignants ? cours.dataset.enseignants.split(',') : [],
-                couleur: cours.style.backgroundColor,
-                bgClass: cours.className.split(' ')[1],
-                rowspan: cours.dataset.rowspan || 1,
-                colspan: cours.dataset.colspan || 1,
-                matiereId: cours.dataset.matiereId,
-                isStart: true
-            };
-        }
-    });
-    const classe = classeSelect.value;
-    const semaine = semaineInput.value;
-    const key = `emploi_${classe}_${semaine}`;
-    localStorage.setItem(key, JSON.stringify(courses));
-    alert('Emploi du temps enregistré !');
-    updateSaveList();
-});
-
-document.getElementById('loadSaveBtn').addEventListener('click', function() {
-    const select = document.getElementById('saveSelect');
-    const key = select.value;
-    if (!key) return;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-        document.querySelectorAll('.dropzone').forEach(cell => {
-            cell.innerHTML = '';
-            cell.style.display = '';
-            cell.rowSpan = 1; cell.colSpan = 1;
-        });
-        const data = JSON.parse(saved);
-        Object.keys(data).forEach(cellId => {
-            const [jour, horaire] = cellId.split('-').map(Number);
-            const cell = document.querySelector(`td[data-jour="${jour}"][data-horaire="${horaire}"]`);
-            if (cell && data[cellId].isStart) {
-                const cours = data[cellId];
-                createCourseElement(cell, cours, cours.rowspan || 1, cours.colspan || 1);
-            }
-        });
-    }
-});
-
-function updateSaveList() {
-    const select = document.getElementById('saveSelect');
-    select.innerHTML = '<option value="">Charger une sauvegarde...</option>';
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('emploi_')) {
-            const opt = document.createElement('option');
-            opt.value = key;
-            const parts = key.split('_');
-            opt.textContent = `${parts[1]} - Semaine ${parts[2]}`;
-            select.appendChild(opt);
-        }
-    }
-}
-
-// ==================== NOUVEL EMPLOI DU TEMPS ====================
-document.getElementById('newBtn').addEventListener('click', function() {
-    if (confirm('Créer un nouvel emploi du temps ? Les données non enregistrées seront perdues.')) {
-        document.querySelectorAll('.dropzone').forEach(cell => {
-            cell.innerHTML = '';
-            cell.style.display = '';
-            cell.rowSpan = 1; cell.colSpan = 1;
-        });
-        coursesList = [];
-        renderCoursesDraggable();
-    }
-});
-
-// ==================== EXPORT PDF ====================
-document.getElementById('exportPdfBtn').addEventListener('click', function() {
+document.getElementById('exportPdfBtn').addEventListener('click', function () {
     const timetableCard = document.getElementById('timetableCard');
     const clone = timetableCard.cloneNode(true);
-    
     clone.style.width = '100%';
     clone.style.padding = '20px';
     clone.style.backgroundColor = 'white';
-    
+
+    clone.querySelectorAll('.resize-handle').forEach(h => h.style.display = 'none');
+
     const opt = {
         margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `emploi_du_temps_${classeDisplay.textContent}_semaine_${semaineInput.value}.pdf`,
+        filename: `emploi_du_temps_${currentEdt ? currentEdt.id : 'export'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
     };
-    
+
     html2pdf().set(opt).from(clone).save();
 });
 
 
-// ==================== INITIALISATION ====================
-updateSaveList();
-renderCoursesDraggable();
+document.addEventListener('DOMContentLoaded', init);

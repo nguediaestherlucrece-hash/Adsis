@@ -18,15 +18,21 @@ public class EmploiDuTempsMapper {
         dto.setIdEmploi(emploiDuTemps.getIdEmploi());
         dto.setDateDebut(emploiDuTemps.getDateDebut());
         dto.setDateFin(emploiDuTemps.getDateFin());
+        dto.setNombreJours(emploiDuTemps.getNombreJours());
 
         Semestre semestre = emploiDuTemps.getSemestre();
         if (semestre != null) {
-            dto.setClasseId(semestre.getId());
+            dto.setSemestreId(semestre.getId());
+            dto.setSemestreNom(semestre.getNomSemestre());
+            if (semestre.getAnnee() != null) {
+                dto.setAnneeNom(semestre.getAnnee().getNomAnneeAcademique());
+            }
         }
 
         Classe classe = emploiDuTemps.getClasse();
         if (classe != null) {
             dto.setClasseId(classe.getId());
+            dto.setClasseNom(classe.getNomClasse());
         }
 
         AssistantPedagogique gestionnaire = emploiDuTemps.getGestionnaire();

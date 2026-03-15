@@ -37,9 +37,8 @@ public class Classe {
     @OneToMany(mappedBy = "classe", cascade =CascadeType.ALL)
     private List<Etudiant> etudiants = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "emploi_du_temps_id", referencedColumnName = "id")
-    private EmploiDuTemps emploiDuTemps;
+    @OneToMany(mappedBy = "classe")
+    private List<EmploiDuTemps> emploisDuTemps = new ArrayList<>();
     // 🔹 Méthodes métier (conservées)
 
     public void ajouterEtudiant(Etudiant etudiant) {

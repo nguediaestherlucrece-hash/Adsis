@@ -17,6 +17,7 @@ public class SemestreMapper {
         dto.setStatut(semestre.isStatut());
 
         dto.setAnneeAcademiqueId(semestre.getAnnee() != null ? semestre.getAnnee().getId() : null);
+        dto.setAnneeNom(semestre.getAnnee() != null ? semestre.getAnnee().getNomAnneeAcademique() : null);
 
         return dto;
     }

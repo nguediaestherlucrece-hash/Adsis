@@ -2,6 +2,8 @@ package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CoursUEDTO {
 
@@ -12,4 +14,7 @@ public class CoursUEDTO {
     private Integer volumeHoraire;
 
     private Long specialiteId;
+    private String specialiteNom;
+    private List<EnseignantSimpleDTO> enseignants;
 }
+

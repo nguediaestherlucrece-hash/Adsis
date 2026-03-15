@@ -7,13 +7,16 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.mappers.CoursUEMapper;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.CoursUERepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface.CourUEService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.EnseignantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,7 @@ public class CoursUEServiceImpl implements CourUEService {
 
     private final CoursUERepository coursUERepository;
     private final SpecialiteRepository specialiteRepository;
+    private final EnseignantRepository enseignantRepository;
     private final CoursUEMapper mapper;
 
     @Override
@@ -47,12 +51,20 @@ public class CoursUEServiceImpl implements CourUEService {
     @Override
     @Transactional(readOnly = true)
     public CoursUEDTO getCoursByCode(String idCours) {
-        // Si besoin, ajouter une méthode dans le repository: findByIdCours
         CoursUE cours = coursUERepository.findAll().stream()
                 .filter(c -> idCours.equals(c.getIdCours()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Cours UE non trouvé avec le code: " + idCours));
         return mapper.toDTO(cours);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CoursUEDTO> getCoursBySpecialite(Long specialiteId) {
+        return coursUERepository.findBySpecialiteId(specialiteId)
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -68,6 +80,17 @@ public class CoursUEServiceImpl implements CourUEService {
         cours.setSpecialite(specialite);
 
         CoursUE saved = coursUERepository.save(cours);
+
+        // Associer les enseignants (côté propriétaire de la relation ManyToMany)
+        if (dto.getEnseignantIds() != null && !dto.getEnseignantIds().isEmpty()) {
+            for (Long enseignantId : dto.getEnseignantIds()) {
+                Enseignant enseignant = enseignantRepository.findById(enseignantId)
+                        .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + enseignantId));
+                enseignant.getCoursEnseignes().add(saved);
+                enseignantRepository.save(enseignant);
+            }
+        }
+
         log.info("Cours UE créé avec l'id {}", saved.getId());
         return mapper.toDTO(saved);
     }
@@ -85,6 +108,24 @@ public class CoursUEServiceImpl implements CourUEService {
         Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
                 .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));
         cours.setSpecialite(specialite);
+
+        // Mettre à jour les enseignants
+        if (dto.getEnseignantIds() != null) {
+            // Retirer le cours des anciens enseignants
+            List<Enseignant> anciensEnseignants = new ArrayList<>(cours.getEnseignants());
+            for (Enseignant ancien : anciensEnseignants) {
+                ancien.getCoursEnseignes().remove(cours);
+                enseignantRepository.save(ancien);
+            }
+
+            // Ajouter les nouveaux enseignants
+            for (Long enseignantId : dto.getEnseignantIds()) {
+                Enseignant enseignant = enseignantRepository.findById(enseignantId)
+                        .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + enseignantId));
+                enseignant.getCoursEnseignes().add(cours);
+                enseignantRepository.save(enseignant);
+            }
+        }
 
         CoursUE updated = coursUERepository.save(cours);
         log.info("Cours UE mis à jour avec l'id {}", updated.getId());

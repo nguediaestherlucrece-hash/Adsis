@@ -12,18 +12,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ADSIS - Emploi du temps</title>
+    <style>
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .edt-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .edt-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+        .elements-panel { background: #f8f9fa; border-radius: 12px; padding: 16px; }
+        .element-pill { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; color: white; font-size: 0.82rem; cursor: grab; user-select: none; margin: 3px; transition: transform 0.15s, box-shadow 0.15s; }
+        .element-pill:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .element-pill:active { cursor: grabbing; }
+        .enseignant-sub-pill { background: #5a5c69; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; margin-left: 12px; }
+
+        /* Styles pour le redimensionnement */
+        .resize-active { background-color: rgba(45, 106, 79, 0.15) !important; border: 2px dashed #2d6a4f !important; }
+        .resize-handle { position: absolute; background: transparent; z-index: 10; }
+        .rh-top { top: -2px; left: 0; right: 0; height: 8px; cursor: ns-resize; }
+        .rh-bottom { bottom: -2px; left: 0; right: 0; height: 8px; cursor: ns-resize; }
+        .rh-left { top: 0; bottom: 0; left: -2px; width: 8px; cursor: ew-resize; }
+        .rh-right { top: 0; bottom: 0; right: -2px; width: 8px; cursor: ew-resize; }
+        .resize-handle:hover { background: rgba(255, 255, 255, 0.4); }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- SIDEBAR - Responsive -->
+            <!-- SIDEBAR -->
             <div class="col-lg-2 col-md-3 col-sm-12 p-0 sidebar">
                 <div class="sidebar-brand">
                     <div class="logo-box mb-4 pb-3 border-bottom">
                         <img src="../assets/image.png" alt="Logo ADSIS" class="logo" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%234e73df%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3EADSIS%3C%2Ftext%3E%3C%2Fsvg%3E'">
                         <h5 class="brand-name m-0 ms-2">ADSIS</h5>
                     </div>
-                    <span class="brand-text d-none d-md-inline"></span>
                 </div>
                 <nav class="nav flex-column gap-2">
                     <a class="nav-link" href="tableaudebordass.html"><i class="bi bi-grid"></i>Tableau de bord</a>
@@ -38,132 +57,164 @@
 
             <!-- CONTENU PRINCIPAL -->
             <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
-                <!-- Entête avec sélections - Responsive -->
-                <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <h5 class="mb-0 fw-semibold header-title">Emploi du temps</h5>
-                        <select class="form-select form-select-sm select-custom" id="classeSelect">
-                            <option>L1 - Génie Informatique</option>
-                            <option>L2 - Génie Informatique</option>
-                            <option>L3 - Génie Informatique</option>
-                            <option>M1 - Génie Logiciel</option>
-                            <option>M2 - Génie Logiciel</option>
-                        </select>
+                
+                <!-- VUE 1 : LISTING DES EMPLOIS DU TEMPS -->
+                <div id="listingView" class="view-section active">
+                    <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <h5 class="mb-0 fw-semibold header-title">Emplois du temps</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEdtModal">
+                            <i class="fas fa-plus me-2"></i>Nouvel emploi du temps
+                        </button>
                     </div>
-                    <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <div class="periode-container">
-                            <i class="fas fa-calendar-week me-1"></i>
-                            <input type="week" id="semaineInput" class="form-control form-control-sm" value="2025-W12">
+
+                    <div class="row mt-3" id="edtListContainer">
+                        <div class="col-12 text-center text-muted p-5">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p>Chargement des emplois du temps...</p>
                         </div>
-                        <select class="form-select form-select-sm select-custom d-none d-sm-inline-block" id="anneeSelect">
-                            <option>2024-2025</option>
-                            <option>2025-2026</option>
-                        </select>
-                        <select class="form-select form-select-sm select-custom d-none d-sm-inline-block" id="semestreSelect">
-                            <option>Semestre 1</option>
-                            <option>Semestre 2</option>
-                        </select>
-                        <!-- Sélecteur de sauvegarde -->
-                        <select class="form-select form-select-sm select-custom" id="saveSelect" style="min-width: 150px;">
-                            <option value="">Charger une sauvegarde...</option>
-                        </select>
-                        <button class="btn-save" id="loadSaveBtn">
-                            <i class="fas fa-folder-open"></i> <span class="d-none d-sm-inline">Charger</span>
-                        </button>
-                        <button class="btn-save" id="saveBtn">
-                            <i class="fas fa-save"></i> <span class="d-none d-sm-inline">Enregistrer</span>
-                        </button>
-                        <button class="btn-export-pdf" id="exportPdfBtn">
-                            <i class="fas fa-file-pdf"></i> <span class="d-none d-sm-inline">PDF</span>
-                        </button>
-                        <button class="btn-new" id="newBtn">
-                        <i class="fas fa-plus"></i> <span class="d-none d-sm-inline">Nouveau</span>
-                        </button>
                     </div>
                 </div>
 
-                <!-- CONTENU PRINCIPAL AVEC COLONNE VERTICALE - Responsive -->
-                <div class="row g-3">
-                    <!-- Colonne gauche : Sélecteurs compacts -->
-                    <div class="col-md-3 col-12">
-                        <!-- Matières -->
-                        <div class="elements-card mb-3">
-                            <h6 class="fw-semibold mb-2"><i class="fas fa-book me-2" style="color: #6932eb;"></i>Matières</h6>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="matiereSelect">
-                                    <!-- options générées par JS -->
-                                </select>
-                                <button class="btn btn-primary btn-sm" id="addMatiereBtn" style="white-space: nowrap;">Ajouter</button>
-                            </div>
+                <!-- VUE 2 : EDITEUR D'EMPLOI DU TEMPS -->
+                <div id="editorView" class="view-section">
+                    <!-- Entête Éditeur -->
+                    <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-outline-secondary me-2" id="backToListBtn" title="Retour à la liste">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h5 class="mb-0 fw-semibold header-title" id="editorTitle">Édition Emploi du Temps</h5>
+                            <span class="badge bg-primary ms-2" id="editorClasseBadge">...</span>
+                            <span class="badge bg-info text-dark ms-1" id="editorAnneeBadge" style="display:none;"></span>
+                            <span class="badge bg-warning text-dark ms-1" id="editorSemestreBadge" style="display:none;"></span>
                         </div>
-
-                        <!-- Enseignants -->
-                        <div class="elements-card mb-3">
-                            <h6 class="fw-semibold mb-2"><i class="fas fa-chalkboard-teacher me-2" style="color: #b15e5e;"></i>Enseignants</h6>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="enseignantSelect">
-                                    <!-- options générées par JS -->
-                                </select>
-                                <button class="btn btn-primary btn-sm" id="addEnseignantBtn">Ajouter</button>
-                            </div>
-                        </div>
-
-                        <!-- Événements -->
-                        <div class="elements-card mb-3">
-                            <h6 class="fw-semibold mb-2"><i class="fas fa-calendar-alt me-2" style="color: #d97706;"></i>Événements</h6>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="evenementSelect">
-                                    <!-- options générées par JS -->
-                                </select>
-                                <button class="btn btn-primary btn-sm" id="addEvenementBtn">Ajouter</button>
-                            </div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <span class="text-muted small me-2" id="debutSemaine"></span>
+                            <span class="text-muted small me-2">→</span>
+                            <span class="text-muted small me-2" id="finSemaine"></span>
+                            <button class="btn-save" id="saveBtn">
+                                <i class="fas fa-save"></i> <span class="d-none d-sm-inline">Enregistrer</span>
+                            </button>
+                            <button class="btn-export-pdf" id="exportPdfBtn">
+                                <i class="fas fa-file-pdf"></i> <span class="d-none d-sm-inline">PDF</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Colonne droite : Emploi du temps -->
-                    <div class="col-md-9 col-12">
-                        <div class="card-timetable" id="timetableCard">
-                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-                                <h5 class="fw-semibold mb-0">
-                                    <i class="fas fa-table me-2 timetable-icon"></i>
-                                    Emploi du temps - <span id="classeDisplay">L1 Génie Informatique</span>
-                                </h5>
-                            </div>
-
-                            <!-- Affichage de la période -->
-                            <div class="periode-display mb-3 text-muted">
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                Semaine du <span id="debutSemaine">17 mars 2025</span> au <span id="finSemaine">23 mars 2025</span>
-                            </div>
-
-                            <!-- TABLEAU HORAIRE -->
-                            <div class="table-responsive" style="overflow-x: auto;">
-                                <table class="table table-bordered table-timetable align-middle" id="timetable">
-                                    <thead>
-                                        <tr>
-                                            <th style="min-width: 100px;">Horaires</th>
-                                            <th style="min-width: 80px;">Lundi</th>
-                                            <th style="min-width: 80px;">Mardi</th>
-                                            <th style="min-width: 80px;">Mercredi</th>
-                                            <th style="min-width: 80px;">Jeudi</th>
-                                            <th style="min-width: 80px;">Vendredi</th>
-                                            <th style="min-width: 80px;">Samedi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="timetableBody"></tbody>
-                                </table>
-                            </div>
-
-                            <!-- Zone des éléments disponibles (badges) -->
-                            <div class="mt-4">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="fas fa-arrow-down"></i>
-                                    <span class="fw-semibold">Éléments disponibles (glisser-déposer)</span>
+                    <div class="row g-3">
+                        <!-- Colonne gauche : Éléments draggables directement -->
+                        <div class="col-md-3 col-12">
+                            <!-- Matières (badges draggables directement) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-book me-2" style="color: #6932eb;"></i>Matières</h6>
+                                <div id="matieresContainer" class="d-flex flex-wrap">
+                                    <p class="text-muted small">Chargement...</p>
                                 </div>
-                                <div id="coursesContainer" class="d-flex flex-wrap gap-2 p-2 bg-light rounded" style="min-height: 60px;"></div>
+                            </div>
+
+                            <!-- Enseignants (badges draggables directement, groupés par matière) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-chalkboard-teacher me-2" style="color: #b15e5e;"></i>Enseignants</h6>
+                                <div id="enseignantsContainer" class="d-flex flex-wrap">
+                                    <p class="text-muted small">Sélectionnez une matière sur la grille pour voir les enseignants.</p>
+                                </div>
+                            </div>
+
+                            <!-- Événements (Bientôt) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-calendar-alt me-2" style="color: #d97706;"></i>Événements spéciaux</h6>
+                                <p class="text-muted small mb-0">Bientôt disponible.</p>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite : Grille -->
+                        <div class="col-md-9 col-12">
+                            <div class="card-timetable" id="timetableCard">
+                                <div class="periode-display mb-3 text-muted">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Du <span id="debutSemaine">...</span> au <span id="finSemaine">...</span>
+                                </div>
+
+                                <div class="table-responsive" style="overflow-x: auto;">
+                                    <table class="table table-bordered table-timetable align-middle" id="timetable">
+                                        <thead>
+                                            <tr id="timetableHeaders">
+                                                <th style="min-width: 100px;">Horaires</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timetableBody"></tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Création / Modification d'Emploi du temps -->
+    <div class="modal fade" id="createEdtModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edtModalTitle">Créer un emploi du temps</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createEdtForm">
+                        <input type="hidden" id="modalEdtId" value="">
+                        <div class="mb-3">
+                            <label class="form-label">Classe</label>
+                            <select class="form-select" id="modalClasse" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="modalDateDebut" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Semestre</label>
+                            <select class="form-select" id="modalSemestre">
+                                <option value="">-- Sélectionnez un semestre --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre de jours (1 à 6)</label>
+                            <input type="number" class="form-control" id="modalNbJours" min="1" max="6" value="6" required>
+                            <small class="text-muted">6 = Lundi à Samedi</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de fin <small class="text-muted">(calculée automatiquement)</small></label>
+                            <input type="date" class="form-control" id="modalDateFin" readonly>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="modalSubmitBtn">Créer et Éditer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold" id="confirmModalTitle">Confirmer</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="mb-0 text-muted" id="confirmModalMessage">Êtes-vous sûr ?</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" id="confirmCancelBtn">Annuler</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmOkBtn">Confirmer</button>
                 </div>
             </div>
         </div>

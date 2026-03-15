@@ -3,7 +3,6 @@ package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Data
 public class EmploiDuTempsDTO {
@@ -11,10 +10,15 @@ public class EmploiDuTempsDTO {
     private Long id;
     private String idEmploi;
     private LocalDate dateDebut;
-    private LocalTime dateFin;
+    private LocalDate dateFin;
+    private Integer nombreJours;
 
     private Long semestreId;
+    private String semestreNom;
+    private String anneeNom;
     private Long classeId;
+    private String classeNom;
     private Long gestionnaireId;
 
 }
+

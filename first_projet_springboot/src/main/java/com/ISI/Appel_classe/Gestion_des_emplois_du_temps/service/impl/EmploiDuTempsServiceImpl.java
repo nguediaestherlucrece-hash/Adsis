@@ -64,10 +64,11 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
         emploi.setIdEmploi(dto.getIdEmploi());
         emploi.setDateDebut(dto.getDateDebut());
         emploi.setDateFin(dto.getDateFin());
+        emploi.setNombreJours(dto.getNombreJours() != null ? dto.getNombreJours() : 6);
 
         if (dto.getSemestreId() != null) {
-            Semestre semestre = semestreRepository.findById(dto.getClasseId())
-                    .orElseThrow(() -> new RuntimeException("Semestre non trouvée avec l'id: " + dto.getSemestreId()));
+            Semestre semestre = semestreRepository.findById(dto.getSemestreId())
+                    .orElseThrow(() -> new RuntimeException("Semestre non trouvé avec l'id: " + dto.getSemestreId()));
             emploi.setSemestre(semestre);
         }
 
@@ -96,11 +97,16 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
         emploi.setIdEmploi(dto.getIdEmploi());
         emploi.setDateDebut(dto.getDateDebut());
         emploi.setDateFin(dto.getDateFin());
+        if (dto.getNombreJours() != null) {
+            emploi.setNombreJours(dto.getNombreJours());
+        }
 
         if (dto.getSemestreId() != null) {
-            Semestre semestre = semestreRepository.findById(dto.getClasseId())
-                    .orElseThrow(() -> new RuntimeException("Semestre non trouvée avec l'id: " + dto.getSemestreId()));
+            Semestre semestre = semestreRepository.findById(dto.getSemestreId())
+                    .orElseThrow(() -> new RuntimeException("Semestre non trouvé avec l'id: " + dto.getSemestreId()));
             emploi.setSemestre(semestre);
+        } else {
+            emploi.setSemestre(null);
         }
 
         if (dto.getClasseId() != null) {
@@ -126,9 +132,9 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
 
     @Override
     public void deleteEmploi(Long id) {
-        if (!emploiDuTempsRepository.existsById(id)) {
-            throw new RuntimeException("Emploi du temps non trouvé avec l'id: " + id);
-        }
+        EmploiDuTemps emploi = emploiDuTempsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Emploi du temps non trouvé avec l'id: " + id));
+
         emploiDuTempsRepository.deleteById(id);
         log.info("Emploi du temps supprimé avec l'id {}", id);
     }

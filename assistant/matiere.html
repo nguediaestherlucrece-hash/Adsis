@@ -12,7 +12,7 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- SIDEBAR - identique à l'interface précédente -->
+            <!-- SIDEBAR -->
             <div class="col-lg-2 col-md-3 col-sm-12 p-0 sidebar">
                 <div class="sidebar-brand">
                     <div class="logo-box mb-4 pb-3 border-bottom">
@@ -24,7 +24,6 @@
                     <a class="nav-link" href="tableaudebordass.html"><i class="bi bi-grid"></i>Tableau de bord</a>
                     <a class="nav-link active" href="matiere.html"><i class="bi bi-book"></i>Matiere</a>
                     <a class="nav-link" href="emploidutemps.html"><i class="bi bi-calendar3"></i>Emploi du temps</a>
-                </nav>
                 </nav>
                 <hr class="mx-3 d-none d-md-block">
                 <div class="admin-profile mx-3 mt-4 d-none d-md-flex">
@@ -38,39 +37,43 @@
                 <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                     <h5 class="mb-0 fw-semibold header-title">Gestion des matières</h5>
                     <div class="d-flex gap-2">
-                        <span class="text-muted">Gérez les matières et leur volume horaire</span>
+                        <span class="text-muted">Gérez les matières et leurs enseignants</span>
                     </div>
                 </div>
 
-                <!-- Formulaire d'ajout -->
+                <!-- Formulaire d'ajout (sans volume horaire) -->
                 <div class="card-course-add mb-4">
                     <h6 class="fw-semibold mb-3"><i class="fas fa-plus-circle me-2"></i>Ajouter une matière</h6>
                     <div class="row g-2">
                         <div class="col-md-2">
                             <input type="text" class="form-control" id="codeInput" placeholder="Code (ex: MATH)">
                         </div>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control" id="nomInput" placeholder="Nom de la matière">
-                        </div>
-                        <div class="col-md-2">
-                            <input type="number" class="form-control" id="heuresInput" placeholder="Heures/semaine" step="0.5" min="0">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="nomInput" placeholder="Intitulé de la matière">
                         </div>
                         <div class="col-md-3">
-                            <select class="form-select" id="parentSelect">
-                                <option value="">-- Aucun parent (matière principale) --</option>
+                            <select class="form-select" id="specialiteSelect">
+                                <option value="">-- Spécialité --</option>
+                                <!-- Chargé via JS -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="enseignantSelect" multiple title="Maintenez Ctrl/Cmd pour sélectionner plusieurs enseignants">
+                                <!-- Chargé via JS -->
                             </select>
                         </div>
                         <div class="col-md-1">
                             <button class="btn btn-primary w-100" id="ajouterBtn">Ajouter</button>
                         </div>
                     </div>
+                    <small class="text-muted mt-2 d-block"><i class="fas fa-info-circle"></i> Maintenez Ctrl (Windows) ou Cmd (Mac) pour sélectionner plusieurs enseignants. Le volume horaire est calculé automatiquement depuis les emplois du temps.</small>
                 </div>
 
                 <!-- Liste des matières -->
                 <div class="card-timetable">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-semibold mb-0"><i class="fas fa-list me-2"></i>Matières</h5>
-                        <span class="badge bg-secondary" id="totalMatieres">8</span>
+                        <span class="badge bg-secondary" id="totalMatieres">0</span>
                     </div>
                     <div id="matieresContainer" class="matieres-list">
                         <!-- Les matières seront injectées ici par JavaScript -->
@@ -79,17 +82,39 @@
                     <div class="row mt-4 pt-3 border-top">
                         <div class="col-md-4">
                             <p class="mb-1 text-muted">Total matières</p>
-                            <h4 id="totalMatieresFooter">8</h4>
+                            <h4 id="totalMatieresFooter">0</h4>
                         </div>
                         <div class="col-md-4">
                             <p class="mb-1 text-muted">Heures totales / semaine</p>
-                            <h4 id="totalHeures">29h</h4>
+                            <h4 id="totalHeures">0h</h4>
                         </div>
                         <div class="col-md-4">
                             <p class="mb-1 text-muted">Moyenne h/matière</p>
-                            <h4 id="moyenneHeures">3.6h</h4>
+                            <h4 id="moyenneHeures">0h</h4>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold" id="confirmModalTitle">Confirmer</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="mb-0 text-muted" id="confirmModalMessage">Êtes-vous sûr ?</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" id="confirmCancelBtn">Annuler</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmOkBtn">Confirmer</button>
                 </div>
             </div>
         </div>

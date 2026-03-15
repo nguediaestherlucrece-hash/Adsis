@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,13 +26,15 @@ public class EmploiDuTemps {
     private String idEmploi;
 
     private LocalDate dateDebut;
-    private LocalTime dateFin;
+    private LocalDate dateFin;
+    private Integer nombreJours; // 1 à 6 (Lundi → Samedi)
 
     @ManyToOne
     @JoinColumn(name = "semestre_id")
     private Semestre semestre;
     
-    @OneToOne(mappedBy = "emploiDuTemps") 
+    @ManyToOne
+    @JoinColumn(name = "classe_id")
     private Classe classe;
 
     @ManyToOne

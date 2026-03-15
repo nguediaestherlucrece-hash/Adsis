@@ -11,4 +11,5 @@ public class SemestreDTO {
     private String nomSemestre;
     private boolean statut;
     private Long anneeAcademiqueId;
+    private String anneeNom;
 }

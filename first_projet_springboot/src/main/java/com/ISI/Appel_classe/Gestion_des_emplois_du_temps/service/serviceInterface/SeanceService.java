@@ -19,4 +19,6 @@ public interface SeanceService {
     SeanceDTO updateSeance(Long id, SeanceUpdateDTO dto);
 
     void deleteSeance(Long id);
+
+    List<SeanceDTO> getSeancesByEmploiDuTempsId(Long emploiDuTempsId);
 }

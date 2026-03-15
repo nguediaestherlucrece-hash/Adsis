@@ -64,4 +64,11 @@ public class CoursUEController {
         courUEService.deleteCours(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/specialite/{specialiteId}")
+    @PreAuthorize("hasAuthority('COURS_READ')")
+    public ResponseEntity<List<CoursUEDTO>> getCoursBySpecialite(@PathVariable Long specialiteId) {
+        List<CoursUEDTO> cours = courUEService.getCoursBySpecialite(specialiteId);
+        return ResponseEntity.ok(cours);
+    }
 }
