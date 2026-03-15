@@ -19,4 +19,7 @@ public class AssistantPedagogiqueCreateDTO {
 
     // Attributs spécifiques
     private String departement; // Ex: "Département Informatique", "Département Sciences"
+
+    // Permissions retirées
+    private Set<String> removedPermissions;
 }

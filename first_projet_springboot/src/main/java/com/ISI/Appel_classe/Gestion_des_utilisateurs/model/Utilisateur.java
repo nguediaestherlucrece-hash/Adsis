@@ -58,13 +58,25 @@ public class Utilisateur implements UserDetails {
     @JoinTable(name = "utilisateur_roles", joinColumns = @JoinColumn(name = "utilisateur_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
+    // Permissions retirées spécifiquement pour cet utilisateur
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private Set<UserPermissionOverride> permissionOverrides = new HashSet<>();
+
     // Implémentation de UserDetails pour Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Récupère toutes les permissions de tous les rôles de l'utilisateur
+        // 1. Collecter les noms des permissions retirées
+        Set<String> removedNames = permissionOverrides.stream()
+                .map(o -> o.getPermission().getName())
+                .collect(Collectors.toSet());
+        // 2. Permissions des rôles moins les permissions retirées
         return roles.stream()
                 .flatMap(role -> role.getPermissions().stream())
-                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                .map(Permission::getName)
+                .filter(name -> !removedNames.contains(name))
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
     }
 

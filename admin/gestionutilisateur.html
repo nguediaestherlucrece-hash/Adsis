@@ -232,6 +232,15 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Section Permissions -->
+                    <div class="mb-3" id="permissionsSection">
+                        <label class="form-label small fw-bold">PERMISSIONS DU RÔLE</label>
+                        <p class="text-muted small mb-2">Désactivez les permissions que vous souhaitez retirer pour cet utilisateur.</p>
+                        <div id="permissionToggles" class="border rounded-3 p-2" style="max-height:250px;overflow-y:auto;">
+                            <div class="text-center text-muted small py-3">Sélectionnez un rôle pour voir les permissions</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-primary w-100 py-2 rounded-3 fw-bold shadow-sm">Enregistrer les
@@ -312,6 +321,14 @@
                             <div id="viewUserMatricule" class="fw-semibold text-primary"></div>
                         </div>
                         <div class="col-12 mt-3" id="viewUserExtra"></div>
+                        <div class="col-12 mt-3" id="viewUserPermissions">
+                            <div class="bg-light p-3 rounded-3">
+                                <label class="small text-muted fw-bold d-flex align-items-center gap-1 mb-2">
+                                    <i class="bi bi-shield-check"></i> PERMISSIONS EFFECTIVES
+                                </label>
+                                <div id="viewPermissionsList" class="d-flex flex-wrap gap-1"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light w-100 py-2 rounded-3 fw-bold"

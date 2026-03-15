@@ -32,6 +32,24 @@ public class EnseignantMapper {
                 .collect(Collectors.toSet());
         dto.setRoleNames(roleNames);
 
+        // Permissions
+        Set<String> rolePermissions = enseignant.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(p -> p.getName())
+                .collect(Collectors.toSet());
+        dto.setRolePermissions(rolePermissions);
+
+        Set<String> removedPermissions = new java.util.HashSet<>();
+        if (enseignant.getPermissionOverrides() != null) {
+            removedPermissions = enseignant.getPermissionOverrides().stream()
+                    .map(o -> o.getPermission().getName())
+                    .collect(Collectors.toSet());
+        }
+        dto.setRemovedPermissions(removedPermissions);
+
+        Set<String> effectivePermissions = new java.util.HashSet<>(rolePermissions);
+        effectivePermissions.removeAll(removedPermissions);
+        dto.setEffectivePermissions(effectivePermissions);
         dto.setSpecialite(enseignant.getSpecialite());
         dto.setGrade(enseignant.getGrade());
 

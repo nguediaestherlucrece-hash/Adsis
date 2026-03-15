@@ -30,6 +30,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
     private final UtilisateurRepository repository;
     private final RoleRepository roleRepository;
+    private final PermissionOverrideHelper permissionOverrideHelper;
     private final UtilisateurMapper mapper;
 
     @Override
@@ -86,6 +87,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setRoles(roles);
         }
 
+        // Appliquer les permissions retirées
+        permissionOverrideHelper.applyRemovedPermissions(utilisateur, dto.getRemovedPermissions());
+
         Utilisateur saved = repository.save(utilisateur);
         return mapper.toDTO(saved);
     }
@@ -116,6 +120,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
             utilisateur.setStatut(dto.getStatut());
         }
 
+        // Mettre à jour les permissions retirées
+        permissionOverrideHelper.updateRemovedPermissions(utilisateur, dto.getRemovedPermissions());
+
         Utilisateur updated = repository.save(utilisateur);
         return mapper.toDTO(updated);
     }
@@ -143,4 +150,3 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
 }
-

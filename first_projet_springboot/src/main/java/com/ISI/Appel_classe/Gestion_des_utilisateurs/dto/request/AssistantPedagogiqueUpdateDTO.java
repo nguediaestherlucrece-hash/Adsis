@@ -14,4 +14,7 @@ public class AssistantPedagogiqueUpdateDTO {
     private Statut statut;
     private Set<String> roleNames;
     private String departement;
+
+    // Permissions retirées
+    private Set<String> removedPermissions;
 }

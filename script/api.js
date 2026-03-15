@@ -145,5 +145,12 @@ export const Api = {
             throw new Error("Erreur mise à jour permissions du rôle: " + errorText);
         }
         return await response.json();
+    },
+
+    // Récupère toutes les permissions disponibles dans le système
+    async getAllPermissions() {
+        const response = await fetch(`${API_BASE_URL}/permissions`);
+        if (!response.ok) throw new Error("Erreur récupération permissions");
+        return await response.json();
     }
 };

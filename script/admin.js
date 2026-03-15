@@ -70,17 +70,34 @@ let currentFilter = 'Tous';
 let searchTerm = '';
 let allFilieres = [];
 let allMatieres = [];
+let allRoles = [];
 let userFiliereMap = {};
 let userMatiereMap = {};
 let currentStaffUser = null;
 
 const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
 
+// Descriptions lisibles pour chaque permission
+const PERM_LABELS = {
+    'COURSE_VIEW': 'Voir les cours',
+    'COURSE_MANAGE': 'Gérer les cours',
+    'USER_VIEW': 'Voir les utilisateurs',
+    'USER_MANAGE': 'Gérer les utilisateurs',
+    'STUDENT_VIEW': 'Voir les étudiants',
+    'ATTENDANCE_VIEW': 'Voir les présences',
+    'ATTENDANCE_MANAGE': 'Gérer les présences',
+    'GRADE_VIEW': 'Voir les notes',
+    'ASSIGNMENT_SUBMIT': 'Soumettre les devoirs',
+    'JUSTIFICATION_VALIDATE': 'Valider les justificatifs',
+    'STATISTICS_VIEW': 'Voir les statistiques'
+};
+
 // Lance le chargement initial au démarrage de la page
 document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     loadFilieres();
     loadMatieres();
+    loadRoles();
     setupEventListeners();
 });
 
@@ -97,7 +114,12 @@ function setupEventListeners() {
     });
 
     const roleSelect = document.getElementById('userRole');
-    if (roleSelect) roleSelect.addEventListener('change', (e) => toggleRoleFields(e.target.value));
+    if (roleSelect) {
+        roleSelect.addEventListener('change', (e) => {
+            toggleRoleFields(e.target.value);
+            renderPermissionToggles(e.target.value, []);
+        });
+    }
 
     const saveBtn = document.querySelector('#userModal .modal-footer .btn-primary');
     if (saveBtn) saveBtn.addEventListener('click', handleSaveUser);
@@ -124,6 +146,13 @@ async function loadFilieres() {
 }
 
 // Charge toutes les matières (CoursUE) depuis l'API
+// Charge tous les rôles et leurs permissions depuis l'API
+async function loadRoles() {
+    try {
+        allRoles = await Api.getRoles();
+    } catch (e) { console.warn('Rôles non chargés:', e.message); }
+}
+
 async function loadMatieres() {
     try {
         const res = await fetch(`${API_BASE}/cours`, { headers: { 'Content-Type': 'application/json' } });
@@ -346,6 +375,7 @@ function openCreateModal() {
     updateMatieresBadges([]); updateFilieresBadges([], 'currentFilieresBadges');
     updateFilieresBadges([], 'currentFilieresBadgesAP');
     toggleRoleFields('Enseignant');
+    renderPermissionToggles('Enseignant', []);
     userModal.show();
 }
 
@@ -371,6 +401,9 @@ function openEditModal(id) {
     updateFilieresBadges(u.filieres || [], 'currentFilieresBadges');
     updateFilieresBadges(u.filieres || [], 'currentFilieresBadgesAP');
     toggleRoleFields(u.role);
+    // Charger les permissions retirées existantes
+    const removedPerms = u.raw.removedPermissions || [];
+    renderPermissionToggles(u.role, Array.isArray(removedPerms) ? removedPerms : [...removedPerms]);
     userModal.show();
 }
 
@@ -571,7 +604,75 @@ function openViewModal(u) {
                 <div class="d-flex flex-wrap gap-1">${filiereBadges}</div>
             </div>`;
     }
+    // Afficher les permissions effectives
+    const permList = document.getElementById('viewPermissionsList');
+    if (permList) {
+        const rolePerms = u.raw.rolePermissions || [];
+        const removedPerms = u.raw.removedPermissions || [];
+        const effectivePerms = u.raw.effectivePermissions || [];
+        const allPerms = [...new Set([...rolePerms])];
+        if (allPerms.length > 0) {
+            permList.innerHTML = allPerms.map(p => {
+                const isRemoved = (Array.isArray(removedPerms) ? removedPerms : [...removedPerms]).includes(p);
+                const label = PERM_LABELS[p] || p;
+                if (isRemoved) {
+                    return `<span class="badge rounded-pill me-1 mb-1" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;text-decoration:line-through;">
+                        <i class="bi bi-x-circle me-1"></i>${label}</span>`;
+                } else {
+                    return `<span class="badge rounded-pill me-1 mb-1" style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;">
+                        <i class="bi bi-check-circle me-1"></i>${label}</span>`;
+                }
+            }).join('');
+        } else {
+            permList.innerHTML = '<span class="text-muted fst-italic small">Aucune permission</span>';
+        }
+    }
     viewModal.show();
+}
+
+// Affiche les toggles pour les permissions du rôle sélectionné
+function renderPermissionToggles(roleName, removedPermissions = []) {
+    const container = document.getElementById('permissionToggles');
+    if (!container) return;
+
+    // Mapper le nom frontend vers le nom backend du rôle
+    const roleMap = {
+        'Enseignant': 'ENSEIGNANT',
+        'Surveillant': 'SURVEILLANT',
+        'Assistant pédagogique': 'ASSISTANT_PEDAGOGIQUE'
+    };
+    const backendRoleName = roleMap[roleName] || roleName;
+    const role = allRoles.find(r => r.name === backendRoleName);
+
+    if (!role || !role.permissions || role.permissions.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted small py-3">Aucune permission pour ce rôle</div>';
+        return;
+    }
+
+    const perms = [...role.permissions].sort();
+    container.innerHTML = perms.map(perm => {
+        const isRemoved = removedPermissions.includes(perm);
+        const label = PERM_LABELS[perm] || perm;
+        return `
+            <div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom" style="border-color:#f1f1f1!important;">
+                <div class="small">
+                    <strong>${label}</strong>
+                </div>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input perm-toggle" type="checkbox" data-perm="${perm}" ${isRemoved ? '' : 'checked'}>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// Récupère la liste des permissions retirées depuis les toggles
+function getRemovedPermissionsFromToggles() {
+    const toggles = document.querySelectorAll('.perm-toggle');
+    const removed = [];
+    toggles.forEach(t => {
+        if (!t.checked) removed.push(t.dataset.perm);
+    });
+    return removed;
 }
 
 // Valide le formulaire et enregistre l'utilisateur via l'API
@@ -587,6 +688,12 @@ async function handleSaveUser() {
     };
     const password = document.getElementById('userPassword').value;
     if (password || !id) baseData.password = password || 'Pass1234';
+
+    // Collecter les permissions retirées
+    const removedPermissions = getRemovedPermissionsFromToggles();
+    if (removedPermissions.length > 0) {
+        baseData.removedPermissions = removedPermissions;
+    }
 
     if (roleStr === 'Enseignant') {
         baseData.specialite = document.getElementById('userSpecialite')?.value || '';

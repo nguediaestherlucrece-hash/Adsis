@@ -17,4 +17,9 @@ public class UtilisateurDTO {
     private Set<String> roleNames;
     private Boolean premiereConnexion;
     private LocalDateTime createdAt;
+
+    // Permissions
+    private Set<String> rolePermissions;       // toutes les permissions héritées du rôle
+    private Set<String> removedPermissions;    // permissions retirées pour cet utilisateur
+    private Set<String> effectivePermissions;  // permissions finales (rôle - retirées)
 }

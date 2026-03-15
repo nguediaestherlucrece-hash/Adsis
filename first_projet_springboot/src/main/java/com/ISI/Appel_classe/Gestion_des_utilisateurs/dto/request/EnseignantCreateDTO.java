@@ -40,4 +40,7 @@ public class EnseignantCreateDTO {
      * IDs des cours que l'enseignant enseigne (ManyToMany)
      */
     private List<Long> coursIds;
+
+    // Permissions retirées
+    private Set<String> removedPermissions;
 }

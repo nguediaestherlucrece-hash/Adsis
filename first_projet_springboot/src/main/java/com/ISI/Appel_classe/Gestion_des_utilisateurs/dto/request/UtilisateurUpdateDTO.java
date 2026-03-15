@@ -12,4 +12,5 @@ public class UtilisateurUpdateDTO {
     private String email;
     private Set<String> roleNames; // Noms des rôles
     private Statut statut;
+    private Set<String> removedPermissions; // Permissions du rôle à retirer pour cet utilisateur
 }
