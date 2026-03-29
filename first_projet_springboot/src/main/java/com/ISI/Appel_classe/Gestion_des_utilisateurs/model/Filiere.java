@@ -28,12 +28,13 @@ public class Filiere {
     private String description;
 
     // 🔹 Relations JPA
+    @ManyToOne
+    @JoinColumn(name = "cycle_id")
+    private Cycle cycle;
 
     @ManyToMany(mappedBy = "filieres")
     private List<Niveau> niveaux = new ArrayList<>();
 
-    @OneToMany(mappedBy = "filiere", cascade =CascadeType.ALL)
-    private List<Specialite> specialites = new ArrayList<>();
 
     @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
     private List<AssistantPedagogique> assistantPedagogiques = new ArrayList<>();

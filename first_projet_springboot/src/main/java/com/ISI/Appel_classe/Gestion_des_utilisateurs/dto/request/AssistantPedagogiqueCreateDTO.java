@@ -22,4 +22,6 @@ public class AssistantPedagogiqueCreateDTO {
 
     // Permissions retirées
     private Set<String> removedPermissions;
+
+    private  Long filiereId;
 }

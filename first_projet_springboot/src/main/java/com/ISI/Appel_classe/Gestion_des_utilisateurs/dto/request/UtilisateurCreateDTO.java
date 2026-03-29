@@ -10,7 +10,6 @@ public class UtilisateurCreateDTO {
     private String nom;
     private String prenom;
     private String email;
-    private String password;
     private Set<String> roleNames; // Noms des rôles (ex: ["ENSEIGNANT", "ADMIN"])
     private Statut statut;
     private Set<String> removedPermissions; // Permissions du rôle à retirer pour cet utilisateur

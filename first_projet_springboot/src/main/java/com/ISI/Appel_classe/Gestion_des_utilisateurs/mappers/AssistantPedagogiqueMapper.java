@@ -24,6 +24,7 @@ public class AssistantPedagogiqueMapper {
         dto.setAccountNonLocked(assistant.getAccountNonLocked());
         dto.setPremiereConnexion(assistant.getPremiereConnexion());
         dto.setCreatedAt(assistant.getCreatedAt());
+        dto.setFiliereId(assistant.getFiliere() != null ? assistant.getFiliere().getId() : null);
 
         Set<String> roleNames = assistant.getRoles().stream()
                 .map(Role::getName)

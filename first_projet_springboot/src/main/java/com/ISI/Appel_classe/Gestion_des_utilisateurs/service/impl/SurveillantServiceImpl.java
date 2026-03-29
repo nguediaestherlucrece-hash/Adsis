@@ -3,6 +3,7 @@ package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.SurveillantUpdateDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.SurveillantDTO;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
@@ -87,6 +88,12 @@ public class SurveillantServiceImpl implements SurveillantService {
         surveillant.setAccountNonLocked(true);
         surveillant.setPremiereConnexion(false);
         surveillant.setCreatedAt(LocalDateTime.now());
+
+        if (dto.getFiliereId() != null) {
+            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
+            surveillant.setFiliere(filiere);
+        }
 
         // Attributs spécifiques
         surveillant.setAffectation(dto.getAffectation());

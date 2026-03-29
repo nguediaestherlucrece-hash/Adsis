@@ -8,6 +8,6 @@ public class SpecialiteCreateDTO {
     private String idSpecialite;
     private String nom;
 
-    private Long filiereId;
+    private Long niveauId;
 }
 

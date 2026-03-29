@@ -6,8 +6,10 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.SpecialiteDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.SpecialiteMapper;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Niveau;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.NiveauRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.SpecialiteService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,7 @@ public class SpecialiteServiceImpl implements SpecialiteService {
 
     private final SpecialiteRepository specialiteRepository;
     private final SpecialiteMapper mapper;
-    private final FiliereRepository filiereRepository;
+    private final NiveauRepository niveauRepository;
 
     @Override
     public List<SpecialiteDTO> getAllSpecialites() {
@@ -44,10 +46,10 @@ public class SpecialiteServiceImpl implements SpecialiteService {
     @Transactional
     public SpecialiteDTO createSpecialite(SpecialiteCreateDTO dto) {
         Specialite s = mapper.fromCreateDTO(dto);
-        if (dto.getFiliereId() != null) {
-            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
-            s.setFiliere(filiere);
+        if (dto.getNiveauId() != null) {
+            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getNiveauId()));
+            s.setNiveau(niveau);
         }
         Specialite saved = specialiteRepository.save(Objects.requireNonNull(s, "Specialite cannot be null"));
         return mapper.toDTO(saved);
@@ -65,10 +67,10 @@ public class SpecialiteServiceImpl implements SpecialiteService {
         if (dto.getNom() != null) {
             s.setNom(dto.getNom());
         }
-        if (dto.getFiliereId() != null) {
-            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
-            s.setFiliere(filiere);
+        if (dto.getNiveauId() != null) {
+            Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getNiveauId()));
+            s.setNiveau(niveau);
         }
 
         Specialite updated = specialiteRepository.save(Objects.requireNonNull(s, "Specialite cannot be null"));

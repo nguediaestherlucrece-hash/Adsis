@@ -19,8 +19,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(request -> {
+        http.cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
                     corsConfig.setAllowedOrigins(java.util.List.of("*")); // En production, mettez l'URL exacte du
                                                                           // frontend

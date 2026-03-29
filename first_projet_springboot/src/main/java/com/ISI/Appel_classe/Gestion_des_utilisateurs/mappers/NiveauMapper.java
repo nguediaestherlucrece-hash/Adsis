@@ -15,7 +15,6 @@ public class NiveauMapper {
         dto.setId(niveau.getId());
         dto.setIdNiveau(niveau.getIdNiveau());
         dto.setNom(niveau.getNom());
-        dto.setCycleId(niveau.getCycle() != null ? niveau.getCycle().getId() : null);
         return dto;
     }
 

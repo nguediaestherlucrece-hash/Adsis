@@ -10,5 +10,5 @@ public class SpecialiteDTO {
     private String idSpecialite;
     private String nom;
 
-    private Long filiereId;
+    private Long niveauId;
 }

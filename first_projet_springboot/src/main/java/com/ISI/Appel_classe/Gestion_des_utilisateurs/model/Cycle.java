@@ -33,5 +33,5 @@ public class Cycle {
 
     // 🔹 Relations JPA
     @OneToMany(mappedBy = "cycle", cascade =CascadeType.ALL)
-    private List<Niveau> Niveaux = new ArrayList<>();
+    private List<Filiere> filieres = new ArrayList<>();
 }

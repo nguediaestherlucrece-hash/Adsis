@@ -12,7 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "assistant_pedagogique")
-@DiscriminatorValue("ASSISTANT_PEDAGOGIQUE")
+@DiscriminatorValue("ASSISTANT")
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
 @Data
 @NoArgsConstructor

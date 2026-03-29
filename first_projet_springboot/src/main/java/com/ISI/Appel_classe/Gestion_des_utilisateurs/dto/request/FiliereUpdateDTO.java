@@ -7,5 +7,6 @@ public class FiliereUpdateDTO {
     private String idFiliere;
     private String nomFiliere;
     private String description;
-    private java.util.List<Long> niveauIds;
+
+    private Long cycleId;
 }

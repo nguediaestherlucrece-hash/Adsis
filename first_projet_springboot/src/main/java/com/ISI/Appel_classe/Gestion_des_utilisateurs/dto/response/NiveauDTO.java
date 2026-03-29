@@ -9,5 +9,4 @@ public class NiveauDTO {
     private String idNiveau;
     private String nom;
 
-    private Long cycleId;
 }

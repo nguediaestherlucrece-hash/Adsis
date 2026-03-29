@@ -4,6 +4,8 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedago
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.AssistantPedagogiqueUpdateDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.AssistantPedagogiqueDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Cycle;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
@@ -88,6 +90,12 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         assistant.setPremiereConnexion(false);
         assistant.setCreatedAt(LocalDateTime.now());
 
+        if (dto.getFiliereId() != null) {
+            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
+            assistant.setFiliere(filiere);
+        }
+
         // Attributs spécifiques
         assistant.setDepartement(dto.getDepartement());
 
@@ -150,6 +158,12 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
             }
             assistant.getRoles().clear();
             assistant.setRoles(roles);
+        }
+
+        if (dto.getFiliereId() != null) {
+            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
+            assistant.setFiliere(filiere);
         }
 
         // Mettre à jour les permissions retirées

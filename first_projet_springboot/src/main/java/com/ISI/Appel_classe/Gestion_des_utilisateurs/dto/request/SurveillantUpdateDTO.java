@@ -17,4 +17,6 @@ public class SurveillantUpdateDTO {
 
     // Permissions retirées
     private Set<String> removedPermissions;
+
+    private  Long filiereId;
 }

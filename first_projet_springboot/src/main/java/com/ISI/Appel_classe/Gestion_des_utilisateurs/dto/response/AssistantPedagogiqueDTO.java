@@ -33,4 +33,6 @@ public class AssistantPedagogiqueDTO {
     // Relations
     private Integer nombreJustificatifsValides;
     private Integer nombreEmploisDuTemps;
+
+    private  Long filiereId;
 }

@@ -15,7 +15,7 @@ public class SpecialiteMapper {
         dto.setId(specialite.getId());
         dto.setIdSpecialite(specialite.getIdSpecialite());
         dto.setNom(specialite.getNom());
-        dto.setFiliereId(specialite.getFiliere() != null ? specialite.getFiliere().getId() : null);
+        dto.setNiveauId(specialite.getNiveau() != null ? specialite.getNiveau().getId() : null);
         return dto;
     }
 

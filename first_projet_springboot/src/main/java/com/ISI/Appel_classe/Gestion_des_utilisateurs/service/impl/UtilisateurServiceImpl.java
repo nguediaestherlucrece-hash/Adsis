@@ -73,7 +73,6 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         utilisateur.setNom(dto.getNom());
         utilisateur.setPrenom(dto.getPrenom());
         utilisateur.setEmail(dto.getEmail());
-        utilisateur.setPassword(dto.getPassword()); // TODO: Hash le mot de passe avec BCrypt
         utilisateur.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
 
         // Assigner les rôles

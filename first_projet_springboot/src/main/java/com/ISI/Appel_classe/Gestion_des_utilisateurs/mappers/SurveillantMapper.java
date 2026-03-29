@@ -24,6 +24,7 @@ public class SurveillantMapper {
         dto.setAccountNonLocked(surveillant.getAccountNonLocked());
         dto.setPremiereConnexion(surveillant.getPremiereConnexion());
         dto.setCreatedAt(surveillant.getCreatedAt());
+        dto.setFiliereId(surveillant.getFiliere() != null ? surveillant.getFiliere().getId() : null);
 
         Set<String> roleNames = surveillant.getRoles().stream()
                 .map(Role::getName)

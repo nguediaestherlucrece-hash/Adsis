@@ -32,4 +32,6 @@ public class SurveillantDTO {
 
     // Relations
     private Integer nombreSeances;
+
+    private  Long filiereId;
 }

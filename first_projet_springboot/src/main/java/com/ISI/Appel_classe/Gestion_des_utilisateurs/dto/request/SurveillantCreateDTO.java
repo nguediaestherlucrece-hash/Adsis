@@ -22,4 +22,6 @@ public class SurveillantCreateDTO {
 
     // Permissions retirées
     private Set<String> removedPermissions;
+
+    private  Long filiereId;
 }

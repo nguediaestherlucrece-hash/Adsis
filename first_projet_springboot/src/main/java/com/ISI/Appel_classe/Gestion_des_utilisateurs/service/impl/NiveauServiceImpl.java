@@ -44,11 +44,7 @@ public class NiveauServiceImpl implements NiveauService {
     @Transactional
     public NiveauDTO createNiveau(NiveauCreateDTO dto) {
         Niveau n = mapper.fromCreateDTO(dto);
-        if (dto.getCycleId() != null) {
-            Cycle cycle = cycleRepository.findById(dto.getCycleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + dto.getCycleId()));
-            n.setCycle(cycle);
-        }
+
         Niveau saved = niveauRepository.save(Objects.requireNonNull(n, "Niveau cannot be null"));
         return mapper.toDTO(saved);
     }
@@ -65,11 +61,7 @@ public class NiveauServiceImpl implements NiveauService {
         if (dto.getNom() != null) {
             n.setNom(dto.getNom());
         }
-        if (dto.getCycleId() != null) {
-            Cycle cycle = cycleRepository.findById(dto.getCycleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cycle non trouvé: " + dto.getCycleId()));
-            n.setCycle(cycle);
-        }
+
 
         Niveau updated = niveauRepository.save(Objects.requireNonNull(n, "Niveau cannot be null"));
         return mapper.toDTO(updated);

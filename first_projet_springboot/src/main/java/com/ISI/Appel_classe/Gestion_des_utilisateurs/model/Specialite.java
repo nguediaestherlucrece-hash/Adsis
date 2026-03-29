@@ -29,8 +29,8 @@ public class Specialite {
     private String nom;
 
     @ManyToOne
-    @JoinColumn(name = "filiere_id")
-    private Filiere filiere;
+    @JoinColumn(name = "niveau_id")
+    private Niveau niveau;
 
     @OneToMany(mappedBy = "specialite", cascade =CascadeType.ALL)
     private List<Classe> classes = new ArrayList<>();
