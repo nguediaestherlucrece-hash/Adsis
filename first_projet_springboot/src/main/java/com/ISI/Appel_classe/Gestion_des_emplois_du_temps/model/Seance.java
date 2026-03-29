@@ -42,9 +42,9 @@ public class Seance {
     @JoinColumn(name = "cours_id")
     private CoursUE cours;
 
-    @ManyToOne
-    @JoinColumn(name = "enseignant_id")
-    private Enseignant enseignant;
+    @ManyToMany
+    @JoinTable(name = "seance_enseignant", joinColumns = @JoinColumn(name = "seance_id"), inverseJoinColumns = @JoinColumn(name = "enseignant_id"))
+    private List<Enseignant> enseignants = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "seance_surveillant", joinColumns = @JoinColumn(name = "seance_id"), inverseJoinColumns = @JoinColumn(name = "surveillant_id"))

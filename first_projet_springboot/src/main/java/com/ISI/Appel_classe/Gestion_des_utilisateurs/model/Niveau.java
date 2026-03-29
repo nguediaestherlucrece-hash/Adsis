@@ -28,9 +28,9 @@ public class Niveau {
 
     private String nom;
 
-    @ManyToMany
-    @JoinTable(name = "niveau_filiere", joinColumns = @JoinColumn(name = "niveau_id"), inverseJoinColumns = @JoinColumn(name = "filiere_id"))
-    private List<Filiere> filieres = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "filiere_id")
+    private Filiere filiere;
 
     @OneToMany(mappedBy = "niveau", cascade =CascadeType.ALL)
     private List<Specialite> specialites = new ArrayList<>();

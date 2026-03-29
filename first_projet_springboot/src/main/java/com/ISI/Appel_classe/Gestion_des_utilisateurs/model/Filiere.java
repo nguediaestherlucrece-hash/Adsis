@@ -32,7 +32,7 @@ public class Filiere {
     @JoinColumn(name = "cycle_id")
     private Cycle cycle;
 
-    @ManyToMany(mappedBy = "filieres")
+    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
     private List<Niveau> niveaux = new ArrayList<>();
 
 

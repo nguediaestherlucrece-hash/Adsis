@@ -28,4 +28,6 @@ public interface EnseignantService {
     void deleteEnseignant(Long id);
 
     EnseignantDTO assignerCours(Long enseignantId, List<Long> coursIds);
+
+    List<EnseignantDTO> getActiveEnseignants();
 }

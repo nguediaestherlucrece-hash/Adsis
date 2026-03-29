@@ -16,9 +16,8 @@ public class SeanceDTO {
     private boolean statut;
 
     private Long coursId;
-    private Long enseignantId;
+    private List<Long> enseignantIds;
     private Long emploiDuTempsId;
     private String couleur;
     private String groupId;
-
 }

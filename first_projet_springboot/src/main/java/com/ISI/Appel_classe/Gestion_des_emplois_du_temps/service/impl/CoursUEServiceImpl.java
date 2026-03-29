@@ -144,9 +144,9 @@ public class CoursUEServiceImpl implements CourUEService {
             enseignantRepository.save(ens);
         }
 
-        // Nullifier la référence enseignant dans les séances avant suppression cascade
+        // Retirer les enseignants des séances avant suppression cascade
         for (var seance : cours.getSeances()) {
-            seance.setEnseignant(null);
+            seance.getEnseignants().clear();
         }
 
         coursUERepository.delete(cours);

@@ -46,6 +46,8 @@ const timetableHeaders = document.getElementById('timetableHeaders');
 const classeDisplay = document.getElementById('editorClasseBadge');
 const debutSemaineText = document.getElementById('debutSemaine');
 const finSemaineText = document.getElementById('finSemaine');
+const headerDebutSemaine = document.getElementById('headerDebutSemaine');
+const headerFinSemaine = document.getElementById('headerFinSemaine');
 const matieresContainerEditor = document.getElementById('matieresContainer');
 const enseignantsContainer = document.getElementById('enseignantsContainer');
 
@@ -99,7 +101,15 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
 // ==================== UTILITAIRES ====================
 function formatDate(dateStr) {
     if (!dateStr) return '...';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    let d;
+    if (Array.isArray(dateStr)) {
+        // Jackson serializes LocalDate as [year, month, day]
+        d = new Date(dateStr[0], dateStr[1] - 1, dateStr[2]);
+    } else {
+        d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return '...';
+    return d.toLocaleDateString('fr-FR', {
         day: '2-digit', month: 'long', year: 'numeric'
     });
 }
@@ -116,10 +126,18 @@ function calculateDateFin(dateDebut, nbJours) {
     return d.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
+/** Parse une date qui peut être un tableau Jackson [y,m,d] ou une string ISO */
+function parseDate(val) {
+    if (!val) return null;
+    if (Array.isArray(val)) return new Date(val[0], val[1] - 1, val[2]);
+    return new Date(val);
+}
+
 /** Retourne la date réelle d'un jour de la grille (index 0=Lundi) en fonction de dateDebut */
 function getDateForJour(jourIdx) {
     if (!currentEdt || !currentEdt.dateDebut) return null;
-    const d = new Date(currentEdt.dateDebut);
+    const d = parseDate(currentEdt.dateDebut);
+    if (!d || isNaN(d.getTime())) return null;
     const dow = d.getDay();
     if (dow === 0) d.setDate(d.getDate() + 1);
     d.setDate(d.getDate() + jourIdx);
@@ -130,10 +148,10 @@ function getDateForJour(jourIdx) {
 function findGridPosition(seanceDate, heureDebut) {
     let jourIdx = -1;
     if (currentEdt && currentEdt.dateDebut) {
-        const base = new Date(currentEdt.dateDebut);
+        const base = parseDate(currentEdt.dateDebut);
         const baseDow = base.getDay();
         if (baseDow === 0) base.setDate(base.getDate() + 1);
-        const seanceD = new Date(seanceDate);
+        const seanceD = parseDate(seanceDate);
         const diffDays = Math.round((seanceD - base) / (1000 * 60 * 60 * 24));
         if (diffDays >= 0 && diffDays < 6) jourIdx = diffDays;
     }
@@ -456,11 +474,15 @@ window.openEditor = async function (edtId, edtDataPreloaded = null) {
             currentEdt = edtDataPreloaded;
         }
 
-        // MAJ infos header
+        // MAJ infos header + timetableCard
         const classeNom = getClasseNom(currentEdt);
         classeDisplay.textContent = classeNom;
-        debutSemaineText.textContent = formatDate(currentEdt.dateDebut);
-        finSemaineText.textContent = formatDate(currentEdt.dateFin);
+        const debutStr = formatDate(currentEdt.dateDebut);
+        const finStr = formatDate(currentEdt.dateFin);
+        debutSemaineText.textContent = debutStr;
+        finSemaineText.textContent = finStr;
+        if (headerDebutSemaine) headerDebutSemaine.textContent = debutStr;
+        if (headerFinSemaine) headerFinSemaine.textContent = finStr;
 
         // Afficher année et semestre dans le header
         const anneeBadge = document.getElementById('editorAnneeBadge');
@@ -672,13 +694,16 @@ async function fetchSeancesForEdt(edtId) {
                     matiere: matiere ? matiere.intitule : 'Séance',
                     matiereId: first.coursId,
                     enseignants: [],
+                    enseignantIds: first.enseignantIds || [],
                     couleur: first.couleur || (matiereColors[first.coursId]) || colors[colorIdx],
                     linkedIds: linkedIds
                 };
 
-                if (first.enseignantId && matiere && matiere.enseignants) {
-                    const ens = matiere.enseignants.find(e => e.id == first.enseignantId);
-                    if (ens) data.enseignants = [`${ens.nom} ${ens.prenom || ''}`];
+                if (first.enseignantIds && first.enseignantIds.length > 0 && matiere && matiere.enseignants) {
+                    data.enseignants = first.enseignantIds.map(eid => {
+                        const ens = matiere.enseignants.find(e => e.id == eid);
+                        return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
+                    }).filter(Boolean);
                 }
 
                 createCourseElement(cell, data, duration, colspan);
@@ -704,12 +729,15 @@ function renderSingleSeance(s) {
         matiere: matiere ? matiere.intitule : 'Séance',
         matiereId: s.coursId,
         enseignants: [],
+        enseignantIds: s.enseignantIds || [],
         couleur: s.couleur || (matiereColors[s.coursId]) || colors[colorIdx]
     };
 
-    if (s.enseignantId && matiere && matiere.enseignants) {
-        const ens = matiere.enseignants.find(e => e.id == s.enseignantId);
-        if (ens) data.enseignants = [`${ens.nom} ${ens.prenom || ''}`];
+    if (s.enseignantIds && s.enseignantIds.length > 0 && matiere && matiere.enseignants) {
+        data.enseignants = s.enseignantIds.map(eid => {
+            const ens = matiere.enseignants.find(e => e.id == eid);
+            return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
+        }).filter(Boolean);
     }
 
     createCourseElement(cell, data, duration, 1);
@@ -775,7 +803,7 @@ async function handleDropOnCell(cell, element) {
             heureFin: heureFin,
             statut: false,
             coursId: parseInt(element.id),
-            enseignantId: null,
+            enseignantIds: [],
             emploiDuTempsId: currentEdt.id,
             couleur: element.couleur || null,
             groupId: groupId
@@ -825,6 +853,20 @@ async function handleDropOnCell(cell, element) {
             if (!resGet.ok) return;
             const seance = await resGet.json();
 
+            // Build the new enseignantIds list (add, don't replace) — max 2
+            let currentIds = Array.isArray(seance.enseignantIds) ? [...seance.enseignantIds] : [];
+            const newId = parseInt(element.id);
+
+            if (currentIds.includes(newId)) {
+                showToast("Cet enseignant est déjà assigné à cette séance.", "warning");
+                return;
+            }
+            if (currentIds.length >= 2) {
+                showToast("Maximum 2 enseignants par séance.", "warning");
+                return;
+            }
+            currentIds.push(newId);
+
             const updateDto = {
                 idSeance: seance.idSeance,
                 date: seance.date,
@@ -832,8 +874,10 @@ async function handleDropOnCell(cell, element) {
                 heureFin: seance.heureFin,
                 statut: seance.statut,
                 coursId: seance.coursId,
-                enseignantId: parseInt(element.id),
-                emploiDuTempsId: seance.emploiDuTempsId
+                enseignantIds: currentIds,
+                emploiDuTempsId: seance.emploiDuTempsId,
+                couleur: seance.couleur,
+                groupId: seance.groupId
             };
 
             const resPut = await fetch(`${API_BASE_URL}/seances/${dbId}`, {
@@ -843,17 +887,29 @@ async function handleDropOnCell(cell, element) {
             });
 
             if (resPut.ok) {
-                coursBlock.dataset.enseignants = element.nom;
+                // Resolve names from matieres data
+                const matiere = matieres.find(m => m.id == coursBlock.dataset.matiereId);
+                const allNames = currentIds.map(eid => {
+                    if (matiere && matiere.enseignants) {
+                        const ens = matiere.enseignants.find(e => e.id == eid);
+                        if (ens) return `${ens.nom} ${ens.prenom || ''}`.trim();
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                coursBlock.dataset.enseignants = allNames.join(',');
+                coursBlock.dataset.enseignantIds = JSON.stringify(currentIds);
                 let ensDiv = coursBlock.querySelector('.enseignants');
+                const ensHtml = allNames.map(n => `<span>${n}</span>`).join(' / ');
                 if (ensDiv) {
-                    ensDiv.innerHTML = `<span>${element.nom}</span>`;
+                    ensDiv.innerHTML = ensHtml;
                 } else {
                     const newDiv = document.createElement('div');
                     newDiv.className = 'enseignants';
-                    newDiv.innerHTML = `<span>${element.nom}</span>`;
+                    newDiv.innerHTML = ensHtml;
                     coursBlock.appendChild(newDiv);
                 }
-                showToast(`Enseignant ${element.nom} assigné.`, "success");
+                showToast(`Enseignant ${element.nom} assigné (${currentIds.length}/2).`, "success");
             }
         } catch (e) { console.error(e); }
     }
@@ -1189,7 +1245,7 @@ async function handleResizeEnd() {
                 heureFin: newHeureFin,
                 statut: primarySeance.statut,
                 coursId: primarySeance.coursId,
-                enseignantId: primarySeance.enseignantId,
+                enseignantIds: primarySeance.enseignantIds || [],
                 emploiDuTempsId: primarySeance.emploiDuTempsId,
                 couleur: couleur,
                 groupId: groupId
@@ -1210,7 +1266,7 @@ async function handleResizeEnd() {
                 heureFin: newHeureFin,
                 statut: primarySeance.statut,
                 coursId: primarySeance.coursId,
-                enseignantId: primarySeance.enseignantId,
+                enseignantIds: primarySeance.enseignantIds || [],
                 emploiDuTempsId: primarySeance.emploiDuTempsId,
                 couleur: couleur,
                 groupId: groupId
@@ -1272,23 +1328,76 @@ timetableBody.addEventListener('dblclick', async function (e) {
 
 
 document.getElementById('exportPdfBtn').addEventListener('click', function () {
-    const timetableCard = document.getElementById('timetableCard');
-    const clone = timetableCard.cloneNode(true);
-    clone.style.width = '100%';
-    clone.style.padding = '20px';
-    clone.style.backgroundColor = 'white';
+    if (!currentEdt) return;
 
-    clone.querySelectorAll('.resize-handle').forEach(h => h.style.display = 'none');
+    // Create a wrapper div to contain the header + the timetable
+    const wrapper = document.createElement('div');
+    // Using 1200px width ensures a generous aspect ratio layout for A4 Landscape
+    wrapper.style.width = '1200px'; 
+    wrapper.style.padding = '20px';
+    wrapper.style.backgroundColor = 'white';
+    wrapper.style.color = '#333';
 
+    // Build Header text
+    const anneeBadge = document.getElementById('editorAnneeBadge');
+    const semestreBadge = document.getElementById('editorSemestreBadge');
+    let annSemTxt = '';
+    if (anneeBadge && anneeBadge.style.display !== 'none') annSemTxt += anneeBadge.textContent;
+    if (semestreBadge && semestreBadge.style.display !== 'none') annSemTxt += (annSemTxt ? ' | ' : '') + semestreBadge.textContent;
+
+    const headerHtml = `
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #4e73df; padding-bottom: 15px; font-family: sans-serif;">
+            <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 26px; font-weight: bold;">Emploi du temps - ${classeDisplay.textContent}</h2>
+            <p style="margin: 5px 0; font-size: 18px; font-weight: 500;">
+                Du ${debutSemaineText.textContent} au ${finSemaineText.textContent}
+            </p>
+            ${annSemTxt ? `<p style="margin: 5px 0; font-size: 15px; color: #666;">${annSemTxt}</p>` : ''}
+        </div>
+    `;
+    wrapper.innerHTML = headerHtml;
+
+    // Clone the timetable table itself (not the whole card, to remove surrounding UI)
+    const timetable = document.getElementById('timetable');
+    const cloneTable = timetable.cloneNode(true);
+
+    // Clean up UI-specific elements
+    cloneTable.querySelectorAll('.resize-handle').forEach(h => h.style.display = 'none');
+    cloneTable.querySelectorAll('.course-slot[style*="opacity: 0.5"]').forEach(pill => pill.remove());
+
+    // Basic scale normalizations strictly for print clarity without breaking Absolute positioning
+    cloneTable.style.width = '100%';
+    cloneTable.style.tableLayout = 'fixed';
+    
+    // Reduce row height slightly to ensure the overall height avoids pagebreaks
+    cloneTable.querySelectorAll('td').forEach(td => {
+        td.style.height = '60px'; // Slightly smaller than the UI's 65px
+        // Notice we do NOT mess with .course-slot positioning.
+        // It remains 'absolute' as dictated by the original CSS which works perfectly.
+    });
+    
+    // Force pill text to be nicely nested in case of small overlaps
+    cloneTable.querySelectorAll('.course-slot').forEach(pill => {
+       pill.style.boxShadow = 'none'; // Cleaner print without shadows
+    });
+
+    wrapper.appendChild(cloneTable);
+
+    // Configuration for a single A4 landscape page fit
     const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `emploi_du_temps_${currentEdt ? currentEdt.id : 'export'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+        margin: [5, 5, 5, 5], // Small margins to maximize printable area
+        filename: `emploi_du_temps_${classeDisplay.textContent.replace(/\s+/g, '_')}_S${currentEdt.id}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: {
+            scale: 2,
+            windowWidth: 1200, 
+            useCORS: true,
+            logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { avoid: 'tr' }
     };
 
-    html2pdf().set(opt).from(clone).save();
+    html2pdf().set(opt).from(wrapper).save();
 });
 
 // Bouton "Enregistrer" — les séances sont déjà sauvées en temps réel, on affiche juste un toast de confirmation

@@ -138,7 +138,7 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
 
         // Nettoyer les FK des séances avant suppression cascade
         for (Seance seance : emploi.getSeances()) {
-            seance.setEnseignant(null);
+            seance.getEnseignants().clear();
             seance.getSurveillants().clear();
         }
 

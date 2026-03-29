@@ -172,8 +172,17 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.setEmail(dto.getEmail());
         }
 
-        if (dto.getStatut() != null)
+        if (dto.getStatut() != null) {
             enseignant.setStatut(dto.getStatut());
+
+            // 🔒 Si l'enseignant est bloqué, le désassigner de tous les cours et séances
+            if (dto.getStatut() == Statut.INACTIF) {
+                log.info("Enseignant bloqué — désassignation des cours et séances pour id={}", id);
+                enseignant.getCoursEnseignes().clear();
+                enseignant.getSeances().forEach(seance -> seance.getEnseignants().remove(enseignant));
+                enseignant.getSeances().clear();
+            }
+        }
 
         // Mettre à jour les rôles
         if (dto.getRoleNames() != null) {
@@ -193,8 +202,8 @@ public class EnseignantServiceImpl implements EnseignantService {
         if (dto.getGrade() != null)
             enseignant.setGrade(dto.getGrade());
 
-        // Mettre à jour les cours
-        if (dto.getCoursIds() != null) {
+        // Mettre à jour les cours (seulement si l'enseignant est toujours actif)
+        if (dto.getCoursIds() != null && enseignant.getStatut() != Statut.INACTIF) {
             List<CoursUE> cours = new ArrayList<>();
             for (Long coursId : dto.getCoursIds()) {
                 CoursUE coursUE = coursUERepository.findById(Objects.requireNonNull(coursId, "CoursId cannot be null"))
@@ -218,11 +227,27 @@ public class EnseignantServiceImpl implements EnseignantService {
     @Transactional
     public void deleteEnseignant(Long id) {
         log.info("Suppression de l'enseignant id={}", id);
-        if (!enseignantRepository.existsById(Objects.requireNonNull(id, "ID cannot be null"))) {
-            throw new ResourceNotFoundException("Enseignant non trouvé: " + id);
-        }
-        enseignantRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
+        Enseignant enseignant = enseignantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
+                .orElseThrow(() -> new ResourceNotFoundException("Enseignant non trouvé: " + id));
+
+        // Dissocier les cours (ManyToMany) pour éviter les violations FK
+        enseignant.getCoursEnseignes().clear();
+
+        // Libérer les séances (ManyToMany) — retirer l'enseignant de chaque séance
+        enseignant.getSeances().forEach(seance -> seance.getEnseignants().remove(enseignant));
+        enseignant.getSeances().clear();
+
+        enseignantRepository.save(enseignant);
+        enseignantRepository.delete(enseignant);
         log.info("Enseignant supprimé avec succès");
+    }
+
+    @Override
+    public List<EnseignantDTO> getActiveEnseignants() {
+        log.info("Récupération des enseignants actifs");
+        return enseignantRepository.findByStatutAndAccountNonLocked(Statut.ACTIF, true).stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

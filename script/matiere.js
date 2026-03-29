@@ -68,7 +68,7 @@ async function fetchSpecialites() {
 
 async function fetchEnseignants() {
     try {
-        const r = await fetch(`${API_BASE_URL}/enseignants`);
+        const r = await fetch(`${API_BASE_URL}/enseignants/actifs`);
         if (r.ok) enseignants = await r.json();
     } catch (e) { console.error("Erreur réseau (enseignants):", e); }
 }
