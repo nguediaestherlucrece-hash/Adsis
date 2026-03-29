@@ -180,13 +180,9 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Nombre de jours (1 à 6)</label>
-                            <input type="number" class="form-control" id="modalNbJours" min="1" max="6" value="6" required>
-                            <small class="text-muted">6 = Lundi à Samedi</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date de fin <small class="text-muted">(calculée automatiquement)</small></label>
-                            <input type="date" class="form-control" id="modalDateFin" readonly>
+                            <label class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="modalDateFin" required>
+                            <small class="text-muted">Max 6 jours après la date de début (Lundi → Samedi)</small>
                         </div>
                     </form>
                 </div>

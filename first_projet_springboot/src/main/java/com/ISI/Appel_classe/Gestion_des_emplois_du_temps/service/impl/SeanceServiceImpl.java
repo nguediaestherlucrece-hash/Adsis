@@ -70,6 +70,8 @@ public class SeanceServiceImpl implements SeanceService {
         seance.setHeureDebut(dto.getHeureDebut());
         seance.setHeureFin(dto.getHeureFin());
         seance.setStatut(dto.isStatut());
+        seance.setCouleur(dto.getCouleur());
+        seance.setGroupId(dto.getGroupId());
 
         if (dto.getCoursId() != null) {
             CoursUE cours = coursUERepository.findById(dto.getCoursId())
@@ -104,6 +106,8 @@ public class SeanceServiceImpl implements SeanceService {
         seance.setHeureDebut(dto.getHeureDebut());
         seance.setHeureFin(dto.getHeureFin());
         seance.setStatut(dto.isStatut());
+        seance.setCouleur(dto.getCouleur());
+        seance.setGroupId(dto.getGroupId());
 
         if (dto.getCoursId() != null) {
             CoursUE cours = coursUERepository.findById(dto.getCoursId())

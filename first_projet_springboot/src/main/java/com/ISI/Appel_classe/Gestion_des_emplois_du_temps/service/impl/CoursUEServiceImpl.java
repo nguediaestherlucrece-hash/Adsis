@@ -134,10 +134,22 @@ public class CoursUEServiceImpl implements CourUEService {
 
     @Override
     public void deleteCours(Long id) {
-        if (!coursUERepository.existsById(id)) {
-            throw new RuntimeException("Cours UE non trouvé avec l'id: " + id);
+        CoursUE cours = coursUERepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cours UE non trouvé avec l'id: " + id));
+
+        // Retirer le cours de tous les enseignants (nettoyage join table enseignant_cours)
+        List<Enseignant> enseignantsAssocies = new ArrayList<>(cours.getEnseignants());
+        for (Enseignant ens : enseignantsAssocies) {
+            ens.getCoursEnseignes().remove(cours);
+            enseignantRepository.save(ens);
         }
-        coursUERepository.deleteById(id);
+
+        // Nullifier la référence enseignant dans les séances avant suppression cascade
+        for (var seance : cours.getSeances()) {
+            seance.setEnseignant(null);
+        }
+
+        coursUERepository.delete(cours);
         log.info("Cours UE supprimé avec l'id {}", id);
     }
 }

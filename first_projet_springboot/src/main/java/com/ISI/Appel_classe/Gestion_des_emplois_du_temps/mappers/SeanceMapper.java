@@ -27,6 +27,8 @@ public class SeanceMapper {
         dto.setCoursId(seance.getCours() != null ? seance.getCours().getId() : null);
         dto.setEnseignantId(seance.getEnseignant() != null ? seance.getEnseignant().getId() : null);
         dto.setEmploiDuTempsId(seance.getEmploiDuTemps() != null ? seance.getEmploiDuTemps().getId() : null);
+        dto.setCouleur(seance.getCouleur());
+        dto.setGroupId(seance.getGroupId());
 
         return dto;
     }

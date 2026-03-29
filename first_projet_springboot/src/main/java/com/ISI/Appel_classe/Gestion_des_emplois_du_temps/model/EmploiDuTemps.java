@@ -41,7 +41,7 @@ public class EmploiDuTemps {
     @JoinColumn(name = "gestionnaire_id")
     private AssistantPedagogique gestionnaire;
 
-    @OneToMany(mappedBy = "emploiDuTemps")
+    @OneToMany(mappedBy = "emploiDuTemps", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Seance> seances = new ArrayList<>();
 
     public void planifierSeance() {

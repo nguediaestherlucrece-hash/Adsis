@@ -3,21 +3,10 @@
 let matieres = [];
 let specialites = [];
 let enseignants = [];
-let seances = [];
 let isEditing = false;
 let currentMatiereId = null;
 
-// Configuration API
 const API_BASE_URL = 'http://localhost:8081/api';
-
-// Références DOM
-const matieresContainer = document.getElementById('matieresContainer');
-const specialiteSelect = document.getElementById('specialiteSelect');
-const enseignantSelect = document.getElementById('enseignantSelect');
-const ajouterBtn = document.getElementById('ajouterBtn');
-const codeInput = document.getElementById('codeInput');
-const nomInput = document.getElementById('nomInput');
-
 
 // ==================== TOAST & CONFIRM ====================
 function showToast(message, type = 'info') {
@@ -66,260 +55,286 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
     });
 }
 
-
-// Fonctions API
+// ==================== API ====================
 async function fetchSpecialites() {
     try {
-        const response = await fetch(`${API_BASE_URL}/specialites`);
-        if (response.ok) {
-            specialites = await response.json();
-            updateSpecialiteSelect();
+        const r = await fetch(`${API_BASE_URL}/specialites`);
+        if (r.ok) {
+            specialites = await r.json();
+            populateSpecialiteSelects();
         }
-    } catch (error) { console.error("Erreur réseau (spécialités):", error); }
+    } catch (e) { console.error("Erreur réseau (spécialités):", e); }
 }
 
 async function fetchEnseignants() {
     try {
-        const response = await fetch(`${API_BASE_URL}/enseignants`);
-        if (response.ok) {
-            enseignants = await response.json();
-            updateEnseignantSelect();
-        }
-    } catch (error) { console.error("Erreur réseau (enseignants):", error); }
+        const r = await fetch(`${API_BASE_URL}/enseignants`);
+        if (r.ok) enseignants = await r.json();
+    } catch (e) { console.error("Erreur réseau (enseignants):", e); }
 }
 
-async function fetchSeances() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/seances`);
-        if (response.ok) {
-            seances = await response.json();
-        }
-    } catch (error) { console.error("Erreur réseau (séances):", error); }
-}
+
 
 async function fetchMatieres() {
     try {
-        const response = await fetch(`${API_BASE_URL}/cours-ue`);
-        if (response.ok) {
-            matieres = await response.json();
+        const r = await fetch(`${API_BASE_URL}/cours-ue`);
+        if (r.ok) {
+            matieres = await r.json();
             renderMatieres();
         }
-    } catch (error) { console.error("Erreur réseau (matières):", error); }
+    } catch (e) { console.error("Erreur réseau (matières):", e); }
 }
 
-async function createMatiere(dto) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cours-ue`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        });
-        
-        if (response.ok) {
-            await fetchMatieres();
-            resetForm();
-            showToast("Matière ajoutée avec succès !", "success");
-        } else {
-            const errText = await response.text();
-            showToast("Erreur lors de l'ajout : " + errText, "danger");
-        }
-    } catch (error) { showToast("Erreur réseau.", "danger"); }
-}
-
-async function updateMatiereApi(id, dto) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cours-ue/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        });
-        
-        if (response.ok) {
-            await fetchMatieres();
-            resetForm();
-            showToast("Matière modifiée avec succès !", "success");
-        } else {
-            showToast("Erreur lors de la modification.", "danger");
-        }
-    } catch (error) { showToast("Erreur réseau.", "danger"); }
-}
-
-async function deleteMatiereApi(id) {
-    const confirmed = await showConfirm("Supprimer cette matière ?", "Cette action est irréversible.");
-    if (!confirmed) return;
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/cours-ue/${id}`, { method: 'DELETE' });
-        
-        if (response.ok || response.status === 204) {
-            await fetchMatieres();
-            showToast("Matière supprimée.", "success");
-        } else {
-            showToast("Erreur lors de la suppression.", "danger");
-        }
-    } catch (error) { showToast("Erreur réseau.", "danger"); }
-}
-
-// Mises à jour de l'UI
-function updateSpecialiteSelect() {
-    specialiteSelect.innerHTML = '<option value="">-- Spécialité --</option>';
+// ==================== SELECTS ====================
+function populateSpecialiteSelects() {
+    // Modal matière
+    const sel = document.getElementById('specialiteSelect');
+    sel.innerHTML = '<option value="">-- Sélectionner --</option>';
     specialites.forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.nom || s.nomSpecialite || s.idSpecialite;
-        specialiteSelect.appendChild(option);
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.nom || s.nomSpecialite || s.idSpecialite;
+        sel.appendChild(o);
     });
-}
-
-function updateEnseignantSelect() {
-    enseignantSelect.innerHTML = '';
-    enseignants.forEach(e => {
-        const option = document.createElement('option');
-        option.value = e.id;
-        option.textContent = `${e.nom} ${e.prenom}`;
-        enseignantSelect.appendChild(option);
-    });
-}
-
-function calculateDuration(heureDebut, heureFin) {
-    if (!heureDebut || !heureFin) return 0;
-    const [h1, m1] = heureDebut.split(':').map(Number);
-    const [h2, m2] = heureFin.split(':').map(Number);
-    return Math.max(0, (h2 * 60 + m2 - h1 * 60 - m1) / 60);
+    // Filtre enseignant modal
+    const filter = document.getElementById('enseignantFilterSpecialite');
+    if (filter) {
+        filter.innerHTML = '<option value="">Toutes spécialités</option>';
+        specialites.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id;
+            o.textContent = s.nom || s.nomSpecialite || s.idSpecialite;
+            filter.appendChild(o);
+        });
+    }
 }
 
 function renderMatieres() {
-    const totalSpan = document.getElementById('totalMatieres');
-    const totalFooter = document.getElementById('totalMatieresFooter');
-    const totalHeuresSpan = document.getElementById('totalHeures');
-    const moyenneSpan = document.getElementById('moyenneHeures');
+    const container = document.getElementById('matieresContainer');
+    let html = '';
 
-    let totalHeures = 0;
-    let htmlString = '';
-    
     matieres.forEach(matiere => {
-        // Calcul automatique du volume horaire basé sur les séances
-        const seancesForMatiere = seances.filter(s => s.coursId === matiere.id);
-        let matiereHeures = 0;
-        seancesForMatiere.forEach(s => {
-            matiereHeures += calculateDuration(s.heureDebut, s.heureFin);
-        });
-        totalHeures += matiereHeures;
 
-        let enseignantsHtml = '';
-        if (matiere.enseignants && matiere.enseignants.length > 0) {
-            enseignantsHtml = matiere.enseignants.map(e => 
-                `<span class="badge bg-info text-dark me-1"><i class="fas fa-chalkboard-teacher me-1"></i>${e.nom}</span>`
-            ).join('');
-        } else {
-            enseignantsHtml = `<span class="badge bg-light text-muted">Aucun</span>`;
-        }
-        
+        const ensHtml = (matiere.enseignants && matiere.enseignants.length > 0)
+            ? matiere.enseignants.map(e => `<span class="badge bg-info text-dark me-1"><i class="fas fa-chalkboard-teacher me-1"></i>${e.nom} ${e.prenom || ''}</span>`).join('')
+            : '<span class="badge bg-light text-muted">Aucun enseignant</span>';
+
         const specName = matiere.specialiteNom || 'Non définie';
 
-        htmlString += `
-            <div class="matiere-item d-flex align-items-center flex-wrap gap-2">
-                <span class="matiere-code">${matiere.codeUE}</span>
+        html += `
+            <div class="matiere-item d-flex align-items-center flex-wrap gap-2 p-2 mb-2 rounded-3 border" style="background:#fafbff;">
+                <span class="matiere-code badge bg-primary">${matiere.codeUE}</span>
                 <span class="matiere-nom fw-bold">${matiere.intitule}</span>
                 <span class="badge bg-secondary">${specName}</span>
-                ${enseignantsHtml}
-                <span class="matiere-heures ms-auto">${matiereHeures % 1 === 0 ? matiereHeures : matiereHeures.toFixed(1)}h</span>
-                <button class="btn btn-sm btn-outline-primary ms-2" title="Modifier" onclick="editerMatiere(${matiere.id})"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger ms-1" title="Supprimer" onclick="supprimerMatiere(${matiere.id})"><i class="fas fa-trash"></i></button>
+                <div class="d-flex flex-wrap gap-1 me-auto">${ensHtml}</div>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button class="btn btn-outline-info" title="Enseignants" onclick="openEnseignantModal(${matiere.id})"><i class="fas fa-users"></i></button>
+                    <button class="btn btn-outline-primary" title="Modifier" onclick="openEditModal(${matiere.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" title="Supprimer" onclick="supprimerMatiere(${matiere.id})"><i class="fas fa-trash"></i></button>
+                </div>
             </div>
         `;
     });
-    
-    if(matieres.length === 0) {
-        htmlString = `<div class="p-3 text-center text-muted">Aucune matière trouvée.</div>`;
-    }
-    
-    const moyenne = matieres.length > 0 ? (totalHeures / matieres.length).toFixed(1) : 0;
 
-    totalSpan.textContent = matieres.length;
-    totalFooter.textContent = matieres.length;
-    totalHeuresSpan.textContent = (totalHeures % 1 === 0 ? totalHeures : totalHeures.toFixed(1)) + 'h';
-    moyenneSpan.textContent = moyenne + 'h';
-    
-    matieresContainer.innerHTML = htmlString;
+    if (matieres.length === 0) {
+        html = '<div class="p-4 text-center text-muted"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucune matière trouvée.</div>';
+    }
+
+    container.innerHTML = html;
 }
 
-// Actions utilisateur
-function submitForm() {
-    const code = codeInput.value.trim();
-    const nom = nomInput.value.trim();
-    const specialiteId = specialiteSelect.value ? parseInt(specialiteSelect.value) : null;
-    
-    // Récupérer les IDs des enseignants sélectionnés
-    const enseignantIds = Array.from(enseignantSelect.selectedOptions).map(opt => parseInt(opt.value));
+// ==================== MODAL MATIÈRE ====================
+function openCreateModal() {
+    document.getElementById('matiereModalTitle').innerHTML = '<i class="bi bi-book me-2"></i>Nouvelle matière';
+    document.getElementById('editMatiereId').value = '';
+    document.getElementById('codeInput').value = '';
+    document.getElementById('nomInput').value = '';
+    document.getElementById('specialiteSelect').value = '';
+    document.getElementById('saveMatiereBtn').textContent = 'Créer';
+    new bootstrap.Modal(document.getElementById('matiereModal')).show();
+}
+
+function openEditModal(id) {
+    const m = matieres.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('matiereModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Modifier la matière';
+    document.getElementById('editMatiereId').value = m.id;
+    document.getElementById('codeInput').value = m.codeUE;
+    document.getElementById('nomInput').value = m.intitule;
+    document.getElementById('specialiteSelect').value = m.specialiteId || '';
+    document.getElementById('saveMatiereBtn').textContent = 'Enregistrer';
+    new bootstrap.Modal(document.getElementById('matiereModal')).show();
+}
+
+document.getElementById('saveMatiereBtn').addEventListener('click', async () => {
+    const code = document.getElementById('codeInput').value.trim();
+    const nom = document.getElementById('nomInput').value.trim();
+    const specialiteId = document.getElementById('specialiteSelect').value;
+    const editId = document.getElementById('editMatiereId').value;
 
     if (!code || !nom || !specialiteId) {
-        showToast("Veuillez remplir au moins le code, l'intitulé et la spécialité.", "warning");
+        showToast("Veuillez remplir le code, l'intitulé et la spécialité.", "warning");
         return;
     }
 
     const dto = {
-        idCours: "C-" + code + "-" + Date.now().toString().slice(-4),
+        idCours: editId ? undefined : "C-" + code + "-" + Date.now().toString().slice(-4),
         codeUE: code,
         intitule: nom,
         volumeHoraire: 0,
-        specialiteId: specialiteId,
-        enseignantIds: enseignantIds
+        specialiteId: parseInt(specialiteId),
+        enseignantIds: []
     };
 
-    if (isEditing && currentMatiereId) {
-        updateMatiereApi(currentMatiereId, dto);
-    } else {
-        createMatiere(dto);
+    // Si édition, conserver les enseignants existants
+    if (editId) {
+        const existing = matieres.find(m => m.id == editId);
+        if (existing && existing.enseignants) {
+            dto.enseignantIds = existing.enseignants.map(e => e.id);
+        }
+        dto.idCours = existing ? existing.idCours : dto.idCours;
     }
+
+    try {
+        const url = editId ? `${API_BASE_URL}/cours-ue/${editId}` : `${API_BASE_URL}/cours-ue`;
+        const method = editId ? 'PUT' : 'POST';
+        const r = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+        if (r.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('matiereModal'))?.hide();
+            showToast(editId ? "Matière modifiée." : "Matière créée.", "success");
+            await fetchMatieres();
+        } else {
+            const err = await r.text();
+            showToast("Erreur : " + err, "danger");
+        }
+    } catch (e) { showToast("Erreur réseau.", "danger"); }
+});
+
+// ==================== MODAL ENSEIGNANTS ====================
+function openEnseignantModal(matiereId) {
+    document.getElementById('enseignantMatiereId').value = matiereId;
+    const m = matieres.find(x => x.id === matiereId);
+    document.getElementById('enseignantModalTitle').innerHTML = `<i class="bi bi-people me-2"></i>Enseignants — ${m ? m.intitule : ''}`;
+    document.getElementById('enseignantSearch').value = '';
+    if (document.getElementById('enseignantFilterSpecialite')) {
+        document.getElementById('enseignantFilterSpecialite').value = '';
+    }
+    renderEnseignantList('', '');
+    new bootstrap.Modal(document.getElementById('enseignantModal')).show();
 }
 
-function editerMatiere(id) {
-    const matiere = matieres.find(m => m.id === id);
-    if (!matiere) return;
-    
-    isEditing = true;
-    currentMatiereId = id;
-    
-    codeInput.value = matiere.codeUE;
-    nomInput.value = matiere.intitule;
-    specialiteSelect.value = matiere.specialiteId || '';
-    
-    // Sélectionner les enseignants
-    const teacherIds = matiere.enseignants ? matiere.enseignants.map(e => e.id.toString()) : [];
-    Array.from(enseignantSelect.options).forEach(opt => {
-        opt.selected = teacherIds.includes(opt.value);
+function renderEnseignantList(searchTerm, filterSpecId) {
+    const container = document.getElementById('enseignantListContainer');
+    const matiereId = parseInt(document.getElementById('enseignantMatiereId').value);
+    const m = matieres.find(x => x.id === matiereId);
+    const assignedIds = (m && m.enseignants) ? m.enseignants.map(e => e.id) : [];
+
+    let filtered = enseignants;
+    if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        filtered = filtered.filter(e => (e.nom + ' ' + (e.prenom || '')).toLowerCase().includes(q));
+    }
+    if (filterSpecId) {
+        // Note: enseignant may not have specialiteId, filter by cours enseignés if available
+        // For now, show all if filter doesn't apply
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center p-3">Aucun enseignant trouvé.</p>';
+        return;
+    }
+
+    let html = '<div class="list-group list-group-flush">';
+    filtered.forEach(e => {
+        const checked = assignedIds.includes(e.id) ? 'checked' : '';
+        html += `
+            <label class="list-group-item d-flex align-items-center gap-3 py-2" style="cursor:pointer;">
+                <input type="checkbox" class="form-check-input ens-checkbox" value="${e.id}" ${checked}>
+                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:32px;height:32px;font-size:0.8rem;">
+                        ${(e.nom || '?')[0]}${(e.prenom || '?')[0]}
+                    </div>
+                    <div>
+                        <div class="fw-semibold">${e.nom} ${e.prenom || ''}</div>
+                        <small class="text-muted">${e.email || ''}</small>
+                    </div>
+                </div>
+            </label>`;
     });
-    
-    ajouterBtn.textContent = 'Modifier';
-    ajouterBtn.classList.remove('btn-primary');
-    ajouterBtn.classList.add('btn-warning');
+    html += '</div>';
+    container.innerHTML = html;
 }
 
-function resetForm() {
-    isEditing = false;
-    currentMatiereId = null;
-    
-    codeInput.value = '';
-    nomInput.value = '';
-    specialiteSelect.value = '';
-    Array.from(enseignantSelect.options).forEach(opt => opt.selected = false);
-    
-    ajouterBtn.textContent = 'Ajouter';
-    ajouterBtn.classList.remove('btn-warning');
-    ajouterBtn.classList.add('btn-primary');
+// Recherche et filtre en temps réel
+document.getElementById('enseignantSearch')?.addEventListener('input', (e) => {
+    renderEnseignantList(e.target.value, document.getElementById('enseignantFilterSpecialite')?.value || '');
+});
+document.getElementById('enseignantFilterSpecialite')?.addEventListener('change', (e) => {
+    renderEnseignantList(document.getElementById('enseignantSearch')?.value || '', e.target.value);
+});
+
+// Sauvegarder les enseignants assignés
+document.getElementById('saveEnseignantsBtn').addEventListener('click', async () => {
+    const matiereId = parseInt(document.getElementById('enseignantMatiereId').value);
+    const m = matieres.find(x => x.id === matiereId);
+    if (!m) return;
+
+    const selectedIds = Array.from(document.querySelectorAll('.ens-checkbox:checked')).map(cb => parseInt(cb.value));
+
+    const dto = {
+        idCours: m.idCours,
+        codeUE: m.codeUE,
+        intitule: m.intitule,
+        volumeHoraire: m.volumeHoraire || 0,
+        specialiteId: m.specialiteId,
+        enseignantIds: selectedIds
+    };
+
+    try {
+        const r = await fetch(`${API_BASE_URL}/cours-ue/${matiereId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        });
+        if (r.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('enseignantModal'))?.hide();
+            showToast("Enseignants mis à jour.", "success");
+            await fetchMatieres();
+        } else {
+            showToast("Erreur lors de la mise à jour.", "danger");
+        }
+    } catch (e) { showToast("Erreur réseau.", "danger"); }
+});
+
+// ==================== SUPPRESSION ====================
+async function supprimerMatiere(id) {
+    const confirmed = await showConfirm("Supprimer cette matière ?", "Cette action est irréversible.");
+    if (!confirmed) return;
+    try {
+        const r = await fetch(`${API_BASE_URL}/cours-ue/${id}`, { method: 'DELETE' });
+        if (r.ok || r.status === 204) {
+            showToast("Matière supprimée.", "success");
+            await fetchMatieres();
+        } else {
+            showToast("Erreur lors de la suppression.", "danger");
+        }
+    } catch (e) { showToast("Erreur réseau.", "danger"); }
 }
 
-// Initialisation globale pour les onclick
-window.supprimerMatiere = deleteMatiereApi;
-window.editerMatiere = editerMatiere;
+// ==================== INIT ====================
+window.openEditModal = openEditModal;
+window.openEnseignantModal = openEnseignantModal;
+window.supprimerMatiere = supprimerMatiere;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    ajouterBtn.addEventListener('click', submitForm);
-    
-    // Charger les données initiales de façon séquentielle
+    document.getElementById('openCreateModalBtn').addEventListener('click', openCreateModal);
+
     await fetchSpecialites();
     await fetchEnseignants();
-    await fetchSeances();
+
     await fetchMatieres();
 });

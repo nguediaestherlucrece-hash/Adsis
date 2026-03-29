@@ -19,4 +19,6 @@ public class SeanceCreateDTO {
     private Long coursId;
     private Long enseignantId;
     private Long emploiDuTempsId;
+    private String couleur;
+    private String groupId;
 }
