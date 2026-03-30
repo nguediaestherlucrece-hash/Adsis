@@ -8,5 +8,5 @@ public class NiveauDTO {
     private Long id;
     private String idNiveau;
     private String nom;
-
+    private Long filiereId;
 }

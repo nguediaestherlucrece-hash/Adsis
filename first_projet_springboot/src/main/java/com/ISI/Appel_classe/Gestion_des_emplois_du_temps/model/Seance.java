@@ -30,28 +30,30 @@ public class Seance {
     @Column(unique = true)
     private String idSeance;
 
-    private LocalDate date; // Changé de String à LocalDate
-    private LocalTime heureDebut; // Changé de String à LocalTime
-    private LocalTime heureFin; // Changé de String à LocalTime
-    private boolean statut; // "ouverte", "clôturée"
+    private LocalDate date;
+    private LocalTime heureDebut;
+    private LocalTime heureFin;
+    private boolean statut;
+    private String couleur;   // Couleur hex (ex: "#0f22f1")
+    private String groupId;   // Identifiant de groupe pour séances multi-jour
 
     // 🔹 Relations JPA
     @ManyToOne
     @JoinColumn(name = "cours_id")
     private CoursUE cours;
 
-    @ManyToOne
-    @JoinColumn(name = "enseignant_id")
-    private Enseignant enseignant;
-
     @ManyToMany
+    @JoinTable(name = "seance_enseignant", joinColumns = @JoinColumn(name = "seance_id"), inverseJoinColumns = @JoinColumn(name = "enseignant_id"))
+    private List<Enseignant> enseignants = new ArrayList<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "seance_surveillant", joinColumns = @JoinColumn(name = "seance_id"), inverseJoinColumns = @JoinColumn(name = "surveillant_id"))
     private List<Surveillant> surveillants = new ArrayList<>();
 
     @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL)
     private List<Appel> appels = new ArrayList<>();
 
-    @OneToMany(mappedBy = "seance")
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Presence> presences = new ArrayList<>();
 
     @ManyToOne

@@ -7,4 +7,5 @@ public class NiveauCreateDTO {
 
     private String idNiveau;
     private String nom;
+    private Long filiereId;
 }

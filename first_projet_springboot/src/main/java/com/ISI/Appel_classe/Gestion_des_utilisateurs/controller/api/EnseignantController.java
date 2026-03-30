@@ -31,6 +31,13 @@ public class EnseignantController {
         return ResponseEntity.ok(enseignantService.getAllEnseignants());
     }
 
+    @GetMapping("/actifs")
+    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
+    public ResponseEntity<List<EnseignantDTO>> getActiveEnseignants() {
+        log.info("📖 [GET /api/enseignants/actifs] Récupération des enseignants actifs");
+        return ResponseEntity.ok(enseignantService.getActiveEnseignants());
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
     public ResponseEntity<EnseignantDTO> getById(@PathVariable Long id) {

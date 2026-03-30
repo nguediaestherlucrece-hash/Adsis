@@ -5,6 +5,7 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.request.EmploiDuTem
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.EmploiDuTempsDTO;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.mappers.EmploiDuTempsMapper;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Seance;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Semestre;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.EmploiDuTempsRepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.SemestreRepository;
@@ -135,7 +136,13 @@ public class EmploiDuTempsServiceImpl implements EmploiDuTempsService {
         EmploiDuTemps emploi = emploiDuTempsRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Emploi du temps non trouvé avec l'id: " + id));
 
-        emploiDuTempsRepository.deleteById(id);
+        // Nettoyer les FK des séances avant suppression cascade
+        for (Seance seance : emploi.getSeances()) {
+            seance.getEnseignants().clear();
+            seance.getSurveillants().clear();
+        }
+
+        emploiDuTempsRepository.delete(emploi);
         log.info("Emploi du temps supprimé avec l'id {}", id);
     }
 }

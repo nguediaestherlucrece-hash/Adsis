@@ -35,7 +35,6 @@ const backToListBtn = document.getElementById('backToListBtn');
 const modalClasse = document.getElementById('modalClasse');
 const modalDateDebut = document.getElementById('modalDateDebut');
 const modalDateFin = document.getElementById('modalDateFin');
-const modalNbJours = document.getElementById('modalNbJours');
 const modalSubmitBtn = document.getElementById('modalSubmitBtn');
 const modalEdtId = document.getElementById('modalEdtId');
 const edtModalTitle = document.getElementById('edtModalTitle');
@@ -47,6 +46,8 @@ const timetableHeaders = document.getElementById('timetableHeaders');
 const classeDisplay = document.getElementById('editorClasseBadge');
 const debutSemaineText = document.getElementById('debutSemaine');
 const finSemaineText = document.getElementById('finSemaine');
+const headerDebutSemaine = document.getElementById('headerDebutSemaine');
+const headerFinSemaine = document.getElementById('headerFinSemaine');
 const matieresContainerEditor = document.getElementById('matieresContainer');
 const enseignantsContainer = document.getElementById('enseignantsContainer');
 
@@ -100,7 +101,15 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
 // ==================== UTILITAIRES ====================
 function formatDate(dateStr) {
     if (!dateStr) return '...';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
+    let d;
+    if (Array.isArray(dateStr)) {
+        // Jackson serializes LocalDate as [year, month, day]
+        d = new Date(dateStr[0], dateStr[1] - 1, dateStr[2]);
+    } else {
+        d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return '...';
+    return d.toLocaleDateString('fr-FR', {
         day: '2-digit', month: 'long', year: 'numeric'
     });
 }
@@ -117,10 +126,18 @@ function calculateDateFin(dateDebut, nbJours) {
     return d.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
+/** Parse une date qui peut être un tableau Jackson [y,m,d] ou une string ISO */
+function parseDate(val) {
+    if (!val) return null;
+    if (Array.isArray(val)) return new Date(val[0], val[1] - 1, val[2]);
+    return new Date(val);
+}
+
 /** Retourne la date réelle d'un jour de la grille (index 0=Lundi) en fonction de dateDebut */
 function getDateForJour(jourIdx) {
     if (!currentEdt || !currentEdt.dateDebut) return null;
-    const d = new Date(currentEdt.dateDebut);
+    const d = parseDate(currentEdt.dateDebut);
+    if (!d || isNaN(d.getTime())) return null;
     const dow = d.getDay();
     if (dow === 0) d.setDate(d.getDate() + 1);
     d.setDate(d.getDate() + jourIdx);
@@ -131,10 +148,10 @@ function getDateForJour(jourIdx) {
 function findGridPosition(seanceDate, heureDebut) {
     let jourIdx = -1;
     if (currentEdt && currentEdt.dateDebut) {
-        const base = new Date(currentEdt.dateDebut);
+        const base = parseDate(currentEdt.dateDebut);
         const baseDow = base.getDay();
         if (baseDow === 0) base.setDate(base.getDate() + 1);
-        const seanceD = new Date(seanceDate);
+        const seanceD = parseDate(seanceDate);
         const diffDays = Math.round((seanceD - base) / (1000 * 60 * 60 * 24));
         if (diffDays >= 0 && diffDays < 6) jourIdx = diffDays;
     }
@@ -197,17 +214,37 @@ async function init() {
     populateModalSemestre();
     await fetchEmploisDuTemps();
 
-    // Auto-calcul dateFin quand dateDebut ou nbJours change
-    modalDateDebut.addEventListener('change', autoCalcDateFin);
-    modalNbJours.addEventListener('change', autoCalcDateFin);
+    // Contraindre dateFin quand dateDebut change
+    modalDateDebut.addEventListener('change', constrainDateFin);
 }
 
-function autoCalcDateFin() {
+function constrainDateFin() {
     const debut = modalDateDebut.value;
-    const nb = parseInt(modalNbJours.value);
-    if (debut && nb > 0) {
-        modalDateFin.value = calculateDateFin(debut, nb);
+    if (!debut) { modalDateFin.min = ''; modalDateFin.max = ''; return; }
+    const d = new Date(debut);
+    modalDateFin.min = debut; // même jour min
+    // max = debut + 5 jours calendaires (pour couvrir Lun→Sam)
+    const maxD = new Date(d);
+    maxD.setDate(maxD.getDate() + 5);
+    modalDateFin.max = maxD.toISOString().split('T')[0];
+    // Si dateFin actuelle est hors bornes, reset
+    if (modalDateFin.value && (modalDateFin.value < modalDateFin.min || modalDateFin.value > modalDateFin.max)) {
+        modalDateFin.value = '';
     }
+}
+
+/** Calcule le nombre de jours ouvrés entre deux dates (inclus) */
+function countWorkDays(dateDebutStr, dateFinStr) {
+    const d1 = new Date(dateDebutStr);
+    const d2 = new Date(dateFinStr);
+    let count = 0;
+    const cur = new Date(d1);
+    while (cur <= d2) {
+        const dow = cur.getDay();
+        if (dow >= 1 && dow <= 6) count++;
+        cur.setDate(cur.getDate() + 1);
+    }
+    return Math.max(1, count);
 }
 
 function populateModalClasse() {
@@ -294,23 +331,22 @@ function renderEdtList(edts) {
 modalSubmitBtn.addEventListener('click', async () => {
     const classeId = modalClasse.value;
     const dateDebut = modalDateDebut.value;
-    const nbJours = parseInt(modalNbJours.value);
+    const dateFin = modalDateFin.value;
     const editId = modalEdtId.value;
     const semestreId = modalSemestre ? modalSemestre.value : null;
 
-    if (!classeId || !dateDebut || !nbJours) {
-        showToast("Veuillez remplir tous les champs obligatoires (classe, date, nombre de jours).", "warning");
+    if (!classeId || !dateDebut || !dateFin) {
+        showToast("Veuillez remplir tous les champs obligatoires (classe, date début, date fin).", "warning");
         return;
     }
 
-    // Auto-calcul dateFin
-    const dateFin = calculateDateFin(dateDebut, nbJours);
+    const nombreJours = countWorkDays(dateDebut, dateFin);
 
     const dto = {
         idEmploi: `EDT-${Date.now()}`,
         dateDebut: dateDebut,
         dateFin: dateFin,
-        nombreJours: nbJours,
+        nombreJours: nombreJours,
         classeId: parseInt(classeId)
     };
     if (semestreId) dto.semestreId = parseInt(semestreId);
@@ -360,8 +396,8 @@ window.openEditEdtModal = async function (edtId) {
         edtModalTitle.textContent = "Modifier l'emploi du temps";
         modalEdtId.value = edt.id;
         modalDateDebut.value = edt.dateDebut;
+        constrainDateFin();
         modalDateFin.value = edt.dateFin;
-        modalNbJours.value = edt.nombreJours || 6;
         modalSubmitBtn.textContent = "Enregistrer";
 
         if (edt.classeId) {
@@ -379,7 +415,6 @@ window.openEditEdtModal = async function (edtId) {
     } catch (e) { console.error(e); }
 };
 
-// Réinitialiser le modal quand il se ferme
 document.getElementById('createEdtModal').addEventListener('hidden.bs.modal', () => {
     edtModalTitle.textContent = "Créer un emploi du temps";
     modalEdtId.value = '';
@@ -387,7 +422,8 @@ document.getElementById('createEdtModal').addEventListener('hidden.bs.modal', ()
     modalClasse.value = '';
     modalDateDebut.value = '';
     modalDateFin.value = '';
-    modalNbJours.value = 6;
+    modalDateFin.min = '';
+    modalDateFin.max = '';
     if (modalSemestre) modalSemestre.value = '';
 });
 
@@ -438,11 +474,15 @@ window.openEditor = async function (edtId, edtDataPreloaded = null) {
             currentEdt = edtDataPreloaded;
         }
 
-        // MAJ infos header
+        // MAJ infos header + timetableCard
         const classeNom = getClasseNom(currentEdt);
         classeDisplay.textContent = classeNom;
-        debutSemaineText.textContent = formatDate(currentEdt.dateDebut);
-        finSemaineText.textContent = formatDate(currentEdt.dateFin);
+        const debutStr = formatDate(currentEdt.dateDebut);
+        const finStr = formatDate(currentEdt.dateFin);
+        debutSemaineText.textContent = debutStr;
+        finSemaineText.textContent = finStr;
+        if (headerDebutSemaine) headerDebutSemaine.textContent = debutStr;
+        if (headerFinSemaine) headerFinSemaine.textContent = finStr;
 
         // Afficher année et semestre dans le header
         const anneeBadge = document.getElementById('editorAnneeBadge');
@@ -514,6 +554,9 @@ async function fetchAllMatieres() {
 }
 
 
+// Stockage local des couleurs de matière (modifiable par l'utilisateur)
+let matiereColors = {};
+
 function renderMatiereBadges() {
     matieresContainerEditor.innerHTML = '';
     if (matieres.length === 0) {
@@ -521,9 +564,14 @@ function renderMatiereBadges() {
         return;
     }
     matieres.forEach((m, idx) => {
-        const color = colors[idx % colors.length];
+        const color = matiereColors[m.id] || colors[idx % colors.length];
+        matiereColors[m.id] = color; // stocker la couleur par défaut
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex align-items-center mb-1 w-100';
+
         const badge = document.createElement('span');
-        badge.className = 'element-pill';
+        badge.className = 'element-pill flex-grow-1';
         badge.style.backgroundColor = color;
         badge.setAttribute('draggable', 'true');
         badge.dataset.json = JSON.stringify({
@@ -531,7 +579,26 @@ function renderMatiereBadges() {
             enseignants: m.enseignants || []
         });
         badge.innerHTML = `<i class="fas fa-book me-1"></i> ${m.intitule}`;
-        matieresContainerEditor.appendChild(badge);
+
+        // Bouton color picker
+        const colorBtn = document.createElement('input');
+        colorBtn.type = 'color';
+        colorBtn.value = color;
+        colorBtn.title = 'Changer la couleur';
+        colorBtn.style.cssText = 'width:24px;height:24px;border:none;cursor:pointer;margin-left:4px;border-radius:50%;padding:0;';
+        colorBtn.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            matiereColors[m.id] = newColor;
+            badge.style.backgroundColor = newColor;
+            badge.dataset.json = JSON.stringify({
+                type: 'matiere', id: m.id, nom: m.intitule, couleur: newColor, codeUE: m.codeUE,
+                enseignants: m.enseignants || []
+            });
+        });
+
+        wrapper.appendChild(badge);
+        wrapper.appendChild(colorBtn);
+        matieresContainerEditor.appendChild(wrapper);
     });
 }
 
@@ -588,37 +655,92 @@ async function fetchSeancesForEdt(edtId) {
         const res = await fetch(`${API_BASE_URL}/seances/emploi-du-temps/${edtId}`);
         if (res.ok) {
             const seances = await res.json();
+
+            // Regrouper les séances par groupId pour reconstituer les blocs multi-jour
+            const groups = {};
+            const ungrouped = [];
             seances.forEach(s => {
-                const { jourIdx, horaireIdx } = findGridPosition(s.date, s.heureDebut);
+                if (s.groupId) {
+                    if (!groups[s.groupId]) groups[s.groupId] = [];
+                    groups[s.groupId].push(s);
+                } else {
+                    ungrouped.push(s);
+                }
+            });
+
+            // Traiter les séances sans groupe (individuelles)
+            ungrouped.forEach(s => renderSingleSeance(s));
+
+            // Traiter les groupes multi-jour
+            Object.values(groups).forEach(group => {
+                // Trier par date puis par jour
+                group.sort((a, b) => new Date(a.date) - new Date(b.date));
+                const first = group[0];
+                const { jourIdx, horaireIdx } = findGridPosition(first.date, first.heureDebut);
                 if (jourIdx < 0 || horaireIdx < 0) return;
 
                 const cell = document.querySelector(`td[data-jour="${jourIdx}"][data-horaire="${horaireIdx}"]`);
                 if (!cell) return;
 
-                const matiere = matieres.find(m => m.id == s.coursId);
+                const matiere = matieres.find(m => m.id == first.coursId);
                 const colorIdx = matiere ? matieres.indexOf(matiere) % colors.length : 0;
-                const duration = calculateDuration(s.heureDebut, s.heureFin);
+                const duration = calculateDuration(first.heureDebut, first.heureFin);
+                const colspan = group.length;
+                const linkedIds = group.map(s => s.id);
 
                 const data = {
-                    dbId: s.id,
+                    dbId: first.id,
                     type: 'matiere',
                     matiere: matiere ? matiere.intitule : 'Séance',
-                    matiereId: s.coursId,
+                    matiereId: first.coursId,
                     enseignants: [],
-                    couleur: colors[colorIdx]
+                    enseignantIds: first.enseignantIds || [],
+                    couleur: first.couleur || (matiereColors[first.coursId]) || colors[colorIdx],
+                    linkedIds: linkedIds
                 };
 
-                if (s.enseignantId) {
-                    if (matiere && matiere.enseignants) {
-                        const ens = matiere.enseignants.find(e => e.id == s.enseignantId);
-                        if (ens) data.enseignants = [`${ens.nom} ${ens.prenom || ''}`];
-                    }
+                if (first.enseignantIds && first.enseignantIds.length > 0 && matiere && matiere.enseignants) {
+                    data.enseignants = first.enseignantIds.map(eid => {
+                        const ens = matiere.enseignants.find(e => e.id == eid);
+                        return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
+                    }).filter(Boolean);
                 }
 
-                createCourseElement(cell, data, duration, 1);
+                createCourseElement(cell, data, duration, colspan);
             });
         }
     } catch (e) { console.error("Erreur fetch seances:", e); }
+}
+
+function renderSingleSeance(s) {
+    const { jourIdx, horaireIdx } = findGridPosition(s.date, s.heureDebut);
+    if (jourIdx < 0 || horaireIdx < 0) return;
+
+    const cell = document.querySelector(`td[data-jour="${jourIdx}"][data-horaire="${horaireIdx}"]`);
+    if (!cell) return;
+
+    const matiere = matieres.find(m => m.id == s.coursId);
+    const colorIdx = matiere ? matieres.indexOf(matiere) % colors.length : 0;
+    const duration = calculateDuration(s.heureDebut, s.heureFin);
+
+    const data = {
+        dbId: s.id,
+        type: 'matiere',
+        matiere: matiere ? matiere.intitule : 'Séance',
+        matiereId: s.coursId,
+        enseignants: [],
+        enseignantIds: s.enseignantIds || [],
+        couleur: s.couleur || (matiereColors[s.coursId]) || colors[colorIdx]
+    };
+
+    if (s.enseignantIds && s.enseignantIds.length > 0 && matiere && matiere.enseignants) {
+        data.enseignants = s.enseignantIds.map(eid => {
+            const ens = matiere.enseignants.find(e => e.id == eid);
+            return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
+        }).filter(Boolean);
+    }
+
+    createCourseElement(cell, data, duration, 1);
 }
 
 
@@ -673,6 +795,7 @@ async function handleDropOnCell(cell, element) {
             return;
         }
 
+        const groupId = `G-${Date.now()}`;
         const dto = {
             idSeance: `S-${Date.now()}`,
             date: dateSeance,
@@ -680,11 +803,11 @@ async function handleDropOnCell(cell, element) {
             heureFin: heureFin,
             statut: false,
             coursId: parseInt(element.id),
-            enseignantId: null,
-            emploiDuTempsId: currentEdt.id
+            enseignantIds: [],
+            emploiDuTempsId: currentEdt.id,
+            couleur: element.couleur || null,
+            groupId: groupId
         };
-
-        console.log("Création séance:", dto);
 
         try {
             const res = await fetch(`${API_BASE_URL}/seances`, {
@@ -700,12 +823,12 @@ async function handleDropOnCell(cell, element) {
                     matiere: element.nom,
                     matiereId: element.id,
                     enseignants: [],
-                    couleur: element.couleur
+                    couleur: element.couleur,
+                    groupId: groupId
                 }, 1, 1);
                 showToast(`${element.nom} ajouté.`, "success");
             } else {
                 const errText = await res.text();
-                console.error("Erreur création séance:", errText);
                 showToast("Erreur : " + errText, "danger");
             }
         } catch (e) { console.error(e); showToast("Erreur réseau", "danger"); }
@@ -730,6 +853,20 @@ async function handleDropOnCell(cell, element) {
             if (!resGet.ok) return;
             const seance = await resGet.json();
 
+            // Build the new enseignantIds list (add, don't replace) — max 2
+            let currentIds = Array.isArray(seance.enseignantIds) ? [...seance.enseignantIds] : [];
+            const newId = parseInt(element.id);
+
+            if (currentIds.includes(newId)) {
+                showToast("Cet enseignant est déjà assigné à cette séance.", "warning");
+                return;
+            }
+            if (currentIds.length >= 2) {
+                showToast("Maximum 2 enseignants par séance.", "warning");
+                return;
+            }
+            currentIds.push(newId);
+
             const updateDto = {
                 idSeance: seance.idSeance,
                 date: seance.date,
@@ -737,8 +874,10 @@ async function handleDropOnCell(cell, element) {
                 heureFin: seance.heureFin,
                 statut: seance.statut,
                 coursId: seance.coursId,
-                enseignantId: parseInt(element.id),
-                emploiDuTempsId: seance.emploiDuTempsId
+                enseignantIds: currentIds,
+                emploiDuTempsId: seance.emploiDuTempsId,
+                couleur: seance.couleur,
+                groupId: seance.groupId
             };
 
             const resPut = await fetch(`${API_BASE_URL}/seances/${dbId}`, {
@@ -748,17 +887,29 @@ async function handleDropOnCell(cell, element) {
             });
 
             if (resPut.ok) {
-                coursBlock.dataset.enseignants = element.nom;
+                // Resolve names from matieres data
+                const matiere = matieres.find(m => m.id == coursBlock.dataset.matiereId);
+                const allNames = currentIds.map(eid => {
+                    if (matiere && matiere.enseignants) {
+                        const ens = matiere.enseignants.find(e => e.id == eid);
+                        if (ens) return `${ens.nom} ${ens.prenom || ''}`.trim();
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                coursBlock.dataset.enseignants = allNames.join(',');
+                coursBlock.dataset.enseignantIds = JSON.stringify(currentIds);
                 let ensDiv = coursBlock.querySelector('.enseignants');
+                const ensHtml = allNames.map(n => `<span>${n}</span>`).join(' / ');
                 if (ensDiv) {
-                    ensDiv.innerHTML = `<span>${element.nom}</span>`;
+                    ensDiv.innerHTML = ensHtml;
                 } else {
                     const newDiv = document.createElement('div');
                     newDiv.className = 'enseignants';
-                    newDiv.innerHTML = `<span>${element.nom}</span>`;
+                    newDiv.innerHTML = ensHtml;
                     coursBlock.appendChild(newDiv);
                 }
-                showToast(`Enseignant ${element.nom} assigné.`, "success");
+                showToast(`Enseignant ${element.nom} assigné (${currentIds.length}/2).`, "success");
             }
         } catch (e) { console.error(e); }
     }
@@ -778,6 +929,8 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
     div.dataset.colspan = colspan;
     div.dataset.dbId = data.dbId;
     div.dataset.linkedIds = data.linkedIds ? JSON.stringify(data.linkedIds) : JSON.stringify([data.dbId]);
+    div.dataset.groupId = data.groupId || '';
+    div.dataset.couleur = data.couleur || '';
 
     let content = `<div class="matiere-nom">${data.matiere}</div>`;
     if (data.enseignants && data.enseignants.length > 0 && data.enseignants[0]) {
@@ -799,11 +952,46 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
     div.innerHTML = content;
     cell.appendChild(div);
 
+    // Clic gauche : afficher les enseignants de la matière
     div.addEventListener('click', (e) => {
         e.stopPropagation();
         if (data.matiereId) {
             renderEnseignantBadgesForMatiere(data.matiereId);
         }
+    });
+
+    // Clic droit : color picker pour changer la couleur de la séance
+    div.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.value = data.couleur || '#0f22f1';
+        picker.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+        document.body.appendChild(picker);
+        picker.addEventListener('input', async (ev) => {
+            const newColor = ev.target.value;
+            div.style.backgroundColor = newColor;
+            div.dataset.couleur = newColor;
+            // Mettre à jour en base toutes les séances liées
+            const ids = JSON.parse(div.dataset.linkedIds || '[]');
+            for (const id of ids) {
+                try {
+                    const r = await fetch(`${API_BASE_URL}/seances/${id}`);
+                    if (!r.ok) continue;
+                    const seance = await r.json();
+                    seance.couleur = newColor;
+                    await fetch(`${API_BASE_URL}/seances/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(seance)
+                    });
+                } catch (err) { console.error(err); }
+            }
+            showToast('Couleur mise à jour.', 'success');
+        });
+        picker.addEventListener('change', () => picker.remove());
+        picker.click();
     });
 
     if (rowspan > 1 || colspan > 1) {
@@ -1033,12 +1221,14 @@ async function handleResizeEnd() {
     const removedDays = oldDays.filter(d => !newDays.includes(d));
     const keptDays = newDays.filter(d => oldDays.includes(d));
 
+    const groupId = element.dataset.groupId || `G-${Date.now()}`;
     let jourToId = {};
     try {
         const primaryId = dataSlot.linkedIds[0] || dataSlot.dbId;
         const resPrimary = await fetch(`${API_BASE_URL}/seances/${primaryId}`);
         if (!resPrimary.ok) throw new Error("Séance primaire introuvable");
         const primarySeance = await resPrimary.json();
+        const couleur = element.dataset.couleur || primarySeance.couleur || dataSlot.couleur;
 
         for (let i = 0; i < dataSlot.linkedIds.length; i++) {
             if (i < oldDays.length) jourToId[oldDays[i]] = dataSlot.linkedIds[i];
@@ -1055,8 +1245,10 @@ async function handleResizeEnd() {
                 heureFin: newHeureFin,
                 statut: primarySeance.statut,
                 coursId: primarySeance.coursId,
-                enseignantId: primarySeance.enseignantId,
-                emploiDuTempsId: primarySeance.emploiDuTempsId
+                enseignantIds: primarySeance.enseignantIds || [],
+                emploiDuTempsId: primarySeance.emploiDuTempsId,
+                couleur: couleur,
+                groupId: groupId
             };
             await fetch(`${API_BASE_URL}/seances/${seanceId}`, {
                 method: 'PUT',
@@ -1074,8 +1266,10 @@ async function handleResizeEnd() {
                 heureFin: newHeureFin,
                 statut: primarySeance.statut,
                 coursId: primarySeance.coursId,
-                enseignantId: primarySeance.enseignantId,
-                emploiDuTempsId: primarySeance.emploiDuTempsId
+                enseignantIds: primarySeance.enseignantIds || [],
+                emploiDuTempsId: primarySeance.emploiDuTempsId,
+                couleur: couleur,
+                groupId: groupId
             };
             const res = await fetch(`${API_BASE_URL}/seances`, {
                 method: 'POST',
@@ -1134,23 +1328,81 @@ timetableBody.addEventListener('dblclick', async function (e) {
 
 
 document.getElementById('exportPdfBtn').addEventListener('click', function () {
-    const timetableCard = document.getElementById('timetableCard');
-    const clone = timetableCard.cloneNode(true);
-    clone.style.width = '100%';
-    clone.style.padding = '20px';
-    clone.style.backgroundColor = 'white';
+    if (!currentEdt) return;
 
-    clone.querySelectorAll('.resize-handle').forEach(h => h.style.display = 'none');
+    // Create a wrapper div to contain the header + the timetable
+    const wrapper = document.createElement('div');
+    // Using 1200px width ensures a generous aspect ratio layout for A4 Landscape
+    wrapper.style.width = '1200px'; 
+    wrapper.style.padding = '20px';
+    wrapper.style.backgroundColor = 'white';
+    wrapper.style.color = '#333';
 
+    // Build Header text
+    const anneeBadge = document.getElementById('editorAnneeBadge');
+    const semestreBadge = document.getElementById('editorSemestreBadge');
+    let annSemTxt = '';
+    if (anneeBadge && anneeBadge.style.display !== 'none') annSemTxt += anneeBadge.textContent;
+    if (semestreBadge && semestreBadge.style.display !== 'none') annSemTxt += (annSemTxt ? ' | ' : '') + semestreBadge.textContent;
+
+    const headerHtml = `
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #4e73df; padding-bottom: 15px; font-family: sans-serif;">
+            <h2 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 26px; font-weight: bold;">Emploi du temps - ${classeDisplay.textContent}</h2>
+            <p style="margin: 5px 0; font-size: 18px; font-weight: 500;">
+                Du ${debutSemaineText.textContent} au ${finSemaineText.textContent}
+            </p>
+            ${annSemTxt ? `<p style="margin: 5px 0; font-size: 15px; color: #666;">${annSemTxt}</p>` : ''}
+        </div>
+    `;
+    wrapper.innerHTML = headerHtml;
+
+    // Clone the timetable table itself (not the whole card, to remove surrounding UI)
+    const timetable = document.getElementById('timetable');
+    const cloneTable = timetable.cloneNode(true);
+
+    // Clean up UI-specific elements
+    cloneTable.querySelectorAll('.resize-handle').forEach(h => h.style.display = 'none');
+    cloneTable.querySelectorAll('.course-slot[style*="opacity: 0.5"]').forEach(pill => pill.remove());
+
+    // Basic scale normalizations strictly for print clarity without breaking Absolute positioning
+    cloneTable.style.width = '100%';
+    cloneTable.style.tableLayout = 'fixed';
+    
+    // Reduce row height slightly to ensure the overall height avoids pagebreaks
+    cloneTable.querySelectorAll('td').forEach(td => {
+        td.style.height = '60px'; // Slightly smaller than the UI's 65px
+        // Notice we do NOT mess with .course-slot positioning.
+        // It remains 'absolute' as dictated by the original CSS which works perfectly.
+    });
+    
+    // Force pill text to be nicely nested in case of small overlaps
+    cloneTable.querySelectorAll('.course-slot').forEach(pill => {
+       pill.style.boxShadow = 'none'; // Cleaner print without shadows
+    });
+
+    wrapper.appendChild(cloneTable);
+
+    // Configuration for a single A4 landscape page fit
     const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `emploi_du_temps_${currentEdt ? currentEdt.id : 'export'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+        margin: [5, 5, 5, 5], // Small margins to maximize printable area
+        filename: `emploi_du_temps_${classeDisplay.textContent.replace(/\s+/g, '_')}_S${currentEdt.id}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: {
+            scale: 2,
+            windowWidth: 1200, 
+            useCORS: true,
+            logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { avoid: 'tr' }
     };
 
-    html2pdf().set(opt).from(clone).save();
+    html2pdf().set(opt).from(wrapper).save();
+});
+
+// Bouton "Enregistrer" — les séances sont déjà sauvées en temps réel, on affiche juste un toast de confirmation
+document.getElementById('saveBtn')?.addEventListener('click', function () {
+    showToast("Emploi du temps enregistré avec succès !", "success");
 });
 
 

@@ -5,9 +5,9 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.NiveauUpdateDTO
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.NiveauDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.NiveauMapper;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Cycle;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Niveau;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.CycleRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.NiveauRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.NiveauService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class NiveauServiceImpl implements NiveauService {
 
     private final NiveauRepository niveauRepository;
     private final NiveauMapper mapper;
-    private final CycleRepository cycleRepository;
+    private final FiliereRepository filiereRepository;
 
     @Override
     public List<NiveauDTO> getAllNiveaux() {
@@ -45,6 +45,12 @@ public class NiveauServiceImpl implements NiveauService {
     public NiveauDTO createNiveau(NiveauCreateDTO dto) {
         Niveau n = mapper.fromCreateDTO(dto);
 
+        if (dto.getFiliereId() != null) {
+            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
+            n.setFiliere(filiere);
+        }
+
         Niveau saved = niveauRepository.save(Objects.requireNonNull(n, "Niveau cannot be null"));
         return mapper.toDTO(saved);
     }
@@ -61,7 +67,11 @@ public class NiveauServiceImpl implements NiveauService {
         if (dto.getNom() != null) {
             n.setNom(dto.getNom());
         }
-
+        if (dto.getFiliereId() != null) {
+            Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
+            n.setFiliere(filiere);
+        }
 
         Niveau updated = niveauRepository.save(Objects.requireNonNull(n, "Niveau cannot be null"));
         return mapper.toDTO(updated);

@@ -29,6 +29,6 @@ public class Enseignant extends Utilisateur {
     @JoinTable(name = "enseignant_cours", joinColumns = @JoinColumn(name = "enseignant_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))
     private List<CoursUE> coursEnseignes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "enseignant")
+    @ManyToMany(mappedBy = "enseignants")
     private List<Seance> seances = new ArrayList<>();
 }

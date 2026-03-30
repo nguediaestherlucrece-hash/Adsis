@@ -15,6 +15,9 @@ public class NiveauMapper {
         dto.setId(niveau.getId());
         dto.setIdNiveau(niveau.getIdNiveau());
         dto.setNom(niveau.getNom());
+        if (niveau.getFiliere() != null) {
+            dto.setFiliereId(niveau.getFiliere().getId());
+        }
         return dto;
     }
 

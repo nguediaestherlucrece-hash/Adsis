@@ -12,7 +12,6 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.EmploiDuTemp
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.SeanceRepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface.SeanceService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Enseignant;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.EnseignantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SurveillantRepository;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +69,8 @@ public class SeanceServiceImpl implements SeanceService {
         seance.setHeureDebut(dto.getHeureDebut());
         seance.setHeureFin(dto.getHeureFin());
         seance.setStatut(dto.isStatut());
+        seance.setCouleur(dto.getCouleur());
+        seance.setGroupId(dto.getGroupId());
 
         if (dto.getCoursId() != null) {
             CoursUE cours = coursUERepository.findById(dto.getCoursId())
@@ -77,10 +78,15 @@ public class SeanceServiceImpl implements SeanceService {
             seance.setCours(cours);
         }
 
-        if (dto.getEnseignantId() != null) {
-            Enseignant enseignant = enseignantRepository.findById(dto.getEnseignantId())
-                    .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + dto.getEnseignantId()));
-            seance.setEnseignant(enseignant);
+        // Handle multiple enseignants
+        if (dto.getEnseignantIds() != null && !dto.getEnseignantIds().isEmpty()) {
+            List<Enseignant> enseignants = new ArrayList<>();
+            for (Long ensId : dto.getEnseignantIds()) {
+                Enseignant ens = enseignantRepository.findById(ensId)
+                        .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + ensId));
+                enseignants.add(ens);
+            }
+            seance.setEnseignants(enseignants);
         }
 
         if (dto.getEmploiDuTempsId() != null) {
@@ -104,6 +110,8 @@ public class SeanceServiceImpl implements SeanceService {
         seance.setHeureDebut(dto.getHeureDebut());
         seance.setHeureFin(dto.getHeureFin());
         seance.setStatut(dto.isStatut());
+        seance.setCouleur(dto.getCouleur());
+        seance.setGroupId(dto.getGroupId());
 
         if (dto.getCoursId() != null) {
             CoursUE cours = coursUERepository.findById(dto.getCoursId())
@@ -113,12 +121,16 @@ public class SeanceServiceImpl implements SeanceService {
             seance.setCours(null);
         }
 
-        if (dto.getEnseignantId() != null) {
-            Enseignant enseignant = enseignantRepository.findById(dto.getEnseignantId())
-                    .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + dto.getEnseignantId()));
-            seance.setEnseignant(enseignant);
+        // Handle multiple enseignants
+        if (dto.getEnseignantIds() != null) {
+            seance.getEnseignants().clear();
+            for (Long ensId : dto.getEnseignantIds()) {
+                Enseignant ens = enseignantRepository.findById(ensId)
+                        .orElseThrow(() -> new RuntimeException("Enseignant non trouvé avec l'id: " + ensId));
+                seance.getEnseignants().add(ens);
+            }
         } else {
-            seance.setEnseignant(null);
+            seance.getEnseignants().clear();
         }
 
         if (dto.getEmploiDuTempsId() != null) {
