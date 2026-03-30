@@ -1,8 +1,10 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface;
+package com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantCreateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantUpdateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -56,4 +58,13 @@ public interface EtudiantService {
      * Assigne un étudiant à une classe
      */
     EtudiantDTO assignerClasse(Long etudiantId, Long classeId);
+
+    /**
+     * Importe une liste d'étudiants depuis un fichier Excel
+     * Le fichier doit contenir les colonnes: Nom, Prénom, Email, Password, Matricule, DateNaissance, Téléphone, ClasseID, Statut
+     *
+     * @param file Le fichier Excel (.xlsx ou .xls)
+     * @return Un DTO contenant les résultats de l'import (succès, échecs, etc.)
+     */
+    EtudiantImportResponseDTO importEtudiantsFromExcel(MultipartFile file);
 }

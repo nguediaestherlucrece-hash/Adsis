@@ -1,15 +1,17 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.controller.api;
+package com.ISI.Appel_classe.Gestion_des_etudiants.controller.api;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantCreateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantUpdateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EtudiantDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.EtudiantService;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -167,5 +169,40 @@ public class EtudiantController {
 
         log.info("✅ Étudiant assigné à la classe avec succès");
         return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * POST /api/etudiants/import/excel
+     * Importe une liste d'étudiants depuis un fichier Excel
+     * Accepte les fichiers .xlsx et .xls
+     *
+     * Format du fichier Excel attendu (en-têtes dans la première ligne):
+     * - Colonne A: Nom (obligatoire)
+     * - Colonne B: Prénom (obligatoire)
+     * - Colonne C: Email (obligatoire)
+     * - Colonne D: Password (obligatoire)
+     * - Colonne E: Matricule (obligatoire)
+     * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
+     * - Colonne G: Téléphone (optionnel)
+     * - Colonne H: Classe ID (obligatoire)
+     * - Colonne I: Statut (optionnel) - Valeurs: ACTIF, INACTIF
+     *
+     * @param file Le fichier Excel à importer
+     * @return Un DTO contenant les résultats de l'import (succès, échecs, etc.)
+     */
+
+
+    @PostMapping("/import/excel")
+    @PreAuthorize("hasAuthority('ETUDIANT_CREATE')")
+    public ResponseEntity<EtudiantImportResponseDTO> importEtudiantsFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        log.info("📥 [POST /api/etudiants/import/excel] Import d'étudiants depuis Excel: {}", file.getOriginalFilename());
+
+        EtudiantImportResponseDTO response = etudiantService.importEtudiantsFromExcel(file);
+
+        log.info("📊 Import terminé: {} succès, {} erreurs",
+                response.getSuccessCount(), response.getFailureCount());
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,6 +1,7 @@
 package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
 
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.CascadeType;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 

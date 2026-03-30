@@ -1,4 +1,4 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request;
+package com.ISI.Appel_classe.Gestion_des_etudiants.dto.request;
 
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import lombok.Data;

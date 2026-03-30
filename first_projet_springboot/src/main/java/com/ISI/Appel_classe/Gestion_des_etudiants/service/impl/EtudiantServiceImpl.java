@@ -1,24 +1,27 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_etudiants.service.impl;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantCreateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.EtudiantUpdateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.EtudiantDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Etudiant;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
+import com.ISI.Appel_classe.Gestion_des_etudiants.util.ExcelEtudiantReader;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.ClasseRepository;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.EtudiantRepository;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.ClasseRepository;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.EtudiantService;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.EtudiantMapper;
+import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
+import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.EtudiantMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -42,6 +45,7 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final EtudiantMapper mapper;
+    private final ExcelEtudiantReader excelEtudiantReader;
 
     @Override
     public List<EtudiantDTO> getAllEtudiants() {
@@ -308,6 +312,124 @@ public class EtudiantServiceImpl implements EtudiantService {
 
         log.info("Classe assignée avec succès");
         return mapper.toDTO(updated);
+    }
+
+    @Override
+    @Transactional
+    public EtudiantImportResponseDTO importEtudiantsFromExcel(MultipartFile file) {
+        log.info("🔄 Début de l'import d'étudiants depuis le fichier Excel: {}", file.getOriginalFilename());
+
+        EtudiantImportResponseDTO response = EtudiantImportResponseDTO.builder()
+                .createdEtudiants(new java.util.ArrayList<>())
+                .errors(new java.util.ArrayList<>())
+                .build();
+
+        try {
+            // Lire le fichier Excel
+            List<EtudiantCreateDTO> etudiants = excelEtudiantReader.readEtudiants(file);
+            response.setTotalImported(etudiants.size());
+
+            int successCount = 0;
+            int failureCount = 0;
+            int lineNumber = 2; // Commence à 2 car la ligne 1 est l'en-tête
+
+            // Créer chaque étudiant
+            for (EtudiantCreateDTO dto : etudiants) {
+                try {
+                    // Vérifier l'unicité de l'email
+                    if (utilisateurRepository.existsByEmail(dto.getEmail())) {
+                        failureCount++;
+                        response.getErrors().add(
+                                EtudiantImportResponseDTO.ImportError.builder()
+                                        .lineNumber(lineNumber)
+                                        .email(dto.getEmail())
+                                        .errorMessage("Un utilisateur avec cet email existe déjà: " + dto.getEmail())
+                                        .build()
+                        );
+                        log.warn("❌ Ligne {}: Email déjà existant: {}", lineNumber, dto.getEmail());
+                        lineNumber++;
+                        continue;
+                    }
+
+                    // Vérifier l'unicité du matricule
+                    if (dto.getMatricule() != null && etudiantRepository.existsByMatricule(dto.getMatricule())) {
+                        failureCount++;
+                        response.getErrors().add(
+                                EtudiantImportResponseDTO.ImportError.builder()
+                                        .lineNumber(lineNumber)
+                                        .email(dto.getEmail())
+                                        .errorMessage("Un étudiant avec ce matricule existe déjà: " + dto.getMatricule())
+                                        .build()
+                        );
+                        log.warn("❌ Ligne {}: Matricule déjà existant: {}", lineNumber, dto.getMatricule());
+                        lineNumber++;
+                        continue;
+                    }
+
+                    // Vérifier que la classe existe
+                    if (dto.getClasseId() == null || !classeRepository.existsById(dto.getClasseId())) {
+                        failureCount++;
+                        response.getErrors().add(
+                                EtudiantImportResponseDTO.ImportError.builder()
+                                        .lineNumber(lineNumber)
+                                        .email(dto.getEmail())
+                                        .errorMessage("La classe avec l'ID " + dto.getClasseId() + " n'existe pas")
+                                        .build()
+                        );
+                        log.warn("❌ Ligne {}: Classe non trouvée avec l'ID: {}", lineNumber, dto.getClasseId());
+                        lineNumber++;
+                        continue;
+                    }
+
+                    // Créer l'étudiant
+                    EtudiantDTO created = createEtudiant(dto);
+                    response.getCreatedEtudiants().add(created);
+                    successCount++;
+                    log.info("✅ Ligne {}: Étudiant créé avec succès - {} {} (ID: {})",
+                            lineNumber, created.getNom(), created.getPrenom(), created.getId());
+
+                } catch (Exception e) {
+                    failureCount++;
+                    response.getErrors().add(
+                            EtudiantImportResponseDTO.ImportError.builder()
+                                    .lineNumber(lineNumber)
+                                    .email(dto.getEmail())
+                                    .errorMessage("Erreur lors de la création de l'étudiant: " + e.getMessage())
+                                    .build()
+                    );
+                    log.error("❌ Ligne {}: Erreur lors de la création de l'étudiant {}: {}",
+                            lineNumber, dto.getEmail(), e.getMessage());
+                } finally {
+                    lineNumber++;
+                }
+            }
+
+            // Construire le message de réponse
+            response.setSuccessCount(successCount);
+            response.setFailureCount(failureCount);
+
+            String message = String.format(
+                    "Import terminé: %d étudiant(s) créé(s) avec succès, %d erreur(s)",
+                    successCount, failureCount
+            );
+            response.setMessage(message);
+
+            log.info("📊 {}", message);
+            return response;
+
+        } catch (Exception e) {
+            log.error("❌ Erreur critique lors de l'import: {}", e.getMessage());
+            response.setMessage("Erreur lors de l'import du fichier Excel: " + e.getMessage());
+            response.setFailureCount(response.getTotalImported());
+            response.getErrors().add(
+                    EtudiantImportResponseDTO.ImportError.builder()
+                            .lineNumber(0)
+                            .email("")
+                            .errorMessage("Erreur critique: " + e.getMessage())
+                            .build()
+            );
+            return response;
+        }
     }
 
 

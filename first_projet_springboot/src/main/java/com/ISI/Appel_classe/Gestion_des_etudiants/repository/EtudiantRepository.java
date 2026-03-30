@@ -1,6 +1,6 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.repository;
+package com.ISI.Appel_classe.Gestion_des_etudiants.repository;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Etudiant;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

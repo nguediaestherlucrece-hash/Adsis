@@ -1,15 +1,15 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.service.impl;
+package com.ISI.Appel_classe.Gestion_des_etudiants.service.impl;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.ClasseCreateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.ClasseUpdateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.ClasseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.ClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.ClasseMapper;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.ClasseMapper;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.ClasseRepository;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.ClasseRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SpecialiteRepository;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.ClasseService;
+import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.ClasseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

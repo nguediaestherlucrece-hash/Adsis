@@ -1,5 +1,8 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_etudiants.model;
 
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Parent;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

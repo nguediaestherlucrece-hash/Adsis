@@ -1,7 +1,7 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_etudiants.model;
 
-import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.CoursUE;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Specialite;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

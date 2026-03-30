@@ -10,9 +10,9 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.EmploiDuTemp
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.SemestreRepository;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface.EmploiDuTempsService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.AssistantPedagogiqueRepository;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.ClasseRepository;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.ClasseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

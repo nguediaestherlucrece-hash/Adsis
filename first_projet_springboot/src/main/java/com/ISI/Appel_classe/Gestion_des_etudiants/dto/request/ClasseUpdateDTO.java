@@ -1,9 +1,9 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request;
+package com.ISI.Appel_classe.Gestion_des_etudiants.dto.request;
 
 import lombok.Data;
 
 @Data
-public class ClasseCreateDTO {
+public class ClasseUpdateDTO {
 
     private String idClasse;
     private String nomClasse;

@@ -1,9 +1,9 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers;
+package com.ISI.Appel_classe.Gestion_des_etudiants.mappers;
 
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.ClasseCreateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.request.ClasseUpdateDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.dto.response.ClasseDTO;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseCreateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.ClasseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import org.springframework.stereotype.Component;
 
 @Component
