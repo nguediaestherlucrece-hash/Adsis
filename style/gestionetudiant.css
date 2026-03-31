@@ -1,0 +1,241 @@
+/* Style général */
+body {
+    background-color: #f4f7fb;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Sidebar - Responsive */
+.sidebar {
+    background-color: white;
+    min-height: 100vh;
+    border-right: 1px solid #dee7f0;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid #dee7f0;
+    }
+}
+
+.sidebar-brand {
+    background-color: #ffffff;
+    color: rgb(101, 101, 246);
+    font-weight: 600;
+    font-size: 1.25rem;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 20px 0;
+    border-bottom: 1px solid #f1f3f9;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.brand-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #2c3e50;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+/* MENU items */
+.nav-link {
+    color: #5a5c69;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+    color: #b7b9cc;
+    margin-right: 12px;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    background-color: #f8f9fc;
+    color: #4e73df;
+}
+
+.nav-link:hover i {
+    color: #4e73df;
+}
+
+.nav-link.active {
+    background-color: #4e73df;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.25);
+}
+
+.nav-link.active i {
+    color: #ffffff;
+}
+
+.admin-profile {
+    background-color: #f8fafd;
+    padding: 0.75rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 500;
+    color: #0d3b66;
+}
+
+.admin-profile i {
+    font-size: 1.4rem;
+    margin-right: 6px;
+}
+
+
+/* Contenu principal */
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.main-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 576px) {
+    .main-header {
+        padding: 1rem;
+    }
+}
+
+.header-title {
+    color: #0d3b66;
+    font-size: 1.1rem;
+}
+
+/* Cartes */
+.card-course-add {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 14px rgba(0,20,40,0.05);
+}
+
+.card-timetable {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem 1.2rem;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.04);
+}
+
+@media (max-width: 768px) {
+    .card-course-add, .card-timetable {
+        padding: 1rem;
+    }
+}
+
+/* Boutons */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2e59d9;
+}
+
+.btn-export-pdf {
+    border: 1px solid #ced8e6;
+    background: white;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-weight: 500;
+    color: #5f48f7;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+.btn-export-pdf:hover {
+    background: #e2eaf3;
+}
+
+/* Liste des étudiants */
+.matieres-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.etudiant-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eaeef2;
+    transition: background 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.etudiant-item:hover {
+    background-color: #f8fafd;
+}
+
+.etudiant-info {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+.etudiant-nom {
+    font-weight: 600;
+    color: #1e2f4a;
+    min-width: 180px;
+}
+
+.etudiant-classe {
+    background: #eef3f9;
+    padding: 0.2rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #0d3b66;
+}
+
+.btn-delete-etudiant {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-delete-etudiant:hover {
+    color: #b91d2c;
+    transform: scale(1.1);
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
