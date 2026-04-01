@@ -1,20 +1,18 @@
-// ==================== CONFIGURATION API ====================
+// ==================== CONFIGURATION ====================
 const API_BASE_URL = 'http://localhost:8081/api';
 
-// ==================== VARIABLES GLOBALES ====================
-let specialites = [];     // Liste des classes (spécialités)
-let enseignants = [];     // Liste des enseignants (non utilisée ici)
-let matieres = [];        // Liste des matières (non utilisée ici)
-let students = [];        // Liste des étudiants (stockée en localStorage)
+// ==================== GLOBAL VARIABLES ====================
+let classes = [];         // Liste des classes (spécialités)
+let students = [];        // Étudiants stockés en localStorage
 let nextId = 1;
 
-// ==================== TOAST & CONFIRM ====================
+// ==================== TOAST NOTIFICATIONS ====================
 function showToast(message, type = 'info') {
     const config = {
         success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
         danger: { icon: 'bi-x-circle-fill', label: 'Erreur', bg: '#c0392b', delay: 6000 },
         warning: { icon: 'bi-exclamation-triangle-fill', label: 'Attention', bg: '#d68910', delay: 5000 },
-        info: { icon: 'bi-info-circle-fill', label: 'Info', bg: '#1a6fa8', delay: 4000 },
+        info: { icon: 'bi-info-circle-fill', label: 'Info', bg: '#1a6fa8', delay: 4000 }
     };
     const c = config[type] || config.info;
     let container = document.getElementById('toastContainer');
@@ -41,6 +39,7 @@ function showToast(message, type = 'info') {
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
+// ==================== CONFIRMATION MODAL ====================
 function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
     return new Promise((resolve) => {
         let modalEl = document.getElementById('confirmModal');
@@ -72,59 +71,34 @@ function showConfirm(title = 'Confirmer', message = 'Êtes-vous sûr ?') {
         const done = (result) => {
             if (resolved) return;
             resolved = true;
-            document.getElementById('confirmOkBtn').replaceWith(document.getElementById('confirmOkBtn').cloneNode(true));
-            document.getElementById('confirmCancelBtn').replaceWith(document.getElementById('confirmCancelBtn').cloneNode(true));
             modal.hide();
             resolve(result);
         };
-        document.getElementById('confirmOkBtn').addEventListener('click', () => done(true), { once: true });
-        document.getElementById('confirmCancelBtn').addEventListener('click', () => done(false), { once: true });
+        document.getElementById('confirmOkBtn').onclick = () => done(true);
+        document.getElementById('confirmCancelBtn').onclick = () => done(false);
         modalEl.addEventListener('hidden.bs.modal', () => done(false), { once: true });
         modal.show();
     });
 }
 
-// ==================== APPELS API ====================
-async function fetchSpecialites() {
+// ==================== API : CHARGER LES CLASSES ====================
+async function loadClasses() {
     try {
         const response = await fetch(`${API_BASE_URL}/specialites`);
         if (response.ok) {
-            specialites = await response.json();
-            populateClassSelects();        // met à jour les <select>
-            showToast('Classes chargées avec succès', 'success');
+            classes = await response.json();
+            populateClassSelects();
+            showToast('Classes chargées', 'success');
         } else {
-            showToast('Erreur lors du chargement des classes', 'danger');
+            showToast('Erreur chargement des classes', 'danger');
         }
     } catch (error) {
-        console.error('Erreur réseau (spécialités) :', error);
+        console.error(error);
         showToast('Impossible de contacter le serveur', 'danger');
     }
 }
 
-// Ces deux fonctions sont optionnelles, on les garde pour une éventuelle utilisation future
-async function fetchEnseignants() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/enseignants/actifs`);
-        if (response.ok) {
-            enseignants = await response.json();
-        }
-    } catch (error) {
-        console.error('Erreur réseau (enseignants) :', error);
-    }
-}
-
-async function fetchMatieres() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cours-ue`);
-        if (response.ok) {
-            matieres = await response.json();
-        }
-    } catch (error) {
-        console.error('Erreur réseau (matières) :', error);
-    }
-}
-
-// ==================== GESTION DES ÉTUDIANTS ====================
+// ==================== GESTION DES ÉTUDIANTS (localStorage) ====================
 function loadStudents() {
     const saved = localStorage.getItem('students');
     if (saved) {
@@ -132,117 +106,84 @@ function loadStudents() {
         nextId = students.length ? Math.max(...students.map(s => s.id)) + 1 : 1;
     }
 }
+function saveStudents() { localStorage.setItem('students', JSON.stringify(students)); }
 
-function saveStudents() {
-    localStorage.setItem('students', JSON.stringify(students));
-}
-
-// Remplir les <select> avec les spécialités récupérées
+// Remplir les <select> avec les classes (nom de la classe)
 function populateClassSelects() {
-    const classeSelect = document.getElementById('classeSelect');
-    const filtreClasse = document.getElementById('filtreClasse');
+    const filtre = document.getElementById('filtreClasse');
+    const modalSelect = document.getElementById('classeModalSelect');
+    if (!filtre || !modalSelect) return;
 
-    if (!classeSelect || !filtreClasse) return;
-
-    // Garder l'option "Toutes les classes" pour le filtre
-    filtreClasse.innerHTML = '<option value="all">Toutes les classes</option>';
-    classeSelect.innerHTML = '';
-
-    specialites.forEach(spec => {
-        const nomClasse = spec.nom || spec.libelle || spec; // adapter selon la structure de l'API
-        const option1 = document.createElement('option');
-        option1.value = nomClasse;
-        option1.textContent = nomClasse;
-        classeSelect.appendChild(option1);
-
-        const option2 = document.createElement('option');
-        option2.value = nomClasse;
-        option2.textContent = nomClasse;
-        filtreClasse.appendChild(option2);
+    const classNames = classes.map(c => c.nom || c.libelle || c);
+    filtre.innerHTML = '<option value="all">Toutes les classes</option>';
+    modalSelect.innerHTML = '';
+    classNames.forEach(nom => {
+        filtre.innerHTML += `<option value="${nom}">${nom}</option>`;
+        modalSelect.innerHTML += `<option value="${nom}">${nom}</option>`;
     });
-
-    // Si aucune spécialité, afficher un message
-    if (specialites.length === 0) {
-        classeSelect.innerHTML = '<option value="">Aucune classe disponible</option>';
-        filtreClasse.innerHTML = '<option value="all">Toutes les classes</option><option value="">Aucune classe</option>';
-    }
 }
 
-// Afficher les étudiants selon le filtre
+// Afficher la liste des étudiants (filtre par classe)
 function renderStudents() {
-    const filterValue = document.getElementById('filtreClasse').value;
-    let filtered = students;
-    if (filterValue !== 'all') {
-        filtered = students.filter(s => s.class === filterValue);
-    }
-
+    const selectedClass = document.getElementById('filtreClasse').value;
+    const filtered = selectedClass === 'all' ? students : students.filter(s => s.class === selectedClass);
     const container = document.getElementById('studentsList');
     const totalSpan = document.getElementById('totalEtudiants');
     totalSpan.textContent = filtered.length;
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
         container.innerHTML = '<div class="no-data"><i class="fas fa-user-graduate me-2"></i>Aucun étudiant dans cette classe.</div>';
         return;
     }
-
-    container.innerHTML = filtered.map(student => `
-        <div class="etudiant-item" data-id="${student.id}">
+    container.innerHTML = filtered.map(s => `
+        <div class="etudiant-item" data-id="${s.id}">
             <div class="etudiant-info">
-                <span class="etudiant-nom">${escapeHtml(student.firstName)} ${escapeHtml(student.lastName)}</span>
-                <span class="etudiant-classe">${escapeHtml(student.class)}</span>
+                <span class="etudiant-nom">${escapeHtml(s.firstName)} ${escapeHtml(s.lastName)}</span>
+                <span class="etudiant-classe">${escapeHtml(s.class)}</span>
             </div>
-            <button class="btn-delete-etudiant" data-id="${student.id}"><i class="fas fa-trash-alt"></i></button>
+            <button class="btn-delete-etudiant" data-id="${s.id}"><i class="fas fa-trash-alt"></i></button>
         </div>
     `).join('');
 
-    // Attacher les événements de suppression
     document.querySelectorAll('.btn-delete-etudiant').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', async e => {
             const id = parseInt(btn.dataset.id);
-            const confirm = await showConfirm('Supprimer', 'Voulez-vous vraiment supprimer cet étudiant ?');
-            if (confirm) deleteStudent(id);
+            if (await showConfirm('Supprimer', 'Supprimer cet étudiant ?')) deleteStudent(id);
         });
     });
 }
 
-// Ajouter un étudiant
-async function addStudent() {
-    const firstName = document.getElementById('prenomInput').value.trim();
-    const lastName = document.getElementById('nomInput').value.trim();
-    const classValue = document.getElementById('classeSelect').value;
-
-    if (!firstName || !lastName || !classValue) {
-        showToast('Veuillez remplir tous les champs', 'warning');
-        return;
-    }
-
-    // Vérifier que la classe existe dans la liste des spécialités
-    const classeExiste = specialites.some(spec => (spec.nom || spec.libelle || spec) === classValue);
-    if (!classeExiste) {
-        showToast('La classe sélectionnée n’existe plus. Rafraîchissez la page.', 'danger');
-        await fetchSpecialites(); // recharger les classes
-        return;
-    }
-
-    const newStudent = {
-        id: nextId++,
-        firstName: firstName,
-        lastName: lastName,
-        class: classValue
-    };
+function addStudent(firstName, lastName, className) {
+    const newStudent = { id: nextId++, firstName, lastName, class: className };
     students.push(newStudent);
     saveStudents();
     renderStudents();
-
-    // Réinitialiser le formulaire
-    document.getElementById('prenomInput').value = '';
-    document.getElementById('nomInput').value = '';
-    document.getElementById('classeSelect').selectedIndex = 0;
-
-    showToast('Étudiant ajouté avec succès', 'success');
+    return true;
 }
 
-// Supprimer un étudiant
+async function addStudentFromModal() {
+    const firstName = document.getElementById('prenomInput').value.trim();
+    const lastName = document.getElementById('nomInput').value.trim();
+    const className = document.getElementById('classeModalSelect').value;
+    if (!firstName || !lastName || !className) {
+        showToast('Tous les champs sont requis', 'warning');
+        return;
+    }
+    // Vérifier que la classe existe
+    const classNames = classes.map(c => c.nom || c.libelle || c);
+    if (!classNames.includes(className)) {
+        showToast('Classe invalide', 'danger');
+        await loadClasses(); // recharger au cas où
+        return;
+    }
+    addStudent(firstName, lastName, className);
+    const modal = bootstrap.Modal.getInstance(document.getElementById('ajoutEtudiantModal'));
+    if (modal) modal.hide();
+    document.getElementById('prenomInput').value = '';
+    document.getElementById('nomInput').value = '';
+    showToast('Étudiant ajouté', 'success');
+}
+
 function deleteStudent(id) {
     students = students.filter(s => s.id !== id);
     saveStudents();
@@ -250,79 +191,64 @@ function deleteStudent(id) {
     showToast('Étudiant supprimé', 'success');
 }
 
-// Exporter la liste filtrée en PDF
-function exportToPDF() {
-    const filterValue = document.getElementById('filtreClasse').value;
-    const title = filterValue === 'all' ? 'Tous les étudiants' : `Étudiants de ${filterValue}`;
-
-    const element = document.createElement('div');
-    element.style.padding = '20px';
-    element.style.backgroundColor = 'white';
-    element.style.fontFamily = 'Arial, sans-serif';
-
-    element.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2>${escapeHtml(title)}</h2>
-            <p>Généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-        </div>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #4e73df; color: white;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">Prénom</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Nom</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Classe</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    const filtered = filterValue === 'all' ? students : students.filter(s => s.class === filterValue);
-    filtered.forEach(s => {
-        element.innerHTML += `
-            <tr>
-                <td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(s.firstName)}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(s.lastName)}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(s.class)}</td>
-            </tr>
-        `;
-    });
-    element.innerHTML += `</tbody></table>`;
-
-    const opt = {
-        margin: 0.5,
-        filename: `liste_etudiants_${filterValue.replace(/ /g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+// ==================== IMPORT EXCEL ====================
+function importExcel(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if (rows.length < 2) {
+            showToast('Le fichier ne contient pas de données', 'warning');
+            return;
+        }
+        const classNames = classes.map(c => c.nom || c.libelle || c);
+        let imported = 0, skipped = 0;
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.length < 3) continue;
+            const nom = row[0] ? String(row[0]).trim() : '';
+            const prenom = row[1] ? String(row[1]).trim() : '';
+            const classe = row[2] ? String(row[2]).trim() : '';
+            if (nom && prenom && classe) {
+                if (classNames.includes(classe)) {
+                    addStudent(prenom, nom, classe);
+                    imported++;
+                } else {
+                    skipped++;
+                }
+            }
+        }
+        if (imported) showToast(`${imported} étudiant(s) importé(s). ${skipped} ignoré(s) (classe inconnue).`, 'success');
+        else if (skipped) showToast(`${skipped} étudiant(s) ignorés (classe inconnue).`, 'warning');
+        else showToast('Aucun étudiant valide trouvé', 'info');
     };
-    html2pdf().set(opt).from(element).save();
+    reader.readAsArrayBuffer(file);
 }
 
-// Petite fonction utilitaire pour échapper les caractères HTML
+// ==================== UTILITAIRES ====================
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
 }
 
 // ==================== INITIALISATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Charger les spécialités depuis l'API
-    await fetchSpecialites();
-    // Optionnel : charger enseignants et matières si besoin
-    // await fetchEnseignants();
-    // await fetchMatieres();
-
-    // Charger les étudiants depuis localStorage
+    await loadClasses();
     loadStudents();
     renderStudents();
 
-    // Attacher les événements
-    document.getElementById('ajouterBtn').addEventListener('click', addStudent);
-    document.getElementById('filtreClasse').addEventListener('change', renderStudents);
-    document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+    document.getElementById('openModalBtn').onclick = () => new bootstrap.Modal(document.getElementById('ajoutEtudiantModal')).show();
+    document.getElementById('confirmAjoutBtn').onclick = addStudentFromModal;
+    document.getElementById('filtreClasse').onchange = renderStudents;
+
+    const importBtn = document.getElementById('importBtn');
+    const fileInput = document.getElementById('fileInput');
+    importBtn.onclick = () => fileInput.click();
+    fileInput.onchange = e => {
+        if (e.target.files.length) {
+            importExcel(e.target.files[0]);
+            fileInput.value = '';
+        }
+    };
 });
