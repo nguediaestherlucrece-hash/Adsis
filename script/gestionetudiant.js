@@ -2,8 +2,8 @@
 const API_BASE_URL = 'http://localhost:8081/api';
 
 // ==================== GLOBAL VARIABLES ====================
-let classes = [];         // Liste des classes (spécialités)
-let students = [];        // Étudiants stockés en localStorage
+let classes = [];
+let students = [];
 let nextId = 1;
 
 // ==================== TOAST NOTIFICATIONS ====================
@@ -108,7 +108,6 @@ function loadStudents() {
 }
 function saveStudents() { localStorage.setItem('students', JSON.stringify(students)); }
 
-// Remplir les <select> avec les classes (nom de la classe)
 function populateClassSelects() {
     const filtre = document.getElementById('filtreClasse');
     const modalSelect = document.getElementById('classeModalSelect');
@@ -123,7 +122,6 @@ function populateClassSelects() {
     });
 }
 
-// Afficher la liste des étudiants (filtre par classe)
 function renderStudents() {
     const selectedClass = document.getElementById('filtreClasse').value;
     const filtered = selectedClass === 'all' ? students : students.filter(s => s.class === selectedClass);
@@ -169,11 +167,10 @@ async function addStudentFromModal() {
         showToast('Tous les champs sont requis', 'warning');
         return;
     }
-    // Vérifier que la classe existe
     const classNames = classes.map(c => c.nom || c.libelle || c);
     if (!classNames.includes(className)) {
         showToast('Classe invalide', 'danger');
-        await loadClasses(); // recharger au cas où
+        await loadClasses();
         return;
     }
     addStudent(firstName, lastName, className);
@@ -189,6 +186,25 @@ function deleteStudent(id) {
     saveStudents();
     renderStudents();
     showToast('Étudiant supprimé', 'success');
+}
+
+// ==================== EXPORT EXCEL ====================
+function exportToExcel() {
+    const filterValue = document.getElementById('filtreClasse').value;
+    const filtered = filterValue === 'all' ? students : students.filter(s => s.class === filterValue);
+    
+    const data = [['Nom', 'Prénom', 'Classe']];
+    filtered.forEach(s => {
+        data.push([s.lastName, s.firstName, s.class]);
+    });
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Étudiants');
+    
+    const fileName = `etudiants_${filterValue.replace(/ /g, '_')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showToast(`Export Excel effectué (${filtered.length} étudiant(s))`, 'success');
 }
 
 // ==================== IMPORT EXCEL ====================
@@ -241,6 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('openModalBtn').onclick = () => new bootstrap.Modal(document.getElementById('ajoutEtudiantModal')).show();
     document.getElementById('confirmAjoutBtn').onclick = addStudentFromModal;
     document.getElementById('filtreClasse').onchange = renderStudents;
+    document.getElementById('exportExcelBtn').onclick = exportToExcel;
 
     const importBtn = document.getElementById('importBtn');
     const fileInput = document.getElementById('fileInput');
