@@ -39,12 +39,6 @@ public class AssistantPedagogiqueController {
         return ResponseEntity.ok(assistantService.getAssistantByEmail(email));
     }
 
-    @GetMapping("/departement/{departement}")
-    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
-    public ResponseEntity<List<AssistantPedagogiqueDTO>> getByDepartement(@PathVariable String departement) {
-        return ResponseEntity.ok(assistantService.getAssistantsByDepartement(departement));
-    }
-
     @PostMapping
     @PreAuthorize("hasAuthority('ASSISTANT_CREATE')")
     public ResponseEntity<AssistantPedagogiqueDTO> create(@RequestBody AssistantPedagogiqueCreateDTO dto) {

@@ -2,6 +2,7 @@ package com.ISI.Appel_classe.Gestion_des_etudiants.mappers;
 
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.ClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import org.springframework.stereotype.Component;
@@ -34,13 +35,7 @@ public class EtudiantMapper {
         dto.setMatricule(etudiant.getMatricule());
         dto.setDateNaissance(etudiant.getDateNaissance());
         dto.setTelephone(etudiant.getTelephone());
-
-        if (etudiant.getClasse() != null) {
-            ClasseDTO classeDTO = new ClasseDTO();
-            classeDTO.setId(etudiant.getClasse().getId());
-            classeDTO.setNomClasse(etudiant.getClasse().getNomClasse());
-            dto.setClasse(classeDTO);
-        }
+        dto.setClasseId(etudiant.getClasse() != null ? etudiant.getClasse().getId() : null);
 
         if (etudiant.getPresences() != null) {
             dto.setNombrePresences(etudiant.getPresences().size());

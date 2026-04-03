@@ -60,13 +60,6 @@ public class SurveillantServiceImpl implements SurveillantService {
     }
 
     @Override
-    public List<SurveillantDTO> getSurveillantsByAffectation(String affectation) {
-        return surveillantRepository.findByAffectation(affectation).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public SurveillantDTO createSurveillant(SurveillantCreateDTO dto) {
         // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
@@ -82,7 +75,6 @@ public class SurveillantServiceImpl implements SurveillantService {
         surveillant.setNom(dto.getNom());
         surveillant.setPrenom(dto.getPrenom());
         surveillant.setEmail(dto.getEmail());
-        surveillant.setPassword(dto.getPassword()); // TODO: Hasher
         surveillant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
         surveillant.setEnabled(true);
         surveillant.setAccountNonLocked(true);
@@ -94,9 +86,6 @@ public class SurveillantServiceImpl implements SurveillantService {
                     .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
             surveillant.setFiliere(filiere);
         }
-
-        // Attributs spécifiques
-        surveillant.setAffectation(dto.getAffectation());
 
         // Rôles
         Set<Role> roles = new HashSet<>();
@@ -145,8 +134,6 @@ public class SurveillantServiceImpl implements SurveillantService {
 
         if (dto.getStatut() != null)
             surveillant.setStatut(dto.getStatut());
-        if (dto.getAffectation() != null)
-            surveillant.setAffectation(dto.getAffectation());
 
         if (dto.getRoleNames() != null) {
             Set<Role> roles = new HashSet<>();

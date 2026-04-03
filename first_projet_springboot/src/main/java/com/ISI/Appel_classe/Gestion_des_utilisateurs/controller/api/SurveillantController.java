@@ -39,12 +39,6 @@ public class SurveillantController {
         return ResponseEntity.ok(surveillantService.getSurveillantByEmail(email));
     }
 
-    @GetMapping("/affectation/{affectation}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
-    public ResponseEntity<List<SurveillantDTO>> getByAffectation(@PathVariable String affectation) {
-        return ResponseEntity.ok(surveillantService.getSurveillantsByAffectation(affectation));
-    }
-
     @PostMapping
     @PreAuthorize("hasAuthority('SURVEILLANT_CREATE')")
     public ResponseEntity<SurveillantDTO> create(@RequestBody SurveillantCreateDTO dto) {

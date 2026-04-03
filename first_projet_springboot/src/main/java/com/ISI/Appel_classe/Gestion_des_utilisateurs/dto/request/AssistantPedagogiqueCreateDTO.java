@@ -13,12 +13,8 @@ public class AssistantPedagogiqueCreateDTO {
     private String prenom;
     private String email;
     private String matricule;
-    private String password;
     private Statut statut;
     private Set<String> roleNames; // Si vide, "ASSISTANT_PEDAGOGIQUE" par défaut
-
-    // Attributs spécifiques
-    private String departement; // Ex: "Département Informatique", "Département Sciences"
 
     // Permissions retirées
     private Set<String> removedPermissions;

@@ -13,7 +13,6 @@ public class SurveillantUpdateDTO {
     private String email;
     private Statut statut;
     private Set<String> roleNames;
-    private String affectation;
 
     // Permissions retirées
     private Set<String> removedPermissions;

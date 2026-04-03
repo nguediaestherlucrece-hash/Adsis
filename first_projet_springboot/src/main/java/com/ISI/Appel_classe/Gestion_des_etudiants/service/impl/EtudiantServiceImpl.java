@@ -7,6 +7,7 @@ import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportRes
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
 import com.ISI.Appel_classe.Gestion_des_etudiants.util.ExcelEtudiantReader;
+import com.ISI.Appel_classe.Gestion_des_etudiants.util.ExcelEtudiantTemplateGenerator;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +48,8 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final UtilisateurRepository utilisateurRepository;
     private final EtudiantMapper mapper;
     private final ExcelEtudiantReader excelEtudiantReader;
+    private final ExcelEtudiantTemplateGenerator excelTemplateGenerator;
+
 
     @Override
     public List<EtudiantDTO> getAllEtudiants() {
@@ -122,9 +126,6 @@ public class EtudiantServiceImpl implements EtudiantService {
         etudiant.setNom(dto.getNom());
         etudiant.setPrenom(dto.getPrenom());
         etudiant.setEmail(dto.getEmail());
-
-        // TODO: Hasher le mot de passe avec BCryptPasswordEncoder
-        etudiant.setPassword(dto.getPassword());
 
         // Statut par défaut ACTIF si non fourni
         etudiant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
@@ -316,13 +317,20 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     @Override
     @Transactional
-    public EtudiantImportResponseDTO importEtudiantsFromExcel(MultipartFile file) {
-        log.info("🔄 Début de l'import d'étudiants depuis le fichier Excel: {}", file.getOriginalFilename());
+    public EtudiantImportResponseDTO importEtudiantsFromExcel(MultipartFile file, Long classeId) {
+        log.info("🔄 Début de l'import d'étudiants depuis le fichier Excel: {} vers la classe {}", file.getOriginalFilename(), classeId);
 
         EtudiantImportResponseDTO response = EtudiantImportResponseDTO.builder()
                 .createdEtudiants(new java.util.ArrayList<>())
                 .errors(new java.util.ArrayList<>())
                 .build();
+
+        if (classeId == null) {
+            throw new BadRequestException("Le paramètre classeId est requis pour l'import des étudiants");
+        }
+
+        Classe classe = classeRepository.findById(classeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Classe non trouvée avec l'ID: " + classeId));
 
         try {
             // Lire le fichier Excel
@@ -366,20 +374,9 @@ public class EtudiantServiceImpl implements EtudiantService {
                         continue;
                     }
 
-                    // Vérifier que la classe existe
-                    if (dto.getClasseId() == null || !classeRepository.existsById(dto.getClasseId())) {
-                        failureCount++;
-                        response.getErrors().add(
-                                EtudiantImportResponseDTO.ImportError.builder()
-                                        .lineNumber(lineNumber)
-                                        .email(dto.getEmail())
-                                        .errorMessage("La classe avec l'ID " + dto.getClasseId() + " n'existe pas")
-                                        .build()
-                        );
-                        log.warn("❌ Ligne {}: Classe non trouvée avec l'ID: {}", lineNumber, dto.getClasseId());
-                        lineNumber++;
-                        continue;
-                    }
+
+                    // Assigner la classe fournie à l'ensemble du lot
+                    dto.setClasseId(classeId);
 
                     // Créer l'étudiant
                     EtudiantDTO created = createEtudiant(dto);
@@ -432,5 +429,10 @@ public class EtudiantServiceImpl implements EtudiantService {
         }
     }
 
+    @Override
+    public byte[] generateEtudiantTemplate() throws IOException {
+        log.info("Génération du fichier Excel modèle pour l'import d'étudiants");
+        return excelTemplateGenerator.generateTemplate();
+    }
 
 }

@@ -20,8 +20,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class AssistantPedagogique extends Utilisateur {
 
-    private String departement;
-
     // 🔹 Relations JPA
     @ManyToOne
     @JoinColumn(name = "filiere_id")

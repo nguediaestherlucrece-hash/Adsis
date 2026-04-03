@@ -50,8 +50,6 @@ public class EnseignantMapper {
         Set<String> effectivePermissions = new java.util.HashSet<>(rolePermissions);
         effectivePermissions.removeAll(removedPermissions);
         dto.setEffectivePermissions(effectivePermissions);
-        dto.setSpecialite(enseignant.getSpecialite());
-        dto.setGrade(enseignant.getGrade());
 
         if (enseignant.getCoursEnseignes() != null) {
             List<EnseignantDTO.CoursSimpleDTO> cours = enseignant.getCoursEnseignes().stream()

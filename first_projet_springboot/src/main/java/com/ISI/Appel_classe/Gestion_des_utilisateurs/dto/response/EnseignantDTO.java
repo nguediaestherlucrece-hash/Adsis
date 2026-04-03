@@ -35,13 +35,6 @@ public class EnseignantDTO {
     private Set<String> effectivePermissions;
 
     // ========================================
-    // CHAMPS SPÉCIFIQUES À ENSEIGNANT
-    // ========================================
-
-    private String specialite;
-    private String grade;
-
-    // ========================================
     // RELATIONS SPÉCIFIQUES
     // ========================================
 

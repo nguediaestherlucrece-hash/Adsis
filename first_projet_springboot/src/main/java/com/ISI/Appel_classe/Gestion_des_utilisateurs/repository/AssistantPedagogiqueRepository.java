@@ -14,7 +14,5 @@ public interface AssistantPedagogiqueRepository extends JpaRepository<AssistantP
 
     boolean existsByEmail(String email);
 
-    List<AssistantPedagogique> findByDepartement(String departement);
-
     List<AssistantPedagogique> findByFiliere_Id(Long filiereId);
 }

@@ -27,9 +27,6 @@ public class SurveillantDTO {
     private Set<String> removedPermissions;
     private Set<String> effectivePermissions;
 
-    // Attributs spécifiques
-    private String affectation;
-
     // Relations
     private Integer nombreSeances;
 

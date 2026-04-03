@@ -7,7 +7,9 @@ import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportRes
 import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -180,14 +182,12 @@ public class EtudiantController {
      * - Colonne A: Nom (obligatoire)
      * - Colonne B: Prénom (obligatoire)
      * - Colonne C: Email (obligatoire)
-     * - Colonne D: Password (obligatoire)
      * - Colonne E: Matricule (obligatoire)
      * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
      * - Colonne G: Téléphone (optionnel)
-     * - Colonne H: Classe ID (obligatoire)
-     * - Colonne I: Statut (optionnel) - Valeurs: ACTIF, INACTIF
      *
      * @param file Le fichier Excel à importer
+     * @param classeId L'ID de la classe à associer à tous les étudiants importés
      * @return Un DTO contenant les résultats de l'import (succès, échecs, etc.)
      */
 
@@ -195,14 +195,54 @@ public class EtudiantController {
     @PostMapping("/import/excel")
     @PreAuthorize("hasAuthority('ETUDIANT_CREATE')")
     public ResponseEntity<EtudiantImportResponseDTO> importEtudiantsFromExcel(
-            @RequestParam("file") MultipartFile file) {
-        log.info("📥 [POST /api/etudiants/import/excel] Import d'étudiants depuis Excel: {}", file.getOriginalFilename());
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("classeId") Long classeId) {
+        log.info("📥 [POST /api/etudiants/import/excel] Import d'étudiants depuis Excel: {} vers classe {}",
+                file.getOriginalFilename(), classeId);
 
-        EtudiantImportResponseDTO response = etudiantService.importEtudiantsFromExcel(file);
+        EtudiantImportResponseDTO response = etudiantService.importEtudiantsFromExcel(file, classeId);
 
         log.info("📊 Import terminé: {} succès, {} erreurs",
                 response.getSuccessCount(), response.getFailureCount());
 
         return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * GET /api/etudiants/template/excel
+     * Télécharge un fichier Excel modèle pour l'import d'étudiants
+     * Le fichier contient les en-têtes et des lignes d'exemple
+     *
+     * Format du fichier Excel (en-têtes dans la première ligne):
+     * - Colonne A: Nom (obligatoire)
+     * - Colonne B: Prénom (obligatoire)
+     * - Colonne C: Email (obligatoire)
+     * - Colonne E: Matricule (obligatoire)
+     * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
+     * - Colonne G: Téléphone (optionnel)
+     *
+     * @return Un fichier Excel modèle prêt à être rempli
+     */
+    @GetMapping("/template/excel")
+    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        log.info("📋 [GET /api/etudiants/template/excel] Téléchargement du fichier Excel modèle");
+
+        try {
+            byte[] excelFile = etudiantService.generateEtudiantTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "modele_etudiants.xls");
+            headers.setContentLength(excelFile.length);
+
+            log.info("✅ Fichier Excel modèle généré avec succès (taille: {} bytes)", excelFile.length);
+            return new ResponseEntity<>(excelFile, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            log.error("❌ Erreur lors de la génération du fichier Excel modèle: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

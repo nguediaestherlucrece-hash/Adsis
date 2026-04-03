@@ -21,9 +21,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Enseignant extends Utilisateur {
 
-    private String specialite;
-    private String grade;
-
     // 🔹 Relations JPA
     @ManyToMany
     @JoinTable(name = "enseignant_cours", joinColumns = @JoinColumn(name = "enseignant_id"), inverseJoinColumns = @JoinColumn(name = "cours_id"))

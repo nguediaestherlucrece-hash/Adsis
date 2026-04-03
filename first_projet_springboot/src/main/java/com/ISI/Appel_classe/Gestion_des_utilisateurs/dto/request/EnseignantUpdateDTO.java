@@ -23,13 +23,6 @@ public class EnseignantUpdateDTO {
     private Set<String> roleNames;
 
     // ========================================
-    // CHAMPS SPÉCIFIQUES À ENSEIGNANT
-    // ========================================
-
-    private String specialite;
-    private String grade;
-
-    // ========================================
     // RELATIONS SPÉCIFIQUES
     // ========================================
 

@@ -48,7 +48,7 @@ public class EtudiantDTO {
     /**
      * Informations de la classe de l'étudiant
      */
-    private ClasseDTO classe;
+    private Long classeId;
 
     /**
      * Nombre de présences enregistrées (optionnel)

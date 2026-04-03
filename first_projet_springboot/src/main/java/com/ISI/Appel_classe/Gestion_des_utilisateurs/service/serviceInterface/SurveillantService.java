@@ -14,8 +14,6 @@ public interface SurveillantService {
 
     SurveillantDTO getSurveillantByEmail(String email);
 
-    List<SurveillantDTO> getSurveillantsByAffectation(String affectation);
-
     SurveillantDTO createSurveillant(SurveillantCreateDTO dto);
 
     SurveillantDTO updateSurveillant(Long id, SurveillantUpdateDTO dto);

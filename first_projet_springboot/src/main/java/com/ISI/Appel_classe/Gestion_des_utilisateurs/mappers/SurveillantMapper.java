@@ -50,8 +50,6 @@ public class SurveillantMapper {
         effectivePermissions.removeAll(removedPermissions);
         dto.setEffectivePermissions(effectivePermissions);
 
-        dto.setAffectation(surveillant.getAffectation());
-
         if (surveillant.getSeances() != null) {
             dto.setNombreSeances(surveillant.getSeances().size());
         }

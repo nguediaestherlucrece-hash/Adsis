@@ -29,12 +29,9 @@ public class ExcelEtudiantReader {
      * - Colonne A: Nom (obligatoire)
      * - Colonne B: Prénom (obligatoire)
      * - Colonne C: Email (obligatoire)
-     * - Colonne D: Password (obligatoire)
      * - Colonne E: Matricule (obligatoire)
      * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
      * - Colonne G: Téléphone (optionnel)
-     * - Colonne H: Classe ID (obligatoire)
-     * - Colonne I: Statut (optionnel) - Valeurs: ACTIF, INACTIF
      *
      * @param file Le fichier uploadé
      * @return Une liste de EtudiantCreateDTO
@@ -119,7 +116,7 @@ public class ExcelEtudiantReader {
     /**
      * Parse une ligne du fichier Excel et retourne un EtudiantCreateDTO
      */
-    private EtudiantCreateDTO parseRow(Row row, int rowCount) {
+    private EtudiantCreateDTO parseRow(Row row, int rowCount ) {
         EtudiantCreateDTO dto = new EtudiantCreateDTO();
 
         // Colonne A: Nom (obligatoire)
@@ -143,13 +140,6 @@ public class ExcelEtudiantReader {
         }
         dto.setEmail(email.trim());
 
-        // Colonne D: Password (obligatoire)
-        String password = getCellStringValue(row, 3);
-        if (password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mot de passe obligatoire (colonne D) - valeur manquante");
-        }
-        dto.setPassword(password.trim());
-
         // Colonne E: Matricule (obligatoire)
         String matricule = getCellStringValue(row, 4);
         if (matricule == null || matricule.trim().isEmpty()) {
@@ -167,24 +157,6 @@ public class ExcelEtudiantReader {
         String telephone = getCellStringValue(row, 6);
         if (telephone != null && !telephone.trim().isEmpty()) {
             dto.setTelephone(telephone.trim());
-        }
-
-        // Colonne H: Classe ID (obligatoire)
-        Long classeId = getCellLongValue(row, 7);
-        if (classeId == null) {
-            throw new IllegalArgumentException("ID Classe obligatoire (colonne H) - valeur manquante");
-        }
-        dto.setClasseId(classeId);
-
-        // Colonne I: Statut (optionnel)
-        String statut = getCellStringValue(row, 8);
-        if (statut != null && !statut.trim().isEmpty()) {
-            try {
-                dto.setStatut(Statut.valueOf(statut.trim().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                log.warn("Statut invalide: {}. Utilisation de ACTIF par défaut", statut);
-                dto.setStatut(Statut.ACTIF);
-            }
         }
 
         // Assigner le rôle ETUDIANT par défaut

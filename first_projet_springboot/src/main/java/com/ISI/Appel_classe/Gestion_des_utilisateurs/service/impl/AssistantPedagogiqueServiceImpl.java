@@ -61,13 +61,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     }
 
     @Override
-    public List<AssistantPedagogiqueDTO> getAssistantsByDepartement(String departement) {
-        return assistantRepository.findByDepartement(departement).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public AssistantPedagogiqueDTO createAssistant(AssistantPedagogiqueCreateDTO dto) {
         // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
@@ -83,7 +76,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         assistant.setNom(dto.getNom());
         assistant.setPrenom(dto.getPrenom());
         assistant.setEmail(dto.getEmail());
-        assistant.setPassword(dto.getPassword()); // TODO: Hasher
         assistant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
         assistant.setEnabled(true);
         assistant.setAccountNonLocked(true);
@@ -95,9 +87,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
                     .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
             assistant.setFiliere(filiere);
         }
-
-        // Attributs spécifiques
-        assistant.setDepartement(dto.getDepartement());
 
         // Rôles
         Set<Role> roles = new HashSet<>();
@@ -146,8 +135,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
 
         if (dto.getStatut() != null)
             assistant.setStatut(dto.getStatut());
-        if (dto.getDepartement() != null)
-            assistant.setDepartement(dto.getDepartement());
 
         if (dto.getRoleNames() != null) {
             Set<Role> roles = new HashSet<>();

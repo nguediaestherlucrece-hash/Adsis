@@ -52,20 +52,6 @@ public class EnseignantController {
         return ResponseEntity.ok(enseignantService.getEnseignantByEmail(email));
     }
 
-    @GetMapping("/specialite/{specialite}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
-    public ResponseEntity<List<EnseignantDTO>> getBySpecialite(@PathVariable String specialite) {
-        log.info("📖 [GET /api/enseignants/specialite/{}]", specialite);
-        return ResponseEntity.ok(enseignantService.getEnseignantsBySpecialite(specialite));
-    }
-
-    @GetMapping("/grade/{grade}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
-    public ResponseEntity<List<EnseignantDTO>> getByGrade(@PathVariable String grade) {
-        log.info("📖 [GET /api/enseignants/grade/{}]", grade);
-        return ResponseEntity.ok(enseignantService.getEnseignantsByGrade(grade));
-    }
-
     @PostMapping
     @PreAuthorize("hasAuthority('ENSEIGNANT_CREATE')")
     public ResponseEntity<EnseignantDTO> create(@RequestBody EnseignantCreateDTO dto) {

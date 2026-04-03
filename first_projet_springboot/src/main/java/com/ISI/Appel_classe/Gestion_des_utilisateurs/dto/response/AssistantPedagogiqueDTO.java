@@ -27,9 +27,6 @@ public class AssistantPedagogiqueDTO {
     private Set<String> removedPermissions;
     private Set<String> effectivePermissions;
 
-    // Attributs spécifiques
-    private String departement;
-
     // Relations
     private Integer nombreJustificatifsValides;
     private Integer nombreEmploisDuTemps;
