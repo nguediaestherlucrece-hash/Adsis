@@ -12,4 +12,5 @@ public class AnneeAcademiqueCreateDTO {
     private String nomAnneeAcademique;
     private LocalDate anneeDebut;
     private LocalDate anneeFin;
+    private boolean actif;
 }

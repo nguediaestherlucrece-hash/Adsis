@@ -93,45 +93,245 @@ body {
     color: #ffffff;
 }
 
-.admin-profile { 
-    background-color: #f8fafd; padding: 0.75rem 1.2rem; border-radius: 50px; font-weight: 500; color: #0d3b66; }
-.admin-profile i {
-     font-size: 1.4rem; margin-right: 6px; }
-.main-content {
-     background-color: #f4f7fb; }
-.main-header {
-     background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-@media (max-width: 576px) { 
-    .main-header { padding: 1rem; } }
-.header-title {
-     color: #0d3b66; font-size: 1.1rem; }
-.card-timetable {
-     background: white; border-radius: 24px; padding: 1.5rem 1.2rem; box-shadow: 0 12px 28px rgba(0,0,0,0.04); }
-@media (max-width: 768px) { .card-timetable { padding: 1rem; } }
-.btn-primary {
-     background-color: #4e73df; border-color: #4e73df; }
-.btn-primary:hover {
-     background-color: #2e59d9; border-color: #2e59d9; }
-.btn-secondary {
-     background-color: #6c757d; border-color: #6c757d; color: white; }
-.btn-secondary:hover {
-     background-color: #5a6268; }
+.admin-profile {
+    background-color: #f8fafd;
+    padding: 0.75rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 500;
+    color: #0d3b66;
+}
 
-.matieres-list { 
-    max-height: 500px; overflow-y: auto; padding-right: 5px; }
-.etudiant-item { 
-    padding: 0.75rem 1rem; border-bottom: 1px solid #eaeef2; transition: background 0.1s; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.etudiant-item:hover { 
-    background-color: #f8fafd; }
-.etudiant-info {
-     display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
-.etudiant-nom {
-     font-weight: 600; color: #1e2f4a; min-width: 180px; }
-.etudiant-classe { 
-    background: #eef3f9; padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.8rem; color: #0d3b66; }
-.btn-delete-etudiant {
-     background: none; border: none; color: #dc3545; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-.btn-delete-etudiant:hover {
-     color: #b91d2c; transform: scale(1.1); }
+.admin-profile i {
+    font-size: 1.4rem;
+    margin-right: 6px;
+}
+
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.main-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    margin-bottom: 0;
+    border: 1px solid #f0f0f0;
+}
+
+@media (max-width: 576px) {
+    .main-header { padding: 1rem; }
+}
+
+.header-title {
+    color: #0d3b66;
+    font-size: 1.1rem;
+}
+
+.card-timetable {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 1.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #f0f0f0;
+}
+
+@media (max-width: 768px) {
+    .card-timetable { padding: 1rem; }
+}
+
+/* Search box */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    left: 10px;
+    color: #b7b9cc;
+    font-size: 0.85rem;
+}
+
+.search-box input {
+    padding-left: 30px;
+    border-radius: 20px;
+    border: 1px solid #dee7f0;
+    min-width: 200px;
+    font-size: 0.85rem;
+}
+
+.search-box input:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 3px rgba(78,115,223,0.12);
+}
+
+/* Filter bar */
+.filter-bar {
+    background: white;
+    padding: 0.75rem 1.2rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.filter-select {
+    min-width: 150px;
+    border-radius: 10px;
+    border: 1px solid #dee7f0;
+}
+
+.filter-select:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 3px rgba(78,115,223,0.12);
+}
+
+/* Student avatar */
+.student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+/* Status badge */
+.status-badge {
+    padding: 0.2rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.actif {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.inactif {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Table */
+#studentsTable thead th {
+    background: #f8fafd;
+    color: #5a5c69;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #eaeef2;
+    padding: 0.75rem 1rem;
+}
+
+#studentsTable tbody tr {
+    transition: background 0.15s;
+}
+
+#studentsTable tbody tr:hover {
+    background-color: #f0f4ff;
+}
+
+#studentsTable tbody td {
+    padding: 0.7rem 1rem;
+    vertical-align: middle;
+    font-size: 0.88rem;
+    color: #1e2f4a;
+}
+
+/* View modal detail grid */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.detail-item {
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: #f8fafd;
+}
+
+.detail-item label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8c95a6;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.detail-item span {
+    font-weight: 600;
+    color: #1e2f4a;
+    font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2e59d9;
+}
+
+/* No data */
 .no-data {
-     text-align: center; padding: 2rem; color: #6c757d; font-style: italic; }
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Toast container */
+.toast-container .toast {
+    border-radius: 12px;
+}
+
+/* ── Modal improvements ── */
+.modal-content {
+    border-radius: 16px !important;
+}
+
+.modal-header.bg-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #6366f1 100%) !important;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header.bg-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%) !important;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header.bg-success {
+    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%) !important;
+    border-radius: 16px 16px 0 0;
+}
+
+/* ── Filter bar improvements ── */
+.filter-bar {
+    background: white;
+    padding: 0.75rem 1.2rem;
+    border-radius: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    border: 1px solid #f0f0f0;
+}
+
+/* ── Search box improvements ── */
+.search-box input {
+    background: #f8fafc;
+    transition: all 0.2s;
+}
+
+.search-box input:focus {
+    background: white;
+}

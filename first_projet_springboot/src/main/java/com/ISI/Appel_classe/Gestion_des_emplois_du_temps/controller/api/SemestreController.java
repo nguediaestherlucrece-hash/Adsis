@@ -64,4 +64,18 @@ public class SemestreController {
         semestreService.deleteSemestre(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/activer")
+    @PreAuthorize("hasAuthority('SEMESTRE_UPDATE')")
+    public ResponseEntity<SemestreDTO> activerSemestre(@PathVariable Long id) {
+        SemestreDTO activated = semestreService.activerSemestre(id);
+        return ResponseEntity.ok(activated);
+    }
+
+    @GetMapping("/annee/{anneeId}")
+    @PreAuthorize("hasAuthority('SEMESTRE_READ')")
+    public ResponseEntity<List<SemestreDTO>> getSemestresByAnnee(@PathVariable Long anneeId) {
+        List<SemestreDTO> semestres = semestreService.getSemestresByAnnee(anneeId);
+        return ResponseEntity.ok(semestres);
+    }
 }

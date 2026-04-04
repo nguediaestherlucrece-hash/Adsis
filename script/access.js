@@ -1,5 +1,40 @@
 import { Api } from './api.js';
 
+// ============ TOAST NOTIFICATIONS ============
+function showToast(message, type = 'info') {
+    const cfg = {
+        success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
+        danger:  { icon: 'bi-x-circle-fill',     label: 'Erreur', bg: '#c0392b', delay: 6000 },
+        warning: { icon: 'bi-exclamation-triangle-fill', label: 'Attention', bg: '#d68910', delay: 5000 },
+        info:    { icon: 'bi-info-circle-fill',   label: 'Info',   bg: '#1a6fa8', delay: 4000 },
+    };
+    const c = cfg[type] || cfg.info;
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+    }
+    const el = document.createElement('div');
+    el.className = 'toast border-0 rounded-3 shadow-lg overflow-hidden';
+    el.setAttribute('role', 'alert');
+    el.setAttribute('data-bs-delay', c.delay);
+    el.style.minWidth = '300px';
+    el.innerHTML = `
+        <div class="toast-header border-0 text-white py-2 px-3" style="background:${c.bg}">
+            <i class="bi ${c.icon} me-2"></i>
+            <strong class="me-auto">${c.label}</strong>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body text-dark bg-white small py-2 px-3">${message}</div>`;
+    container.appendChild(el);
+    const toast = new bootstrap.Toast(el);
+    toast.show();
+    el.addEventListener('hidden.bs.toast', () => el.remove());
+}
+
 const PERMISSION_DEFINITIONS = {
     'COURSE_VIEW': { group: 'Cours', desc: 'Voir les cours' },
     'COURSE_MANAGE': { group: 'Cours', desc: 'Gérer les cours' },
@@ -39,7 +74,7 @@ async function loadRoles() {
         if (allRoles.length > 0) selectRole(allRoles[0]);
     } catch (e) {
         console.error(e);
-        alert("Erreur chargement rôles. Vérifiez le backend.");
+        showToast('Erreur lors du chargement des rôles. Vérifiez le backend.', 'danger');
     }
 }
 
@@ -127,6 +162,7 @@ async function savePermissions() {
     try {
         await Api.updateRolePermissions(currentRole.id, newPerms);
         currentRole.permissions = newPerms;
+        showToast('Permissions sauvegardées avec succès.', 'success');
 
         const btn = document.querySelector('.btn-primary');
         const oldText = btn.innerText;
@@ -137,6 +173,6 @@ async function savePermissions() {
             btn.classList.remove('btn-success');
         }, 2000);
     } catch (e) {
-        alert("Erreur sauvegarde: " + e.message);
+        showToast('Erreur de sauvegarde : ' + e.message, 'danger');
     }
 }

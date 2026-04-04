@@ -16,6 +16,8 @@ public class AnneeAcademiqueMapper {
         dto.setNomAnneeAcademique(annee.getNomAnneeAcademique());
         dto.setAnneeDebut(annee.getAnneeDebut());
         dto.setAnneeFin(annee.getAnneeFin());
+        dto.setActif(annee.isActif());
+        dto.setNombreSemestres(annee.getSemestres() != null ? annee.getSemestres().size() : 0);
 
         return dto;
     }

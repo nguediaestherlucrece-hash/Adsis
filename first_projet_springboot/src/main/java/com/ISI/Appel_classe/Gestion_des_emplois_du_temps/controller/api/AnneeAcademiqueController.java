@@ -64,4 +64,11 @@ public class AnneeAcademiqueController {
         anneeAcademiqueService.deleteAnnee(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/activer")
+    @PreAuthorize("hasAuthority('ANNEE_UPDATE')")
+    public ResponseEntity<AnneeAcademiqueDTO> activerAnnee(@PathVariable Long id) {
+        AnneeAcademiqueDTO activated = anneeAcademiqueService.activerAnnee(id);
+        return ResponseEntity.ok(activated);
+    }
 }

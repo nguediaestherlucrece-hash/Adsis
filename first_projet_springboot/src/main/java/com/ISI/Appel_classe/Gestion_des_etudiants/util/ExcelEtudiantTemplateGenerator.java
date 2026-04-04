@@ -9,7 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * Classe utilitaire pour générer un fichier Excel modèle pour l'import d'étudiants
+ * Classe utilitaire pour générer un fichier Excel modèle pour l'import
+ * d'étudiants
  * Ce fichier peut être téléchargé par l'utilisateur, rempli, et réuploadé
  */
 @Slf4j
@@ -36,9 +37,10 @@ public class ExcelEtudiantTemplateGenerator {
      * - A: Nom (obligatoire)
      * - B: Prénom (obligatoire)
      * - C: Email (obligatoire)
-     * - E: Matricule (obligatoire)
-     * - F: Date Naissance (format YYYY-MM-DD, optionnel)
-     * - G: Téléphone (optionnel)
+     * - D: Matricule (obligatoire)
+     * - E: Date Naissance (format YYYY-MM-DD, optionnel)
+     * - F: Téléphone (optionnel)
+     * 
      * @return Un tableau de bytes contenant le fichier Excel
      * @throws IOException En cas d'erreur lors de la génération
      */
@@ -60,12 +62,12 @@ public class ExcelEtudiantTemplateGenerator {
             }
 
             // Définir la largeur des colonnes
-            sheet.setColumnWidth(0, 15 * 256);  // Nom
-            sheet.setColumnWidth(1, 15 * 256);  // Prénom
-            sheet.setColumnWidth(2, 25 * 256);  // Email
-            sheet.setColumnWidth(4, 15 * 256);  // Matricule
-            sheet.setColumnWidth(5, 25 * 256);  // Date Naissance
-            sheet.setColumnWidth(6, 15 * 256);  // Téléphone
+            sheet.setColumnWidth(0, 15 * 256); // Nom
+            sheet.setColumnWidth(1, 15 * 256); // Prénom
+            sheet.setColumnWidth(2, 25 * 256); // Email
+            sheet.setColumnWidth(3, 15 * 256); // Matricule
+            sheet.setColumnWidth(4, 25 * 256); // Date Naissance
+            sheet.setColumnWidth(5, 15 * 256); // Téléphone
 
             // Ajouter des lignes d'exemple (avec des données fictivielles)
             addExampleRows(sheet);
@@ -121,11 +123,14 @@ public class ExcelEtudiantTemplateGenerator {
      */
     private void addExampleRows(Sheet sheet) {
         String[][] exampleData = {
-                {"Dupont", "Jean", "jean.dupont@example.com", "MAT001", "2005-01-15", "+33612345678"},
-                {"Martin", "Marie", "marie.martin@example.com", "MAT002", "2004-05-22", "+33687654321",},
-                {"Bernard", "Pierre", "pierre.bernard@example.com", "MAT003", "2005-08-30", "+33698765432"},
-                {"Thomas", "Luc", "luc.thomas@example.com", "MAT004", "2006-03-10", "+33611223344"},
-                {"Robert", "Sophie", "sophie.robert@example.com", "MAT005", "2005-11-25", "+33699887766"}
+                { "Eboa", "Samuel", "samuel.eboa@saintjeaningenieur.org", "MAT001", "2005-01-15", "+237670123456" },
+                { "Ngo Njock", "Thérèse", "therese.ngonjock@saintjeaningenieur.org", "MAT002", "2004-05-22",
+                        "+237690654321" },
+                { "Kamdem", "Jean-Paul", "jp.kamdem@saintjeaningenieur.org", "MAT003", "2005-08-30", "+237651987654" },
+                { "Abena", "Fouda Marie", "marie.abena@saintjeaningenieur.org", "MAT004", "2006-03-10",
+                        "+237620112233" },
+                { "Moussa", "Ibrahim", "ibrahim.moussa@saintjeaningenieur.org", "MAT005", "2005-11-25",
+                        "+237681887766" }
         };
 
         CellStyle exampleStyle = sheet.getWorkbook().createCellStyle();

@@ -2,8 +2,10 @@ package com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface;
 
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.MigrationRequestDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.HistoriqueClasseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -61,6 +63,11 @@ public interface EtudiantService {
     EtudiantDTO assignerClasse(Long etudiantId, Long classeId);
 
     /**
+     * Bascule le statut d'un étudiant entre ACTIF et INACTIF
+     */
+    EtudiantDTO toggleStatut(Long id);
+
+    /**
      * Importe une liste d'étudiants depuis un fichier Excel et les assigne à une classe
      * Le fichier doit contenir les colonnes: Nom, Prénom, Email, Password, Matricule, DateNaissance, Téléphone, Statut
      *
@@ -78,4 +85,16 @@ public interface EtudiantService {
      * @throws IOException En cas d'erreur lors de la génération
      */
     byte[] generateEtudiantTemplate() throws IOException;
+
+    /**
+     * Migre un ou plusieurs étudiants vers une nouvelle classe
+     * en conservant l'historique complet (classe, année, semestre actifs)
+     */
+    List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto);
+
+    /**
+     * Récupère l'historique des classes d'un étudiant
+     * avec le taux de présence par classe
+     */
+    List<HistoriqueClasseDTO> getHistorique(Long etudiantId);
 }

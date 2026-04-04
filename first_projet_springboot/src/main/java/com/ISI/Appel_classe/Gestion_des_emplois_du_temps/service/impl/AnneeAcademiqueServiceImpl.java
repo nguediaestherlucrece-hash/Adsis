@@ -56,6 +56,7 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
         annee.setNomAnneeAcademique(dto.getNomAnneeAcademique());
         annee.setAnneeDebut(dto.getAnneeDebut());
         annee.setAnneeFin(dto.getAnneeFin());
+        annee.setActif(dto.isActif());
 
         AnneeAcademique saved = anneeAcademiqueRepository.save(annee);
         log.info("Année académique créée avec l'id {}", saved.getId());
@@ -71,6 +72,7 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
         annee.setNomAnneeAcademique(dto.getNomAnneeAcademique());
         annee.setAnneeDebut(dto.getAnneeDebut());
         annee.setAnneeFin(dto.getAnneeFin());
+        annee.setActif(dto.isActif());
 
         AnneeAcademique updated = anneeAcademiqueRepository.save(annee);
         log.info("Année académique mise à jour avec l'id {}", updated.getId());
@@ -84,5 +86,21 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
         }
         anneeAcademiqueRepository.deleteById(id);
         log.info("Année académique supprimée avec l'id {}", id);
+    }
+
+    @Override
+    @Transactional
+    public AnneeAcademiqueDTO activerAnnee(Long id) {
+        AnneeAcademique annee = anneeAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Année académique non trouvée avec l'id: " + id));
+
+        // Désactiver toutes les années
+        anneeAcademiqueRepository.deactivateAll();
+
+        // Activer celle demandée
+        annee.setActif(true);
+        AnneeAcademique saved = anneeAcademiqueRepository.save(annee);
+        log.info("Année académique activée avec l'id {}", saved.getId());
+        return mapper.toDTO(saved);
     }
 }

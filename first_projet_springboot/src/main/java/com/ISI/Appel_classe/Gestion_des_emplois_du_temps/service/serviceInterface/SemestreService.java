@@ -19,4 +19,8 @@ public interface SemestreService {
     SemestreDTO updateSemestre(Long id, SemestreUpdateDTO dto);
 
     void deleteSemestre(Long id);
+
+    SemestreDTO activerSemestre(Long id);
+
+    List<SemestreDTO> getSemestresByAnnee(Long anneeId);
 }

@@ -24,9 +24,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Etudiant extends Utilisateur {
 
-    @Column(unique = true)
-    private String matricule;
-
     private String dateNaissance; // À convertir en LocalDate plus tard si nécessaire
     private String telephone;
 
@@ -40,6 +37,9 @@ public class Etudiant extends Utilisateur {
 
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
     private List<Presence> presences = new ArrayList<>();
+
+    @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
+    private List<HistoriqueClasse> historiqueClasses = new ArrayList<>();
 
     // 🔹 Méthodes de logique métier (conservées)
     public void consulterHistorique() {

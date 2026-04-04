@@ -29,9 +29,9 @@ public class ExcelEtudiantReader {
      * - Colonne A: Nom (obligatoire)
      * - Colonne B: Prénom (obligatoire)
      * - Colonne C: Email (obligatoire)
-     * - Colonne E: Matricule (obligatoire)
-     * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
-     * - Colonne G: Téléphone (optionnel)
+     * - Colonne D: Matricule (obligatoire)
+     * - Colonne E: Date Naissance (optionnel) - Format: YYYY-MM-DD
+     * - Colonne F: Téléphone (optionnel)
      *
      * @param file Le fichier uploadé
      * @return Une liste de EtudiantCreateDTO
@@ -140,21 +140,21 @@ public class ExcelEtudiantReader {
         }
         dto.setEmail(email.trim());
 
-        // Colonne E: Matricule (obligatoire)
-        String matricule = getCellStringValue(row, 4);
+        // Colonne D: Matricule (obligatoire)
+        String matricule = getCellStringValue(row, 3);
         if (matricule == null || matricule.trim().isEmpty()) {
-            throw new IllegalArgumentException("Matricule obligatoire (colonne E) - valeur manquante");
+            throw new IllegalArgumentException("Matricule obligatoire (colonne D) - valeur manquante");
         }
         dto.setMatricule(matricule.trim());
 
-        // Colonne F: Date Naissance (optionnel)
-        String dateNaissance = getCellStringValue(row, 5);
+        // Colonne E: Date Naissance (optionnel)
+        String dateNaissance = getCellStringValue(row, 4);
         if (dateNaissance != null && !dateNaissance.trim().isEmpty()) {
             dto.setDateNaissance(dateNaissance.trim());
         }
 
-        // Colonne G: Téléphone (optionnel)
-        String telephone = getCellStringValue(row, 6);
+        // Colonne F: Téléphone (optionnel)
+        String telephone = getCellStringValue(row, 5);
         if (telephone != null && !telephone.trim().isEmpty()) {
             dto.setTelephone(telephone.trim());
         }

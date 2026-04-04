@@ -2,8 +2,10 @@ package com.ISI.Appel_classe.Gestion_des_etudiants.controller.api;
 
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.MigrationRequestDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.HistoriqueClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -174,6 +176,20 @@ public class EtudiantController {
     }
 
     /**
+     * PATCH /api/etudiants/{id}/toggle-statut
+     * Bascule le statut d'un étudiant entre ACTIF et INACTIF
+     */
+    @PatchMapping("/{id}/toggle-statut")
+    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    public ResponseEntity<EtudiantDTO> toggleStatut(@PathVariable Long id) {
+        log.info("🔄 [PATCH /api/etudiants/{}/toggle-statut] Basculement du statut", id);
+
+        EtudiantDTO updated = etudiantService.toggleStatut(id);
+
+        log.info("✅ Statut de l'étudiant basculé: {}", updated.getStatut());
+        return ResponseEntity.ok(updated);
+    }
+    /**
      * POST /api/etudiants/import/excel
      * Importe une liste d'étudiants depuis un fichier Excel
      * Accepte les fichiers .xlsx et .xls
@@ -182,9 +198,9 @@ public class EtudiantController {
      * - Colonne A: Nom (obligatoire)
      * - Colonne B: Prénom (obligatoire)
      * - Colonne C: Email (obligatoire)
-     * - Colonne E: Matricule (obligatoire)
-     * - Colonne F: Date Naissance (optionnel) - Format: YYYY-MM-DD
-     * - Colonne G: Téléphone (optionnel)
+     * - Colonne D: Matricule (obligatoire)
+     * - Colonne E: Date Naissance (optionnel) - Format: YYYY-MM-DD
+     * - Colonne F: Téléphone (optionnel)
      *
      * @param file Le fichier Excel à importer
      * @param classeId L'ID de la classe à associer à tous les étudiants importés
@@ -244,5 +260,26 @@ public class EtudiantController {
             log.error("❌ Erreur lors de la génération du fichier Excel modèle: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    // ========================================
+    // MIGRATION & HISTORIQUE
+    // ========================================
+
+    @PostMapping("/migrer")
+    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    public ResponseEntity<List<EtudiantDTO>> migrerEtudiants(@RequestBody MigrationRequestDTO dto) {
+        log.info("POST /api/etudiants/migrer - Migration de {} étudiant(s) vers classe {}",
+                dto.getEtudiantIds().size(), dto.getClasseDestinationId());
+        List<EtudiantDTO> result = etudiantService.migrerEtudiants(dto);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{id}/historique")
+    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    public ResponseEntity<List<HistoriqueClasseDTO>> getHistorique(@PathVariable Long id) {
+        log.info("GET /api/etudiants/{}/historique", id);
+        List<HistoriqueClasseDTO> historique = etudiantService.getHistorique(id);
+        return ResponseEntity.ok(historique);
     }
 }

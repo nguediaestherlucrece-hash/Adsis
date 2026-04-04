@@ -288,12 +288,21 @@ async function fetchEmploisDuTemps() {
 
 function renderEdtList(edts) {
     if (edts.length === 0) {
-        edtListContainer.innerHTML = `<div class="col-12 text-center text-muted p-5"><p>Aucun emploi du temps. Cliquez sur "+ Nouvel emploi du temps" pour commencer.</p></div>`;
+        edtListContainer.innerHTML = `
+            <div class="col-12 text-center p-5">
+                <div class="empty-state-edt">
+                    <i class="bi bi-calendar2-x"></i>
+                    <h6>Aucun emploi du temps</h6>
+                    <p>Cliquez sur « + Nouvel emploi du temps » pour commencer.</p>
+                </div>
+            </div>`;
         return;
     }
 
+    const accentColors = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#14b8a6', '#ef4444', '#6366f1', '#ec4899'];
+
     let html = '';
-    edts.forEach(edt => {
+    edts.forEach((edt, idx) => {
         const classeNom = getClasseNom(edt);
         const anneeNom = getAnneeNom(edt);
         const semestreNom = getSemestreNom(edt);
@@ -303,21 +312,37 @@ function renderEdtList(edts) {
         else if (semestreNom) annSemText = semestreNom;
         else annSemText = 'Non assigné';
 
+        const accent = accentColors[idx % accentColors.length];
+        const initials = classeNom.substring(0, 2).toUpperCase();
+
         html += `
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card edt-card h-100 shadow-sm border-0">
-                    <div class="card-body" onclick="openEditor(${edt.id})" style="cursor:pointer;">
-                        <h6 class="card-title fw-bold text-primary mb-2">${classeNom}</h6>
-                        <p class="text-muted mb-1 small"><i class="fas fa-calendar-alt me-2"></i>Du ${formatDate(edt.dateDebut)} au ${formatDate(edt.dateFin)}</p>
-                        <p class="text-muted mb-1 small"><i class="fas fa-th me-2"></i>${edt.nombreJours || 6} Jours</p>
-                        <p class="text-muted mb-0 small"><i class="fas fa-graduation-cap me-2"></i>${annSemText}</p>
+            <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+                <div class="edt-card-premium" onclick="openEditor(${edt.id})" style="border-left: 4px solid ${accent};">
+                    <div class="edt-card-header">
+                        <div class="edt-avatar" style="background: ${accent}15; color: ${accent};">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <div class="edt-title-zone">
+                            <h6 class="edt-classe-name">${classeNom}</h6>
+                            <span class="edt-semester-badge">${annSemText}</span>
+                        </div>
                     </div>
-                    <div class="card-footer bg-transparent border-0 d-flex justify-content-end gap-2 py-2 px-3">
-                        <button class="btn btn-sm btn-outline-primary" title="Modifier les infos" onclick="event.stopPropagation(); openEditEdtModal(${edt.id})">
-                            <i class="fas fa-pencil-alt"></i>
+                    <div class="edt-card-details">
+                        <div class="edt-detail-row">
+                            <i class="bi bi-calendar-range" style="color: ${accent};"></i>
+                            <span>${formatDate(edt.dateDebut)} → ${formatDate(edt.dateFin)}</span>
+                        </div>
+                        <div class="edt-detail-row">
+                            <i class="bi bi-grid-3x3-gap" style="color: ${accent};"></i>
+                            <span>${edt.nombreJours || 6} jours programmés</span>
+                        </div>
+                    </div>
+                    <div class="edt-card-actions">
+                        <button class="edt-action-btn edit" title="Modifier les infos" onclick="event.stopPropagation(); openEditEdtModal(${edt.id})">
+                            <i class="bi bi-pencil-square"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" title="Supprimer" onclick="event.stopPropagation(); deleteEdt(${edt.id})">
-                            <i class="fas fa-trash"></i>
+                        <button class="edt-action-btn delete" title="Supprimer" onclick="event.stopPropagation(); deleteEdt(${edt.id})">
+                            <i class="bi bi-trash3"></i>
                         </button>
                     </div>
                 </div>
@@ -784,54 +809,8 @@ async function handleDropOnCell(cell, element) {
             return;
         }
 
-        const jourIdx = parseInt(cell.dataset.jour);
-        const horaireIdx = parseInt(cell.dataset.horaire);
-        const dateSeance = getDateForJour(jourIdx);
-        const heureDebut = horaires[horaireIdx].debut;
-        const heureFin = horaires[horaireIdx].fin;
-
-        if (!dateSeance) {
-            showToast("Impossible de déterminer la date pour ce jour.", "warning");
-            return;
-        }
-
-        const groupId = `G-${Date.now()}`;
-        const dto = {
-            idSeance: `S-${Date.now()}`,
-            date: dateSeance,
-            heureDebut: heureDebut,
-            heureFin: heureFin,
-            statut: false,
-            coursId: parseInt(element.id),
-            enseignantIds: [],
-            emploiDuTempsId: currentEdt.id,
-            couleur: element.couleur || null,
-            groupId: groupId
-        };
-
-        try {
-            const res = await fetch(`${API_BASE_URL}/seances`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dto)
-            });
-            if (res.ok) {
-                const created = await res.json();
-                createCourseElement(cell, {
-                    dbId: created.id,
-                    type: 'matiere',
-                    matiere: element.nom,
-                    matiereId: element.id,
-                    enseignants: [],
-                    couleur: element.couleur,
-                    groupId: groupId
-                }, 1, 1);
-                showToast(`${element.nom} ajouté.`, "success");
-            } else {
-                const errText = await res.text();
-                showToast("Erreur : " + errText, "danger");
-            }
-        } catch (e) { console.error(e); showToast("Erreur réseau", "danger"); }
+        // Ouvrir le modal de configuration au lieu de créer directement
+        openSeanceConfigModal(null, cell, element);
     }
     else if (element.type === 'enseignant') {
         if (cell.children.length === 0) {
@@ -952,12 +931,10 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
     div.innerHTML = content;
     cell.appendChild(div);
 
-    // Clic gauche : afficher les enseignants de la matière
+    // Clic gauche : ouvrir le modal d'édition de la séance
     div.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (data.matiereId) {
-            renderEnseignantBadgesForMatiere(data.matiereId);
-        }
+        openSeanceConfigModalForEdit(div, cell);
     });
 
     // Clic droit : color picker pour changer la couleur de la séance
@@ -1403,6 +1380,238 @@ document.getElementById('exportPdfBtn').addEventListener('click', function () {
 // Bouton "Enregistrer" — les séances sont déjà sauvées en temps réel, on affiche juste un toast de confirmation
 document.getElementById('saveBtn')?.addEventListener('click', function () {
     showToast("Emploi du temps enregistré avec succès !", "success");
+});
+
+
+// ============ SEANCE CONFIG MODAL FUNCTIONS ============
+
+function openSeanceConfigModal(existingSeanceId, cell, dropElement) {
+    const modal = new bootstrap.Modal(document.getElementById('seanceConfigModal'));
+    document.getElementById('seanceEditId').value = existingSeanceId || '';
+    document.getElementById('seanceEditGroupId').value = '';
+    document.getElementById('seanceCellJour').value = cell.dataset.jour;
+    document.getElementById('seanceCellHoraire').value = cell.dataset.horaire;
+    document.getElementById('seanceDeleteBtn').style.display = existingSeanceId ? '' : 'none';
+    document.getElementById('seanceConfigTitle').innerHTML = existingSeanceId
+        ? '<i class="bi bi-pencil me-2"></i>Modifier la séance'
+        : '<i class="bi bi-plus-circle me-2"></i>Nouvelle séance';
+
+    // Populate matière select
+    populateSeanceMatiereSelect(dropElement ? parseInt(dropElement.id) : null);
+
+    // Couleur
+    const defaultColor = dropElement ? (dropElement.couleur || '#0f22f1') : '#0f22f1';
+    document.getElementById('seanceCouleurInput').value = defaultColor;
+
+    modal.show();
+}
+
+function openSeanceConfigModalForEdit(div, cell) {
+    const modal = new bootstrap.Modal(document.getElementById('seanceConfigModal'));
+    const dbId = div.dataset.dbId;
+    const matiereId = div.dataset.matiereId;
+    const linkedIds = JSON.parse(div.dataset.linkedIds || '[]');
+    const groupId = div.dataset.groupId || '';
+
+    document.getElementById('seanceEditId').value = dbId;
+    document.getElementById('seanceEditGroupId').value = groupId;
+    document.getElementById('seanceCellJour').value = cell.dataset.jour;
+    document.getElementById('seanceCellHoraire').value = cell.dataset.horaire;
+    document.getElementById('seanceDeleteBtn').style.display = '';
+    document.getElementById('seanceConfigTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Modifier la séance';
+
+    // Populate matière select
+    populateSeanceMatiereSelect(parseInt(matiereId));
+
+    // Couleur
+    const couleur = div.dataset.couleur || div.style.backgroundColor || '#0f22f1';
+    document.getElementById('seanceCouleurInput').value = rgbToHex(couleur);
+
+    // Pre-check enseignants
+    setTimeout(() => {
+        const ensIds = JSON.parse(div.dataset.enseignantIds || '[]');
+        ensIds.forEach(eid => {
+            const cb = document.querySelector(`#seanceEnseignantsList input[value="${eid}"]`);
+            if (cb) cb.checked = true;
+        });
+    }, 100);
+
+    // Store linkedIds for delete
+    document.getElementById('seanceEditId').dataset.linkedIds = JSON.stringify(linkedIds);
+
+    modal.show();
+}
+
+function populateSeanceMatiereSelect(selectedId) {
+    const sel = document.getElementById('seanceMatiereSelect');
+    sel.innerHTML = '<option value="">-- Sélectionner --</option>';
+    matieres.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.intitule;
+        if (m.id === selectedId) opt.selected = true;
+        sel.appendChild(opt);
+    });
+    // Trigger enseignant list population
+    populateSeanceEnseignants(selectedId);
+    sel.addEventListener('change', (e) => {
+        populateSeanceEnseignants(parseInt(e.target.value));
+    });
+}
+
+function populateSeanceEnseignants(matiereId) {
+    const container = document.getElementById('seanceEnseignantsList');
+    const matiere = matieres.find(m => m.id == matiereId);
+    if (!matiere || !matiere.enseignants || matiere.enseignants.length === 0) {
+        container.innerHTML = '<p class="text-muted small mb-0">Aucun enseignant pour cette matière.</p>';
+        return;
+    }
+    container.innerHTML = '';
+    matiere.enseignants.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input" type="checkbox" value="${e.id}" id="seanceEns_${e.id}">
+            <label class="form-check-label" for="seanceEns_${e.id}">
+                <i class="fas fa-chalkboard-teacher me-1"></i>${e.nom} ${e.prenom || ''}
+            </label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function rgbToHex(color) {
+    if (color.startsWith('#')) return color;
+    const match = color.match(/\d+/g);
+    if (!match || match.length < 3) return '#0f22f1';
+    return '#' + match.slice(0, 3).map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
+}
+
+// SAVE handler for seance config modal
+document.getElementById('seanceSaveBtn')?.addEventListener('click', async () => {
+    const matiereId = parseInt(document.getElementById('seanceMatiereSelect').value);
+    if (!matiereId) {
+        showToast('Veuillez sélectionner une matière.', 'warning');
+        return;
+    }
+
+    const jourIdx = parseInt(document.getElementById('seanceCellJour').value);
+    const horaireIdx = parseInt(document.getElementById('seanceCellHoraire').value);
+    const couleur = document.getElementById('seanceCouleurInput').value;
+    const existingId = document.getElementById('seanceEditId').value;
+
+    // Collect checked enseignant IDs
+    const enseignantIds = [];
+    document.querySelectorAll('#seanceEnseignantsList input:checked').forEach(cb => {
+        enseignantIds.push(parseInt(cb.value));
+    });
+
+    const dateSeance = getDateForJour(jourIdx);
+    const heureDebut = horaires[horaireIdx].debut;
+    const heureFin = horaires[horaireIdx].fin;
+
+    if (!dateSeance) {
+        showToast('Impossible de déterminer la date.', 'warning');
+        return;
+    }
+
+    const matiere = matieres.find(m => m.id == matiereId);
+    const matiereNom = matiere ? matiere.intitule : 'Séance';
+
+    try {
+        if (existingId) {
+            // UPDATE existing seance
+            const resGet = await fetch(`${API_BASE_URL}/seances/${existingId}`);
+            if (!resGet.ok) { showToast('Séance introuvable.', 'danger'); return; }
+            const seance = await resGet.json();
+
+            const updateDto = {
+                idSeance: seance.idSeance,
+                date: seance.date,
+                heureDebut: seance.heureDebut,
+                heureFin: seance.heureFin,
+                statut: seance.statut,
+                coursId: matiereId,
+                enseignantIds: enseignantIds,
+                emploiDuTempsId: seance.emploiDuTempsId,
+                couleur: couleur,
+                groupId: seance.groupId
+            };
+
+            const resPut = await fetch(`${API_BASE_URL}/seances/${existingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateDto)
+            });
+
+            if (resPut.ok) {
+                showToast('Séance mise à jour.', 'success');
+            } else {
+                showToast('Erreur lors de la mise à jour.', 'danger');
+            }
+        } else {
+            // CREATE new seance
+            const groupId = `G-${Date.now()}`;
+            const dto = {
+                idSeance: `S-${Date.now()}`,
+                date: dateSeance,
+                heureDebut: heureDebut,
+                heureFin: heureFin,
+                statut: false,
+                coursId: matiereId,
+                enseignantIds: enseignantIds,
+                emploiDuTempsId: currentEdt.id,
+                couleur: couleur,
+                groupId: groupId
+            };
+
+            const res = await fetch(`${API_BASE_URL}/seances`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+
+            if (res.ok) {
+                showToast(`${matiereNom} ajouté.`, 'success');
+            } else {
+                const errText = await res.text();
+                showToast('Erreur : ' + errText, 'danger');
+            }
+        }
+
+        // Refresh the grid
+        bootstrap.Modal.getInstance(document.getElementById('seanceConfigModal'))?.hide();
+        buildTimetableGrid(currentEdt.nombreJours || 6);
+        await fetchSeancesForEdt(currentEdt.id);
+    } catch (e) {
+        console.error(e);
+        showToast('Erreur réseau.', 'danger');
+    }
+});
+
+// DELETE handler for seance config modal
+document.getElementById('seanceDeleteBtn')?.addEventListener('click', async () => {
+    const dbId = document.getElementById('seanceEditId').value;
+    if (!dbId) return;
+
+    if (!confirm('Supprimer cette séance ?')) return;
+
+    const linkedIds = JSON.parse(document.getElementById('seanceEditId').dataset.linkedIds || '[]');
+    const idsToDelete = linkedIds.length > 0 ? linkedIds : [parseInt(dbId)];
+
+    try {
+        for (const id of idsToDelete) {
+            await fetch(`${API_BASE_URL}/seances/${id}`, { method: 'DELETE' });
+        }
+        showToast('Séance(s) supprimée(s).', 'success');
+
+        bootstrap.Modal.getInstance(document.getElementById('seanceConfigModal'))?.hide();
+        buildTimetableGrid(currentEdt.nombreJours || 6);
+        await fetchSeancesForEdt(currentEdt.id);
+    } catch (e) {
+        console.error(e);
+        showToast('Erreur lors de la suppression.', 'danger');
+    }
 });
 
 

@@ -2,10 +2,13 @@ package com.ISI.Appel_classe.Gestion_des_etudiants.service.impl;
 
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.EtudiantUpdateDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.MigrationRequestDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.EtudiantImportResponseDTO;
+import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.HistoriqueClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.HistoriqueClasse;
 import com.ISI.Appel_classe.Gestion_des_etudiants.util.ExcelEtudiantReader;
 import com.ISI.Appel_classe.Gestion_des_etudiants.util.ExcelEtudiantTemplateGenerator;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
@@ -14,10 +17,17 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestExcepti
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_etudiants.repository.ClasseRepository;
 import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.HistoriqueClasseRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceRepository;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.AnneeAcademiqueRepository;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.repository.SemestreRepository;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.AnneeAcademique;
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Semestre;
 import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
 import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.EtudiantMapper;
+import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.HistoriqueClasseMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +59,11 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final EtudiantMapper mapper;
     private final ExcelEtudiantReader excelEtudiantReader;
     private final ExcelEtudiantTemplateGenerator excelTemplateGenerator;
+    private final HistoriqueClasseRepository historiqueClasseRepository;
+    private final HistoriqueClasseMapper historiqueClasseMapper;
+    private final PresenceRepository presenceRepository;
+    private final AnneeAcademiqueRepository anneeAcademiqueRepository;
+    private final SemestreRepository semestreRepository;
 
 
     @Override
@@ -317,6 +332,25 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     @Override
     @Transactional
+    public EtudiantDTO toggleStatut(Long id) {
+        log.info("Basculement du statut de l'étudiant id={}", id);
+
+        Etudiant etudiant = etudiantRepository.findById(Objects.requireNonNull(id, "ID cannot be null"))
+                .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + id));
+
+        if (etudiant.getStatut() == Statut.ACTIF) {
+            etudiant.setStatut(Statut.INACTIF);
+        } else {
+            etudiant.setStatut(Statut.ACTIF);
+        }
+
+        Etudiant updated = etudiantRepository.save(etudiant);
+        log.info("Statut de l'étudiant id={} basculé vers {}", id, updated.getStatut());
+        return mapper.toDTO(updated);
+    }
+
+    @Override
+    @Transactional
     public EtudiantImportResponseDTO importEtudiantsFromExcel(MultipartFile file, Long classeId) {
         log.info("🔄 Début de l'import d'étudiants depuis le fichier Excel: {} vers la classe {}", file.getOriginalFilename(), classeId);
 
@@ -433,6 +467,101 @@ public class EtudiantServiceImpl implements EtudiantService {
     public byte[] generateEtudiantTemplate() throws IOException {
         log.info("Génération du fichier Excel modèle pour l'import d'étudiants");
         return excelTemplateGenerator.generateTemplate();
+    }
+
+    @Override
+    @Transactional
+    public List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto) {
+        log.info("🔄 Début de la migration de {} étudiant(s) vers la classe id={}",
+                dto.getEtudiantIds().size(), dto.getClasseDestinationId());
+
+        // 1. Charger la classe destination
+        Classe classeDestination = classeRepository.findById(dto.getClasseDestinationId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Classe destination non trouvée avec l'ID: " + dto.getClasseDestinationId()));
+
+        // 2. Capturer les repères temporels globaux actifs
+        AnneeAcademique anneeActive = anneeAcademiqueRepository.findByActifTrue().orElse(null);
+        Semestre semestreActif = semestreRepository.findByStatutTrue().orElse(null);
+
+        List<EtudiantDTO> result = new java.util.ArrayList<>();
+
+        // 3. Pour chaque étudiant
+        for (Long etudiantId : dto.getEtudiantIds()) {
+            Etudiant etudiant = etudiantRepository.findById(etudiantId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + etudiantId));
+
+            Classe ancienneClasse = etudiant.getClasse();
+
+            // Ne migrer que si la classe change réellement
+            if (ancienneClasse != null && !ancienneClasse.getId().equals(classeDestination.getId())) {
+                // Créer l'entrée d'historique
+                HistoriqueClasse historique = new HistoriqueClasse();
+                historique.setEtudiant(etudiant);
+                historique.setClasse(ancienneClasse);
+                historique.setAnneeAcademique(anneeActive);
+                historique.setSemestre(semestreActif);
+                historique.setDateSortie(java.time.LocalDate.now());
+                historique.setMotif(dto.getMotif() != null ? dto.getMotif() : "Migration");
+
+                // Calculer la date d'entrée : dernière migration ou date de création
+                List<HistoriqueClasse> historiquesPrecedents =
+                        historiqueClasseRepository.findByEtudiantIdOrderByDateSortieDesc(etudiantId);
+                if (!historiquesPrecedents.isEmpty()) {
+                    historique.setDateEntree(historiquesPrecedents.get(0).getDateSortie());
+                } else {
+                    historique.setDateEntree(
+                            etudiant.getCreatedAt() != null
+                                    ? etudiant.getCreatedAt().toLocalDate()
+                                    : java.time.LocalDate.now());
+                }
+
+                historiqueClasseRepository.save(historique);
+                log.info("✅ Historique créé pour l'étudiant {} : {} → {}",
+                        etudiantId, ancienneClasse.getNomClasse(), classeDestination.getNomClasse());
+            }
+
+            // Changer la classe courante
+            etudiant.setClasse(classeDestination);
+            Etudiant updated = etudiantRepository.save(etudiant);
+            result.add(mapper.toDTO(updated));
+        }
+
+        log.info("📊 Migration terminée : {} étudiant(s) migré(s)", result.size());
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HistoriqueClasseDTO> getHistorique(Long etudiantId) {
+        log.info("Récupération de l'historique de l'étudiant id={}", etudiantId);
+
+        // Vérifier que l'étudiant existe
+        if (!etudiantRepository.existsById(etudiantId)) {
+            throw new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + etudiantId);
+        }
+
+        List<HistoriqueClasse> historiques =
+                historiqueClasseRepository.findByEtudiantIdOrderByDateSortieDesc(etudiantId);
+
+        return historiques.stream().map(h -> {
+            HistoriqueClasseDTO dto = historiqueClasseMapper.toDTO(h);
+
+            // Enrichir avec le taux de présence
+            if (h.getClasse() != null) {
+                long totalSeances = presenceRepository
+                        .countByEtudiantIdAndSeance_EmploiDuTemps_ClasseId(etudiantId, h.getClasse().getId());
+                long presencesCount = presenceRepository
+                        .countByEtudiantIdAndSeance_EmploiDuTemps_ClasseIdAndStatut(
+                                etudiantId, h.getClasse().getId(), "présent");
+
+                dto.setTotalSeances(totalSeances);
+                dto.setPresencesCount(presencesCount);
+                dto.setTauxPresence(totalSeances > 0 ? (presencesCount * 100.0 / totalSeances) : 0);
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 
 }

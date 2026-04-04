@@ -15,8 +15,6 @@
     <style>
         .view-section { display: none; }
         .view-section.active { display: block; }
-        .edt-card { transition: transform 0.2s, box-shadow 0.2s; }
-        .edt-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
         .elements-panel { background: #f8f9fa; border-radius: 12px; padding: 16px; }
         .element-pill { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; color: white; font-size: 0.82rem; cursor: grab; user-select: none; margin: 3px; transition: transform 0.15s, box-shadow 0.15s; }
         .element-pill:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -190,6 +188,55 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="button" class="btn btn-primary" id="modalSubmitBtn">Créer et Éditer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configuration de Séance -->
+    <div class="modal fade" id="seanceConfigModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold" id="seanceConfigTitle">
+                        <i class="bi bi-gear me-2"></i>Configuration de la séance
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="seanceEditId" value="">
+                    <input type="hidden" id="seanceEditGroupId" value="">
+                    <input type="hidden" id="seanceCellJour" value="">
+                    <input type="hidden" id="seanceCellHoraire" value="">
+                    <!-- Matière (modifiable) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Matière</label>
+                        <select class="form-select" id="seanceMatiereSelect"></select>
+                    </div>
+                    <!-- Enseignants (checkboxes dynamiques) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Enseignants de cette matière</label>
+                        <div id="seanceEnseignantsList" class="border rounded-3 p-2"
+                             style="max-height:200px;overflow-y:auto;">
+                            <p class="text-muted small mb-0">Sélectionnez une matière</p>
+                        </div>
+                    </div>
+                    <!-- Couleur -->
+                    <div class="mb-3 d-flex align-items-center gap-3">
+                        <label class="form-label fw-semibold mb-0">Couleur</label>
+                        <input type="color" class="form-control form-control-color" id="seanceCouleurInput" value="#0f22f1">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" id="seanceDeleteBtn" style="display:none;">
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="seanceSaveBtn">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

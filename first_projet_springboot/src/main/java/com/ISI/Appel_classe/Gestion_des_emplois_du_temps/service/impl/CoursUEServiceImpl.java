@@ -74,6 +74,7 @@ public class CoursUEServiceImpl implements CourUEService {
         cours.setCodeUE(dto.getCodeUE());
         cours.setIntitule(dto.getIntitule());
         cours.setVolumeHoraire(dto.getVolumeHoraire());
+        cours.setCredit(dto.getCredit());
 
         Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
                 .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));
@@ -104,6 +105,7 @@ public class CoursUEServiceImpl implements CourUEService {
         cours.setCodeUE(dto.getCodeUE());
         cours.setIntitule(dto.getIntitule());
         cours.setVolumeHoraire(dto.getVolumeHoraire());
+        cours.setCredit(dto.getCredit());
 
         Specialite specialite = specialiteRepository.findById(dto.getSpecialiteId())
                 .orElseThrow(() -> new RuntimeException("Spécialité non trouvée"));

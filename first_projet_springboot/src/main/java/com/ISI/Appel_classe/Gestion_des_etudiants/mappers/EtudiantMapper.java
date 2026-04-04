@@ -36,6 +36,7 @@ public class EtudiantMapper {
         dto.setDateNaissance(etudiant.getDateNaissance());
         dto.setTelephone(etudiant.getTelephone());
         dto.setClasseId(etudiant.getClasse() != null ? etudiant.getClasse().getId() : null);
+        dto.setClasseNom(etudiant.getClasse() != null ? etudiant.getClasse().getNomClasse() : null);
 
         if (etudiant.getPresences() != null) {
             dto.setNombrePresences(etudiant.getPresences().size());

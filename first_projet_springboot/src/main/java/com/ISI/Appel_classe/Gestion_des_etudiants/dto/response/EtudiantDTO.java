@@ -49,6 +49,7 @@ public class EtudiantDTO {
      * Informations de la classe de l'étudiant
      */
     private Long classeId;
+    private String classeNom;
 
     /**
      * Nombre de présences enregistrées (optionnel)

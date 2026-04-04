@@ -11,6 +11,7 @@ public class coursUECreateDTO {
     private String codeUE;
     private String intitule;
     private Integer volumeHoraire;
+    private Integer credit;
 
     private Long specialiteId;
     private List<Long> enseignantIds;

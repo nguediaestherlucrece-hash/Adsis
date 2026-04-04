@@ -19,5 +19,7 @@ public interface AnneeAcademiqueService {
     AnneeAcademiqueDTO updateAnnee(Long id, AnneeAcademiqueUpdateDTO dto);
 
     void deleteAnnee(Long id);
+
+    AnneeAcademiqueDTO activerAnnee(Long id);
 }
 

@@ -8,7 +8,6 @@ let currentMatiereId = null;
 
 const API_BASE_URL = 'http://localhost:8081/api';
 
-// ==================== TOAST & CONFIRM ====================
 function showToast(message, type = 'info') {
     const config = {
         success: { icon: 'bi-check-circle-fill', label: 'Succès', bg: '#1a7f5a', delay: 3500 },
@@ -87,7 +86,6 @@ async function fetchMatieres() {
 
 // ==================== SELECTS ====================
 function populateSpecialiteSelects() {
-    // Modal matière
     const sel = document.getElementById('specialiteSelect');
     sel.innerHTML = '<option value="">-- Sélectionner --</option>';
     specialites.forEach(s => {
@@ -96,7 +94,6 @@ function populateSpecialiteSelects() {
         o.textContent = s.nom || s.nomSpecialite || s.idSpecialite;
         sel.appendChild(o);
     });
-    // Filtre enseignant modal
     const filter = document.getElementById('enseignantFilterSpecialite');
     if (filter) {
         filter.innerHTML = '<option value="">Toutes spécialités</option>';
@@ -109,36 +106,69 @@ function populateSpecialiteSelects() {
     }
 }
 
-function renderMatieres() {
+function renderMatieres(filterQuery = '') {
     const container = document.getElementById('matieresContainer');
+    const q = filterQuery.toLowerCase().trim();
+
+    let filtered = matieres;
+    if (q) {
+        filtered = matieres.filter(m =>
+            (m.intitule || '').toLowerCase().includes(q) ||
+            (m.codeUE || '').toLowerCase().includes(q) ||
+            (m.specialiteNom || '').toLowerCase().includes(q)
+        );
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="matiere-empty-state">
+                <i class="bi bi-inbox"></i>
+                <h6>${q ? 'Aucun résultat' : 'Aucune matière'}</h6>
+                <p>${q ? `Aucune matière ne correspond à « ${filterQuery} »` : 'Commencez par créer une nouvelle matière.'}</p>
+            </div>`;
+        return;
+    }
+
+    const accentColors = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#14b8a6', '#ef4444', '#6366f1', '#ec4899'];
     let html = '';
 
-    matieres.forEach(matiere => {
-
+    filtered.forEach((matiere, idx) => {
         const ensHtml = (matiere.enseignants && matiere.enseignants.length > 0)
-            ? matiere.enseignants.map(e => `<span class="badge bg-info text-dark me-1"><i class="fas fa-chalkboard-teacher me-1"></i>${e.nom} ${e.prenom || ''}</span>`).join('')
-            : '<span class="badge bg-light text-muted">Aucun enseignant</span>';
+            ? matiere.enseignants.map(e => `<span class="ens-tag"><i class="bi bi-person-fill me-1"></i>${e.nom} ${e.prenom || ''}</span>`).join('')
+            : '<span class="ens-tag empty"><i class="bi bi-person-x me-1"></i>Aucun enseignant</span>';
 
         const specName = matiere.specialiteNom || 'Non définie';
+        const credit = matiere.credit || 0;
+        const tauxHoraire = credit * 15;
+        const accent = accentColors[idx % accentColors.length];
 
         html += `
-            <div class="matiere-item d-flex align-items-center flex-wrap gap-2 p-2 mb-2 rounded-3 border" style="background:#fafbff;">
-                <span class="matiere-code badge bg-primary">${matiere.codeUE}</span>
-                <span class="matiere-nom fw-bold">${matiere.intitule}</span>
-                <span class="badge bg-secondary">${specName}</span>
-                <div class="d-flex flex-wrap gap-1 me-auto">${ensHtml}</div>
-                <div class="btn-group btn-group-sm ms-2">
-                    <button class="btn btn-outline-info" title="Enseignants" onclick="openEnseignantModal(${matiere.id})"><i class="fas fa-users"></i></button>
-                    <button class="btn btn-outline-primary" title="Modifier" onclick="openEditModal(${matiere.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-outline-danger" title="Supprimer" onclick="supprimerMatiere(${matiere.id})"><i class="fas fa-trash"></i></button>
+            <div class="matiere-card-premium" style="border-left: 4px solid ${accent};">
+                <div class="matiere-card-main">
+                    <div class="matiere-icon" style="background: ${accent}12; color: ${accent};">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <div class="matiere-info">
+                        <div class="matiere-info-top">
+                            <span class="matiere-code-badge" style="background: ${accent}; color: white;">${matiere.codeUE}</span>
+                            <h6 class="matiere-title">${matiere.intitule}</h6>
+                        </div>
+                        <div class="matiere-meta">
+                            <span class="meta-tag spec"><i class="bi bi-mortarboard me-1"></i>${specName}</span>
+                            <span class="meta-tag credit"><i class="bi bi-star me-1"></i>${credit} crédits</span>
+                            <span class="meta-tag hours"><i class="bi bi-clock me-1"></i>${tauxHoraire}h</span>
+                        </div>
+                        <div class="matiere-enseignants">${ensHtml}</div>
+                    </div>
+                </div>
+                <div class="matiere-card-actions">
+                    <button class="matiere-action-btn info" title="Enseignants" onclick="openEnseignantModal(${matiere.id})"><i class="bi bi-people"></i></button>
+                    <button class="matiere-action-btn edit" title="Modifier" onclick="openEditModal(${matiere.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="matiere-action-btn delete" title="Supprimer" onclick="supprimerMatiere(${matiere.id})"><i class="bi bi-trash3"></i></button>
                 </div>
             </div>
         `;
     });
-
-    if (matieres.length === 0) {
-        html = '<div class="p-4 text-center text-muted"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucune matière trouvée.</div>';
-    }
 
     container.innerHTML = html;
 }
@@ -149,6 +179,8 @@ function openCreateModal() {
     document.getElementById('editMatiereId').value = '';
     document.getElementById('codeInput').value = '';
     document.getElementById('nomInput').value = '';
+    document.getElementById('creditInput').value = '';
+    document.getElementById('tauxHoraireDisplay').textContent = '0';
     document.getElementById('specialiteSelect').value = '';
     document.getElementById('saveMatiereBtn').textContent = 'Créer';
     new bootstrap.Modal(document.getElementById('matiereModal')).show();
@@ -161,6 +193,8 @@ function openEditModal(id) {
     document.getElementById('editMatiereId').value = m.id;
     document.getElementById('codeInput').value = m.codeUE;
     document.getElementById('nomInput').value = m.intitule;
+    document.getElementById('creditInput').value = m.credit || '';
+    document.getElementById('tauxHoraireDisplay').textContent = (m.credit || 0) * 15;
     document.getElementById('specialiteSelect').value = m.specialiteId || '';
     document.getElementById('saveMatiereBtn').textContent = 'Enregistrer';
     new bootstrap.Modal(document.getElementById('matiereModal')).show();
@@ -182,6 +216,7 @@ document.getElementById('saveMatiereBtn').addEventListener('click', async () => 
         codeUE: code,
         intitule: nom,
         volumeHoraire: 0,
+        credit: parseInt(document.getElementById('creditInput').value) || 0,
         specialiteId: parseInt(specialiteId),
         enseignantIds: []
     };
@@ -330,8 +365,22 @@ window.openEditModal = openEditModal;
 window.openEnseignantModal = openEnseignantModal;
 window.supprimerMatiere = supprimerMatiere;
 
+// Calcul dynamique taux horaire
+document.getElementById('creditInput')?.addEventListener('input', (e) => {
+    const credit = parseInt(e.target.value) || 0;
+    document.getElementById('tauxHoraireDisplay').textContent = credit * 15;
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('openCreateModalBtn').addEventListener('click', openCreateModal);
+
+    // Search filter
+    const searchInput = document.getElementById('matiereSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            renderMatieres(e.target.value);
+        });
+    }
 
     await fetchSpecialites();
     await fetchEnseignants();
