@@ -40,28 +40,36 @@ function showToast(msg, type = 'info', duration = 3000) {
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
-const tabScan   = document.getElementById('tab-scan');
-const tabList   = document.getElementById('tab-list');
-const panelScan = document.getElementById('panel-scan');
-const panelList = document.getElementById('panel-list');
+const tabScan    = document.getElementById('tab-scan');
+const tabQrgen   = document.getElementById('tab-qrgen');
+const tabList    = document.getElementById('tab-list');
+const panelScan  = document.getElementById('panel-scan');
+const panelQrgen = document.getElementById('panel-qrgen');
+const panelList  = document.getElementById('panel-list');
 
 function activateTab(tab) {
+  // Reset all
+  [tabScan, tabQrgen, tabList].forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  [panelScan, panelQrgen, panelList].forEach(p => p.classList.add('hidden'));
+
   if (tab === 'scan') {
     tabScan.classList.add('active');  tabScan.setAttribute('aria-selected','true');
-    tabList.classList.remove('active'); tabList.setAttribute('aria-selected','false');
     panelScan.classList.remove('hidden');
-    panelList.classList.add('hidden');
+  } else if (tab === 'qrgen') {
+    tabQrgen.classList.add('active'); tabQrgen.setAttribute('aria-selected','true');
+    panelQrgen.classList.remove('hidden');
+    stopScan();
+    initQRGen();
   } else {
     tabList.classList.add('active');  tabList.setAttribute('aria-selected','true');
-    tabScan.classList.remove('active'); tabScan.setAttribute('aria-selected','false');
     panelList.classList.remove('hidden');
-    panelScan.classList.add('hidden');
     stopScan();
   }
 }
 
-tabScan.addEventListener('click', () => activateTab('scan'));
-tabList.addEventListener('click', () => activateTab('list'));
+tabScan.addEventListener('click',   () => activateTab('scan'));
+tabQrgen.addEventListener('click',  () => activateTab('qrgen'));
+tabList.addEventListener('click',   () => activateTab('list'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QR SCAN
@@ -255,8 +263,338 @@ document.getElementById('btn-mark-all-present').addEventListener('click', () => 
   showToast('Tous les étudiants marqués présents.', 'success');
 });
 
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// CLÔTURER L'APPEL
+// QR PRÉSENCE – GÉNÉRATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let qrGenInited      = false;
+let sessionQRCode    = null;   // QRCode instance – séance
+let fsQRCode         = null;   // QRCode instance – fullscreen
+let studentQRCode    = null;   // QRCode instance – étudiant sélectionné
+let qrTimerInterval  = null;
+let qrTimeLeft       = 120;    // 2 minutes in seconds
+let currentToken     = '';
+let selectedStudentId = null;
+
+// ── Mode toggle ───────────────────────────────────────────────────────────────
+const modeSessionBtn = document.getElementById('qrgen-mode-session');
+const modeStudentBtn = document.getElementById('qrgen-mode-student');
+const sessionPanel   = document.getElementById('qrgen-session-panel');
+const studentPanel   = document.getElementById('qrgen-student-panel');
+
+modeSessionBtn?.addEventListener('click', () => {
+  modeSessionBtn.classList.add('active');
+  modeStudentBtn.classList.remove('active');
+  sessionPanel.style.display = '';
+  studentPanel.style.display = 'none';
+});
+
+modeStudentBtn?.addEventListener('click', () => {
+  modeStudentBtn.classList.add('active');
+  modeSessionBtn.classList.remove('active');
+  studentPanel.style.display = '';
+  sessionPanel.style.display = 'none';
+  renderStudentPicker();
+});
+
+// ── Token generator (pseudo-random, changes each renewal) ─────────────────────
+function genToken() {
+  return `ADSIS-SESSION:${session.id}:${Date.now()}:${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+}
+
+// ── Init QR gen (called once when tab is first opened) ────────────────────────
+function initQRGen() {
+  if (qrGenInited) return;
+  qrGenInited = true;
+
+  // Set labels
+  document.getElementById('qr-label-course').textContent = session.course;
+  document.getElementById('qr-label-meta').textContent =
+    [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
+  document.getElementById('qr-fs-course').textContent = session.course;
+  document.getElementById('qr-fs-meta').textContent =
+    [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
+
+  generateSessionQR();
+}
+
+// ── Generate/renew session QR ─────────────────────────────────────────────────
+function generateSessionQR() {
+  currentToken = genToken();
+
+  // Clear previous
+  const container  = document.getElementById('qr-canvas-session');
+  const containerFS = document.getElementById('qr-fullscreen-canvas');
+  container.innerHTML  = '';
+  containerFS.innerHTML = '';
+
+  // Hide expired overlay
+  const expiredOverlay = document.getElementById('qr-expired-overlay');
+  if (expiredOverlay) expiredOverlay.style.display = 'none';
+
+  // QR size — responsive
+  const qrSize = Math.min(220, window.innerWidth - 100);
+
+  try {
+    sessionQRCode = new QRCode(container, {
+      text: currentToken,
+      width:  qrSize,
+      height: qrSize,
+      colorDark:  '#1a1f36',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+
+    fsQRCode = new QRCode(containerFS, {
+      text: currentToken,
+      width:  Math.min(320, window.innerWidth - 80),
+      height: Math.min(320, window.innerWidth - 80),
+      colorDark:  '#ffffff',
+      colorLight: '#0f172a',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  } catch (e) {
+    container.innerHTML = '<p style="color:var(--danger);font-size:.85rem;">Erreur de génération du QR code.</p>';
+  }
+
+  // Start / restart timer
+  startQRTimer();
+}
+
+window.renewQR = generateSessionQR; // for inline onclick
+
+// ── Timer ─────────────────────────────────────────────────────────────────────
+function startQRTimer() {
+  clearInterval(qrTimerInterval);
+  qrTimeLeft = 120;
+  updateTimerDisplay();
+
+  qrTimerInterval = setInterval(() => {
+    qrTimeLeft--;
+    updateTimerDisplay();
+
+    if (qrTimeLeft <= 0) {
+      clearInterval(qrTimerInterval);
+      // Show expired overlay
+      const expiredOverlay = document.getElementById('qr-expired-overlay');
+      if (expiredOverlay) {
+        expiredOverlay.style.display = 'flex';
+        // Blur QR to make it obviously invalid
+        const canvas = document.querySelector('#qr-canvas-session canvas');
+        if (canvas) canvas.style.filter = 'blur(6px)';
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const mins = String(Math.floor(qrTimeLeft / 60)).padStart(2,'0');
+  const secs = String(qrTimeLeft % 60).padStart(2,'0');
+  const str  = `${mins}:${secs}`;
+  const expiring = qrTimeLeft <= 30;
+
+  ['qr-timer','qr-fs-timer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = str;
+    el.classList.toggle('expiring', expiring);
+  });
+}
+
+// ── Renew button ──────────────────────────────────────────────────────────────
+document.getElementById('btn-refresh-qr')?.addEventListener('click', generateSessionQR);
+
+// ── Fullscreen ────────────────────────────────────────────────────────────────
+const fsModal     = document.getElementById('qr-fullscreen-modal');
+const fsCloseBtn  = document.getElementById('qr-fullscreen-close');
+
+document.getElementById('btn-fullscreen-qr')?.addEventListener('click', () => {
+  fsModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+});
+
+fsCloseBtn?.addEventListener('click', closeFullscreen);
+fsModal?.addEventListener('click', e => { if (e.target === fsModal) closeFullscreen(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFullscreen(); });
+
+function closeFullscreen() {
+  fsModal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ── Download session QR ───────────────────────────────────────────────────────
+document.getElementById('btn-download-qr')?.addEventListener('click', () => {
+  const canvas = document.querySelector('#qr-canvas-session canvas');
+  if (!canvas) return;
+
+  // Draw a decorated version with label
+  const label   = session.course || 'Séance';
+  const meta    = [session.class, session.room].filter(Boolean).join(' • ');
+  const padding = 20;
+  const textH   = 52;
+
+  const out = document.createElement('canvas');
+  out.width  = canvas.width + padding * 2;
+  out.height = canvas.height + padding * 2 + textH;
+  const ctx = out.getContext('2d');
+
+  // White bg
+  ctx.fillStyle = '#fff';
+  ctx.roundRect(0, 0, out.width, out.height, 16);
+  ctx.fill();
+
+  // QR
+  ctx.drawImage(canvas, padding, padding);
+
+  // Label
+  ctx.fillStyle = '#1a1f36';
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, out.width / 2, canvas.height + padding + 24);
+
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText(meta, out.width / 2, canvas.height + padding + 44);
+
+  const a = document.createElement('a');
+  a.download = `QR_${label.replace(/\s+/g,'-')}_${session.class || 'seance'}.png`;
+  a.href = out.toDataURL('image/png');
+  a.click();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QR PAR ÉTUDIANT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderStudentPicker() {
+  const listEl = document.getElementById('qrgen-student-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  students.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'qrgen-stu-item';
+    item.dataset.id   = s.id;
+    item.dataset.name = s.name.toLowerCase();
+
+    const initials = s.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    item.innerHTML = `
+      <div class="qrgen-stu-avatar">${initials}</div>
+      <div class="qrgen-stu-info">
+        <div class="qrgen-stu-name">${s.name}</div>
+        <div class="qrgen-stu-mat">${s.matricule}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => {
+      listEl.querySelectorAll('.qrgen-stu-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      showStudentQR(s);
+    });
+
+    listEl.appendChild(item);
+  });
+}
+
+// Student search filter
+document.getElementById('qrgen-student-search')?.addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.qrgen-stu-item').forEach(item => {
+    item.style.display = item.dataset.name.includes(q) ? '' : 'none';
+  });
+});
+
+function showStudentQR(student) {
+  selectedStudentId = student.id;
+  const container = document.getElementById('qrgen-student-qr');
+  container.innerHTML = '';
+
+  // QR data: ADSIS:<studentId>:<matricule>:<sessionId>
+  const qrData = `ADSIS:${student.id}:${student.matricule}:${session.id}`;
+  const qrSize = Math.min(180, window.innerWidth - 160);
+
+  const box = document.createElement('div');
+  box.className = 'qrgen-stu-qr-box';
+
+  const canvasWrap = document.createElement('div');
+  canvasWrap.id = `stu-qr-${student.id}`;
+
+  box.innerHTML = `
+    <div class="qrgen-stu-qr-name">${student.name}</div>
+  `;
+  box.insertBefore(canvasWrap, box.firstChild);
+
+  const matEl = document.createElement('div');
+  matEl.className = 'qrgen-stu-qr-mat';
+  matEl.textContent = student.matricule;
+  box.appendChild(matEl);
+
+  // Buttons row
+  const btnRow = document.createElement('div');
+  btnRow.className = 'qrgen-stu-btn-row';
+
+  const btnDl = document.createElement('button');
+  btnDl.className = 'btn-qrgen-action btn-stu-dl btn-download-qr';
+  btnDl.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Télécharger
+  `;
+
+  const btnMark = document.createElement('button');
+  btnMark.className = 'btn-qrgen-action btn-stu-mark';
+  btnMark.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    Marquer présent
+  `;
+
+  btnRow.appendChild(btnDl);
+  btnRow.appendChild(btnMark);
+  box.appendChild(btnRow);
+  container.appendChild(box);
+
+  // Generate QR
+  try {
+    studentQRCode = new QRCode(canvasWrap, {
+      text: qrData,
+      width:  qrSize,
+      height: qrSize,
+      colorDark:  '#1a1f36',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  } catch(e) {
+    canvasWrap.textContent = 'Erreur QR';
+  }
+
+  // Download student QR
+  btnDl.addEventListener('click', () => {
+    const canvas = canvasWrap.querySelector('canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.download = `QR_${student.name.replace(/\s+/g,'-')}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+
+  // Mark present manually
+  btnMark.addEventListener('click', () => {
+    attendance[student.id] = 'present';
+    updateCounters();
+    updateStudentRow(student.id);
+    showToast(`✓ ${student.name} marqué présent`, 'success');
+    btnMark.disabled = true;
+    btnMark.style.opacity = '0.6';
+    btnMark.textContent = 'Présent ✓';
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 const modalOverlay = document.getElementById('modal-overlay');
 const modalText    = document.getElementById('modal-text');

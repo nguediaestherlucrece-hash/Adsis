@@ -6,6 +6,8 @@
     <title>ADSIS – Séance d'appel</title>
     <!-- html5-qrcode CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- QRCode.js pour générer les QR codes étudiants -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="../style/shared.css" />
     <link rel="stylesheet" href="../style/appel.css" />
 </head>
@@ -38,7 +40,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             <span>Appel</span>
         </a>
-        <a href="profilens.html" class="nav-item">
+        <a href="profil.html" class="nav-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span>Mon profil</span>
         </a>
@@ -119,6 +121,15 @@
                 </svg>
                 Scan QR
             </button>
+            <button class="tab-btn" id="tab-qrgen" role="tab" aria-selected="false" aria-controls="panel-qrgen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+                    <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/>
+                    <rect x="3" y="16" width="5" height="5" rx="1"/>
+                    <path d="M21 16h-5v5"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M12 3v.01"/>
+                    <path d="M12 14v.01"/><path d="M7 12h-4"/><path d="M16 12h-1"/>
+                </svg>
+                QR Présence
+            </button>
             <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" aria-controls="panel-list">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
                     <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
@@ -180,6 +191,120 @@
             </div>
         </div>
 
+        <!-- Panel: QR Présence (généré pour les étudiants) -->
+        <div class="tab-panel hidden" id="panel-qrgen" role="tabpanel" aria-labelledby="tab-qrgen">
+            <div class="qrgen-wrap">
+
+                <!-- Explication -->
+                <div class="qrgen-intro">
+                    <div class="qrgen-intro-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <p>Affichez ce QR code aux étudiants. Chaque étudiant scanne <strong>son propre QR code</strong> personnel depuis l'application pour être marqué présent automatiquement.</p>
+                </div>
+
+                <!-- Mode selector -->
+                <div class="qrgen-mode-bar">
+                    <button class="qrgen-mode-btn active" id="qrgen-mode-session" data-mode="session">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        QR de séance
+                    </button>
+                    <button class="qrgen-mode-btn" id="qrgen-mode-student" data-mode="student">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        QR par étudiant
+                    </button>
+                </div>
+
+                <!-- ─── Mode séance : un seul QR à afficher en grand ─── -->
+                <div id="qrgen-session-panel">
+                    <p class="qrgen-hint">Ce QR code identifie la séance. Projetez-le au tableau ou affichez-le sur votre écran pendant 2 minutes.</p>
+
+                    <div class="qrgen-timer-row">
+                        <span class="qrgen-timer-label">Expire dans :</span>
+                        <span class="qrgen-timer-val" id="qr-timer">02:00</span>
+                        <button class="btn-refresh-qr" id="btn-refresh-qr" title="Renouveler">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                            Renouveler
+                        </button>
+                    </div>
+
+                    <div class="qrgen-display" id="qrgen-display">
+                        <div class="qrgen-qr-box">
+                            <div id="qr-canvas-session"></div>
+                            <div class="qrgen-qr-label">
+                                <strong id="qr-label-course"></strong>
+                                <span id="qr-label-meta"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="qrgen-actions">
+                        <button class="btn-qrgen-action btn-fullscreen" id="btn-fullscreen-qr">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                            Plein écran
+                        </button>
+                        <button class="btn-qrgen-action btn-download-qr" id="btn-download-qr">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Télécharger
+                        </button>
+                    </div>
+
+                    <!-- QR expiré overlay -->
+                    <div class="qr-expired-overlay" id="qr-expired-overlay" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <p>QR code expiré</p>
+                        <button class="btn-qrgen-action" onclick="renewQR()">Renouveler</button>
+                    </div>
+                </div>
+
+                <!-- ─── Mode par étudiant : QR individuel pour chaque étudiant ─── -->
+                <div id="qrgen-student-panel" style="display:none;">
+                    <p class="qrgen-hint">Chaque étudiant dispose d'un QR code unique. Affichez-les un par un ou imprimez-les pour les distribuer.</p>
+
+                    <div class="qrgen-student-picker">
+                        <div class="qrgen-student-search-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="qrgen-search-icon">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <input type="search" id="qrgen-student-search" class="qrgen-student-search" placeholder="Rechercher un étudiant…" />
+                        </div>
+                        <div class="qrgen-student-list" id="qrgen-student-list">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="qrgen-student-qr" id="qrgen-student-qr">
+                        <div class="qrgen-student-qr-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <p>Sélectionnez un étudiant pour afficher son QR code</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- Panel: Liste de classe -->
         <div class="tab-panel hidden" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
             <div class="list-search-wrap">
@@ -227,6 +352,26 @@
         <div class="modal-actions">
             <button class="modal-btn modal-cancel" id="modal-cancel">Annuler</button>
             <button class="modal-btn modal-confirm" id="modal-confirm">Clôturer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Fullscreen QR Modal -->
+<div class="qr-fullscreen-modal" id="qr-fullscreen-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="QR code plein écran">
+    <button class="qr-fullscreen-close" id="qr-fullscreen-close" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+    <div class="qr-fullscreen-content">
+        <div id="qr-fullscreen-canvas"></div>
+        <div class="qr-fullscreen-info">
+            <h2 id="qr-fs-course"></h2>
+            <p id="qr-fs-meta"></p>
+            <div class="qr-fs-timer-row">
+                <span>Expire dans :</span>
+                <span class="qrgen-timer-val" id="qr-fs-timer">02:00</span>
+            </div>
         </div>
     </div>
 </div>
