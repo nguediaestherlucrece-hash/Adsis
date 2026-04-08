@@ -451,3 +451,43 @@ body {
     color: white;
     border-color: #28a745;
 }
+/* --- SECTION EXPORT PDF (MEDIA PRINT) --- */
+@media print {
+    /* Masquer les éléments inutiles sur le PDF */
+    .sidebar, 
+    .col-md-3, 
+    .main-header button, 
+    .main-header select,
+    .periode-container,
+    #coursesContainer,
+    .mt-4,
+    hr,
+    .admin-profile {
+        display: none !important;
+    }
+
+    /* Ajuster la mise en page pour le PDF */
+    .main-content {
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background-color: white !important;
+    }
+
+    .col-md-9 {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Supprimer les ombres pour le PDF */
+    .card-timetable {
+        box-shadow: none !important;
+        border: 1px solid #eee !important;
+        padding: 0 !important;
+    }
+    
+    body {
+        background-color: white !important;
+    }
+}

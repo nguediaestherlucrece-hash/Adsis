@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADSIS – Mon profil</title>
+    <link rel="stylesheet" href="../style/shared.css" />
+    <link rel="stylesheet" href="../style/profilens.css" />
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <img src="../assets/image.png" alt="ADSIS" onerror="this.style.display='none';document.querySelector('.logo-txt-fb').style.display='flex';" />
+            <span class="logo-txt-fb" style="display:none;">✔</span>
+        </div>
+        <span class="sidebar-brand">ADSIS</span>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="sidebar-etab">
+        <span class="etab-label">ÉTABLISSEMENT</span>
+        <span class="etab-name" id="sb-etab"></span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="dashboardens.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span>Tableau de bord</span>
+        </a>
+        <a href="emploiens.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Emploi de temps</span>
+        </a>
+        <a href="appel.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Appel</span>
+        </a>
+        <a href="profilens.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Mon profil</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="nav-item nav-logout" id="btn-logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>Déconnexion</span>
+        </button>
+    </div>
+</aside>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrap">
+    <header class="topbar">
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <button class="back-btn" onclick="history.back()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="topbar-title">
+            <h2>Mon profil</h2>
+            <p id="page-date" class="topbar-date"></p>
+        </div>
+        <div class="topbar-user">
+            <div class="user-info">
+                <span id="user-name-top" class="user-name"></span>
+                <span id="user-email-top" class="user-email"></span>
+            </div>
+            <div class="avatar" id="user-avatar">DM</div>
+        </div>
+    </header>
+
+    <main class="content">
+
+        <!-- Profile card -->
+        <div class="profile-hero">
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar" id="prof-avatar">DM</div>
+                <button class="avatar-edit-btn" title="Changer la photo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="profile-hero-info">
+                <h2 id="prof-name">Marie Dupont</h2>
+                <p class="prof-role-label">ENSEIGNANT</p>
+                <span class="prof-role-badge">Enseignant</span>
+            </div>
+            <div class="profile-etab-badge">
+                <div class="etab-logo">
+                    <img src="logo.png" alt="ADSIS" onerror="this.style.display='none';" />
+                </div>
+                <span id="prof-etab">Saint Jean Ingénieur</span>
+            </div>
+        </div>
+
+        <!-- Personal info form -->
+        <div class="profile-section" id="form-section">
+            <div class="section-heading">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                Informations personnelles
+            </div>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="f-prenom">Prénom</label>
+                    <input type="text" id="f-prenom" placeholder="Prénom" />
+                </div>
+                <div class="form-field">
+                    <label for="f-nom">Nom</label>
+                    <input type="text" id="f-nom" placeholder="Nom" />
+                </div>
+                <div class="form-field form-field-full">
+                    <label for="f-email">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,12 2,6"/>
+                        </svg>
+                        Email
+                    </label>
+                    <input type="email" id="f-email" placeholder="email@adsis.com" />
+                </div>
+                <div class="form-field">
+                    <label for="f-tel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 5.55 5.55l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z"/>
+                        </svg>
+                        Téléphone
+                    </label>
+                    <input type="tel" id="f-tel" placeholder="+221 77 000 00 00" />
+                </div>
+                <div class="form-field">
+                    <label for="f-adresse">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        Adresse
+                    </label>
+                    <input type="text" id="f-adresse" placeholder="Ville, Pays" />
+                </div>
+                <div class="form-field form-field-full">
+                    <label for="f-etab">Établissement</label>
+                    <input type="text" id="f-etab" placeholder="Nom de l'établissement" disabled />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-save" id="btn-save">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Enregistrer les modifications
+                </button>
+            </div>
+
+            <div class="save-feedback" id="save-feedback"></div>
+        </div>
+
+        <!-- Security section -->
+        <div class="profile-section">
+            <div class="section-heading">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Sécurité
+            </div>
+
+            <div class="form-grid">
+                <div class="form-field form-field-full">
+                    <label for="f-pw-cur">Mot de passe actuel</label>
+                    <div class="input-pw-wrap">
+                        <input type="password" id="f-pw-cur" placeholder="••••••••" />
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="f-pw-new">Nouveau mot de passe</label>
+                    <input type="password" id="f-pw-new" placeholder="••••••••" />
+                </div>
+                <div class="form-field">
+                    <label for="f-pw-conf">Confirmer</label>
+                    <input type="password" id="f-pw-conf" placeholder="••••••••" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-save btn-secondary" id="btn-change-pw">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Changer le mot de passe
+                </button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="../script/shared.js"></script>
+<script src="../script/profilens.js"></script>
+</body>
+</html>

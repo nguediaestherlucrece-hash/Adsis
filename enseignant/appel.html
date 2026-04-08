@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADSIS – Séance d'appel</title>
+    <!-- html5-qrcode CDN -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link rel="stylesheet" href="../style/shared.css" />
+    <link rel="stylesheet" href="../style/appel.css" />
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <img src="../assets/image.png" alt="ADSIS" onerror="this.style.display='none';document.querySelector('.logo-txt-fb').style.display='flex';" />
+            <span class="logo-txt-fb" style="display:none;">✔</span>
+        </div>
+        <span class="sidebar-brand">ADSIS</span>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="sidebar-etab">
+        <span class="etab-label">ÉTABLISSEMENT</span>
+        <span class="etab-name" id="sb-etab"></span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="dashboardens.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span>Tableau de bord</span>
+        </a>
+        <a href="emploiens.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Emploi de temps</span>
+        </a>
+        <a href="appel.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Appel</span>
+        </a>
+        <a href="profilens.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Mon profil</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="nav-item nav-logout" id="btn-logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>Déconnexion</span>
+        </button>
+    </div>
+</aside>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrap">
+
+    <!-- TOPBAR -->
+    <header class="topbar topbar-appel">
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <button class="back-btn" id="back-btn" onclick="history.back()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="topbar-title">
+            <h2 id="page-title">Séance d'appel</h2>
+            <p id="page-date" class="topbar-date"></p>
+        </div>
+        <div class="topbar-user">
+            <div class="user-info">
+                <span id="user-name-top" class="user-name"></span>
+                <span id="user-email-top" class="user-email"></span>
+            </div>
+            <div class="avatar" id="user-avatar">DM</div>
+        </div>
+    </header>
+
+    <main class="content">
+
+        <!-- Session info banner -->
+        <div class="session-banner" id="session-banner">
+            <div class="session-info">
+                <h3 id="session-course">Base de données</h3>
+                <p id="session-meta">L1 Info A • Salle C105 • 14:00 – 16:00</p>
+            </div>
+            <div class="session-status" id="session-status">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                    <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                    <line x1="12" y1="20" x2="12.01" y2="20"/>
+                </svg>
+                En ligne
+            </div>
+        </div>
+
+        <!-- Stats counters -->
+        <div class="counters-row">
+            <div class="counter-card counter-present">
+                <span class="counter-num" id="cnt-present">0</span>
+                <span class="counter-lbl">PRÉSENTS</span>
+            </div>
+            <div class="counter-card counter-retard">
+                <span class="counter-num" id="cnt-retard">0</span>
+                <span class="counter-lbl">RETARDS</span>
+            </div>
+            <div class="counter-card counter-absent">
+                <span class="counter-num" id="cnt-absent">0</span>
+                <span class="counter-lbl">ABSENTS</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-bar" role="tablist">
+            <button class="tab-btn active" id="tab-scan" role="tab" aria-selected="true" aria-controls="panel-scan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+                    <path d="M23 7V1h-6"/><path d="M1 7V1h6"/><path d="M23 17v6h-6"/><path d="M1 17v6h6"/>
+                    <rect x="7" y="7" width="4" height="4"/><rect x="13" y="7" width="4" height="4"/>
+                    <rect x="7" y="13" width="4" height="4"/><rect x="13" y="13" width="4" height="4"/>
+                </svg>
+                Scan QR
+            </button>
+            <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" aria-controls="panel-list">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                Liste de classe
+            </button>
+        </div>
+
+        <!-- Panel: Scan QR -->
+        <div class="tab-panel" id="panel-scan" role="tabpanel" aria-labelledby="tab-scan">
+            <div class="scan-wrap">
+                <div id="reader-container">
+                    <div id="reader"></div>
+                    <div class="scan-overlay" id="scan-overlay">
+                        <div class="scan-frame">
+                            <div class="scan-corner tl"></div>
+                            <div class="scan-corner tr"></div>
+                            <div class="scan-corner bl"></div>
+                            <div class="scan-corner br"></div>
+                            <div class="scan-line" id="scan-line"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="camera-error" id="camera-error" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                    <p class="camera-error-title">Impossible d'accéder à la caméra.</p>
+                    <p class="camera-error-sub">Veuillez autoriser l'accès dans les paramètres du navigateur.</p>
+                    <p class="camera-error-hint">Demandez aux étudiants de présenter leur QR code à l'entrée</p>
+                </div>
+
+                <div class="scan-result" id="scan-result" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span id="scan-result-text">Étudiant marqué !</span>
+                </div>
+
+                <div class="scan-controls">
+                    <button class="btn-start-scan" id="btn-start-scan">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <path d="M23 7V1h-6"/><path d="M1 7V1h6"/>
+                            <path d="M23 17v6h-6"/><path d="M1 17v6h6"/>
+                        </svg>
+                        Démarrer le scan
+                    </button>
+                    <button class="btn-stop-scan" id="btn-stop-scan" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <rect x="6" y="6" width="12" height="12"/>
+                        </svg>
+                        Arrêter le scan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: Liste de classe -->
+        <div class="tab-panel hidden" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
+            <div class="list-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="search-icon">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="search" id="student-search" class="student-search" placeholder="Rechercher un étudiant…" />
+            </div>
+
+            <div class="student-list" id="student-list">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="list-actions">
+                <button class="btn-mark-all" id="btn-mark-all-present">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Tous présents
+                </button>
+            </div>
+        </div>
+
+        <!-- Clôturer -->
+        <div class="close-appel-bar">
+            <button class="btn-cloture" id="btn-cloture">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Clôturer l'appel
+            </button>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <h3 class="modal-title">Clôturer l'appel</h3>
+        <p class="modal-text" id="modal-text">Êtes-vous sûr de vouloir clôturer cet appel ?</p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel" id="modal-cancel">Annuler</button>
+            <button class="modal-btn modal-confirm" id="modal-confirm">Clôturer</button>
+        </div>
+    </div>
+</div>
+
+<script src="../script/shared.js"></script>
+<script src="../script/appel.js"></script>
+</body>
+</html>
