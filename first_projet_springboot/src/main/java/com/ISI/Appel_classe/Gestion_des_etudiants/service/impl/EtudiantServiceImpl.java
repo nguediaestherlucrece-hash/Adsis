@@ -28,8 +28,11 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Semestre;
 import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.EtudiantService;
 import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.EtudiantMapper;
 import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.HistoriqueClasseMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,6 +67,8 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final PresenceRepository presenceRepository;
     private final AnneeAcademiqueRepository anneeAcademiqueRepository;
     private final SemestreRepository semestreRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailSenderService emailSenderService;
 
 
     @Override
@@ -145,6 +150,9 @@ public class EtudiantServiceImpl implements EtudiantService {
         // Statut par défaut ACTIF si non fourni
         etudiant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
 
+        String generatedPassword = UserPasswordGenerator.generateRandomPassword();
+        etudiant.setPassword(passwordEncoder.encode(generatedPassword));
+
         // Champs par défaut de Utilisateur
         etudiant.setEnabled(true);
         etudiant.setAccountNonLocked(true);
@@ -200,6 +208,9 @@ public class EtudiantServiceImpl implements EtudiantService {
 
         Etudiant saved = etudiantRepository.save(etudiant);
         log.info("Étudiant créé avec succès avec l'ID: {}", saved.getId());
+
+        // Envoyer le mot de passe par email de manière asynchrone
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), generatedPassword);
 
         return mapper.toDTO(saved);
     }

@@ -14,8 +14,11 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SurveillantRepos
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.SurveillantService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.SurveillantMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +38,10 @@ public class SurveillantServiceImpl implements SurveillantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final SurveillantMapper mapper;
+    private final PasswordEncoder passwordEncoder;
     private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
     private final PermissionOverrideHelper permissionOverrideHelper;
+    private final EmailSenderService emailSenderService;
 
     @Override
     public List<SurveillantDTO> getAllSurveillants() {
@@ -76,6 +81,10 @@ public class SurveillantServiceImpl implements SurveillantService {
         surveillant.setPrenom(dto.getPrenom());
         surveillant.setEmail(dto.getEmail());
         surveillant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
+
+        String generatedPassword = UserPasswordGenerator.generateRandomPassword();
+        surveillant.setPassword(passwordEncoder.encode(generatedPassword));
+
         surveillant.setEnabled(true);
         surveillant.setAccountNonLocked(true);
         surveillant.setPremiereConnexion(false);
@@ -107,6 +116,9 @@ public class SurveillantServiceImpl implements SurveillantService {
 
         Surveillant saved = surveillantRepository.save(surveillant);
         log.info("Surveillant créé - ID: {}", saved.getId());
+
+        // Envoyer le mot de passe par email
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), generatedPassword);
 
         return mapper.toDTO(saved);
     }

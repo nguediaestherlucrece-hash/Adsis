@@ -12,9 +12,13 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.UtilisateurMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UtilisateurServiceImpl implements UtilisateurService {
@@ -32,6 +37,9 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     private final RoleRepository roleRepository;
     private final PermissionOverrideHelper permissionOverrideHelper;
     private final UtilisateurMapper mapper;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailSenderService emailSenderService;
+
 
     @Override
     public Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Long filiere, Pageable pageable) {
@@ -70,9 +78,14 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         }
 
         Utilisateur utilisateur = new Utilisateur();
+
         utilisateur.setNom(dto.getNom());
         utilisateur.setPrenom(dto.getPrenom());
         utilisateur.setEmail(dto.getEmail());
+
+        String password = UserPasswordGenerator.generateRandomPassword();
+        utilisateur.setPassword(passwordEncoder.encode(password));
+
         utilisateur.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
 
         // Assigner les rôles
@@ -90,6 +103,10 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         permissionOverrideHelper.applyRemovedPermissions(utilisateur, dto.getRemovedPermissions());
 
         Utilisateur saved = repository.save(utilisateur);
+
+        // Envoyer le mot de passe par email
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), password);
+
         return mapper.toDTO(saved);
     }
 

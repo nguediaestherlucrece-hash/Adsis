@@ -22,25 +22,25 @@ public class AssistantPedagogiqueController {
     private final AssistantPedagogiqueService assistantService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AssistantPedagogiqueDTO>> getAll() {
         return ResponseEntity.ok(assistantService.getAllAssistants());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssistantPedagogiqueDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(assistantService.getAssistantById(id));
     }
 
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssistantPedagogiqueDTO> getByEmail(@PathVariable String email) {
         return ResponseEntity.ok(assistantService.getAssistantByEmail(email));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ASSISTANT_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssistantPedagogiqueDTO> create(@RequestBody AssistantPedagogiqueCreateDTO dto) {
         log.info("Création assistant pédagogique: {}", dto.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -48,7 +48,7 @@ public class AssistantPedagogiqueController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSISTANT_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<AssistantPedagogiqueDTO> update(
             @PathVariable Long id,
             @RequestBody AssistantPedagogiqueUpdateDTO dto) {
@@ -56,20 +56,20 @@ public class AssistantPedagogiqueController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ASSISTANT_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         assistantService.deleteAssistant(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/filiere/{filiereId}")
-    @PreAuthorize("hasAuthority('ASSISTANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AssistantPedagogiqueDTO>> getAssistantPedagogiqueByFiliere(@PathVariable Long filiereId) {
         return ResponseEntity.ok(assistantService.getAssistantsByFiliere(filiereId));
     }
 
     @PostMapping("/{id}/filiere/{filiereId}")
-    @PreAuthorize("hasAuthority('ASSISTANT_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AssistantPedagogiqueDTO> assignFiliere(@PathVariable Long id, @PathVariable Long filiereId) {
         return ResponseEntity.ok(assistantService.assignAssistantToFiliere(id, filiereId));
     }

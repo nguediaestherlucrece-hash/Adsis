@@ -15,8 +15,11 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.EnseignantService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.EnseignantMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +45,9 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final EnseignantMapper mapper;
+    private final PasswordEncoder passwordEncoder;
     private final PermissionOverrideHelper permissionOverrideHelper;
+    private final EmailSenderService emailSenderService;
 
     @Override
     public List<EnseignantDTO> getAllEnseignants() {
@@ -88,6 +93,10 @@ public class EnseignantServiceImpl implements EnseignantService {
         enseignant.setPrenom(dto.getPrenom());
         enseignant.setEmail(dto.getEmail());
         enseignant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
+
+        String generatedPassword = UserPasswordGenerator.generateRandomPassword();
+        enseignant.setPassword(passwordEncoder.encode(generatedPassword));
+
         enseignant.setEnabled(true);
         enseignant.setAccountNonLocked(true);
         enseignant.setPremiereConnexion(false);
@@ -125,6 +134,9 @@ public class EnseignantServiceImpl implements EnseignantService {
 
         Enseignant saved = enseignantRepository.save(enseignant);
         log.info("Enseignant créé avec succès - ID: {}", saved.getId());
+
+        // Envoyer le mot de passe par email
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), generatedPassword);
 
         return mapper.toDTO(saved);
     }

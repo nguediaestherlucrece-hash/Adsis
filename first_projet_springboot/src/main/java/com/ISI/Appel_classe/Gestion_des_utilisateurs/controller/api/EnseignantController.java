@@ -25,35 +25,35 @@ public class EnseignantController {
     private final EnseignantService enseignantService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<EnseignantDTO>> getAllEnseignants() {
         log.info("📖 [GET /api/enseignants] Récupération de tous les enseignants");
         return ResponseEntity.ok(enseignantService.getAllEnseignants());
     }
 
     @GetMapping("/actifs")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EnseignantDTO>> getActiveEnseignants() {
         log.info("📖 [GET /api/enseignants/actifs] Récupération des enseignants actifs");
         return ResponseEntity.ok(enseignantService.getActiveEnseignants());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EnseignantDTO> getById(@PathVariable Long id) {
         log.info("📖 [GET /api/enseignants/{}]", id);
         return ResponseEntity.ok(enseignantService.getEnseignantById(id));
     }
 
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_READ')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EnseignantDTO> getByEmail(@PathVariable String email) {
         log.info("📖 [GET /api/enseignants/email/{}]", email);
         return ResponseEntity.ok(enseignantService.getEnseignantByEmail(email));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ENSEIGNANT_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EnseignantDTO> create(@RequestBody EnseignantCreateDTO dto) {
         log.info("➕ [POST /api/enseignants] Création: {}", dto.getEmail());
         EnseignantDTO created = enseignantService.createEnseignant(dto);
@@ -62,7 +62,7 @@ public class EnseignantController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<EnseignantDTO> update(
             @PathVariable Long id,
             @RequestBody EnseignantUpdateDTO dto) {
@@ -71,7 +71,7 @@ public class EnseignantController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("🗑️ [DELETE /api/enseignants/{}]", id);
         enseignantService.deleteEnseignant(id);
@@ -79,7 +79,7 @@ public class EnseignantController {
     }
 
     @PatchMapping("/{id}/cours")
-    @PreAuthorize("hasAuthority('ENSEIGNANT_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EnseignantDTO> assignerCours(
             @PathVariable Long id,
             @RequestBody List<Long> coursIds) {

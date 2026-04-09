@@ -21,33 +21,33 @@ public class ClasseController {
     private final ClasseService classeService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CLASSE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ClasseDTO>> getAllClasses() {
         return ResponseEntity.ok(classeService.getAllClasses());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSE_READ')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<ClasseDTO> getClasseById(@PathVariable Long id) {
         return ResponseEntity.ok(classeService.getClasseById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CLASSE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ClasseDTO> createClasse(@RequestBody ClasseCreateDTO dto) {
         ClasseDTO created = classeService.createClasse(dto);
         return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ClasseDTO> updateClasse(@PathVariable Long id, @RequestBody ClasseUpdateDTO dto) {
         ClasseDTO updated = classeService.updateClasse(id, dto);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('CLASSE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteClasse(@PathVariable Long id) {
         classeService.deleteClasse(id);
         return ResponseEntity.noContent().build();

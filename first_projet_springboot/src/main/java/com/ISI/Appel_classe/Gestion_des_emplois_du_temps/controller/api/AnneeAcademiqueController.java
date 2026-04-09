@@ -22,35 +22,35 @@ public class AnneeAcademiqueController {
     private final AnneeAcademiqueService anneeAcademiqueService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ANNEE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AnneeAcademiqueDTO>> getAllAnnees() {
         List<AnneeAcademiqueDTO> annees = anneeAcademiqueService.getAllAnnees();
         return ResponseEntity.ok(annees);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ANNEE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnneeAcademiqueDTO> getAnneeById(@PathVariable Long id) {
         AnneeAcademiqueDTO dto = anneeAcademiqueService.getAnneeById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idAnnee}")
-    @PreAuthorize("hasAuthority('ANNEE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnneeAcademiqueDTO> getAnneeByCode(@PathVariable String idAnnee) {
         AnneeAcademiqueDTO dto = anneeAcademiqueService.getAnneeByCode(idAnnee);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ANNEE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnneeAcademiqueDTO> createAnnee(@RequestBody AnneeAcademiqueCreateDTO dto) {
         AnneeAcademiqueDTO created = anneeAcademiqueService.createAnnee(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ANNEE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnneeAcademiqueDTO> updateAnnee(
             @PathVariable Long id,
             @RequestBody AnneeAcademiqueUpdateDTO dto) {
@@ -59,14 +59,14 @@ public class AnneeAcademiqueController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ANNEE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAnnee(@PathVariable Long id) {
         anneeAcademiqueService.deleteAnnee(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activer")
-    @PreAuthorize("hasAuthority('ANNEE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnneeAcademiqueDTO> activerAnnee(@PathVariable Long id) {
         AnneeAcademiqueDTO activated = anneeAcademiqueService.activerAnnee(id);
         return ResponseEntity.ok(activated);

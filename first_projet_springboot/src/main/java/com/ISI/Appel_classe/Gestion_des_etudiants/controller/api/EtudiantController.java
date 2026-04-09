@@ -38,7 +38,7 @@ public class EtudiantController {
      * Retourne TOUS les attributs (hérités + spécifiques)
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<EtudiantDTO>> getAllEtudiants() {
         log.info("📖 [GET /api/etudiants] Récupération de tous les étudiants");
         List<EtudiantDTO> etudiants = etudiantService.getAllEtudiants();
@@ -52,7 +52,7 @@ public class EtudiantController {
      * Retourne TOUS les attributs incluant les relations
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<EtudiantDTO> getEtudiantById(@PathVariable Long id) {
         log.info("📖 [GET /api/etudiants/{}] Récupération de l'étudiant", id);
         EtudiantDTO etudiant = etudiantService.getEtudiantById(id);
@@ -65,7 +65,7 @@ public class EtudiantController {
      * Récupère un étudiant par son matricule
      */
     @GetMapping("/matricule/{matricule}")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<EtudiantDTO> getEtudiantByMatricule(@PathVariable String matricule) {
         log.info("📖 [GET /api/etudiants/matricule/{}] Récupération par matricule", matricule);
         EtudiantDTO etudiant = etudiantService.getEtudiantByMatricule(matricule);
@@ -78,7 +78,7 @@ public class EtudiantController {
      * Récupère un étudiant par son email
      */
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<EtudiantDTO> getEtudiantByEmail(@PathVariable String email) {
         log.info("📖 [GET /api/etudiants/email/{}] Récupération par email", email);
         EtudiantDTO etudiant = etudiantService.getEtudiantByEmail(email);
@@ -91,7 +91,7 @@ public class EtudiantController {
      * Récupère tous les étudiants d'une classe
      */
     @GetMapping("/classe/{classeId}")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<EtudiantDTO>> getEtudiantsByClasse(@PathVariable Long classeId) {
         log.info("📖 [GET /api/etudiants/classe/{}] Récupération des étudiants de la classe", classeId);
         List<EtudiantDTO> etudiants = etudiantService.getEtudiantsByClasse(classeId);
@@ -108,7 +108,7 @@ public class EtudiantController {
      * - Relations: classeId
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('ETUDIANT_CREATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EtudiantDTO> createEtudiant(@RequestBody EtudiantCreateDTO dto) {
         log.info("➕ [POST /api/etudiants] Création d'un nouvel étudiant: {}", dto.getEmail());
         log.debug("Données reçues: nom={}, prenom={}, matricule={}, classeId={}",
@@ -128,7 +128,7 @@ public class EtudiantController {
      * Permet de modifier TOUS les attributs modifiables (hérités + spécifiques)
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    @PreAuthorize("or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('ETUDIANT')")
     public ResponseEntity<EtudiantDTO> updateEtudiant(
             @PathVariable Long id,
             @RequestBody EtudiantUpdateDTO dto) {
@@ -148,7 +148,7 @@ public class EtudiantController {
      * Supprime l'enregistrement dans les tables etudiant ET utilisateur (cascade)
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ETUDIANT_DELETE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<Void> deleteEtudiant(@PathVariable Long id) {
         log.info("🗑️ [DELETE /api/etudiants/{}] Suppression de l'étudiant", id);
 
@@ -163,7 +163,7 @@ public class EtudiantController {
      * Assigne ou change la classe d'un étudiant
      */
     @PatchMapping("/{etudiantId}/classe/{classeId}")
-    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EtudiantDTO> assignerClasse(
             @PathVariable Long etudiantId,
             @PathVariable Long classeId) {
@@ -180,7 +180,7 @@ public class EtudiantController {
      * Bascule le statut d'un étudiant entre ACTIF et INACTIF
      */
     @PatchMapping("/{id}/toggle-statut")
-    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EtudiantDTO> toggleStatut(@PathVariable Long id) {
         log.info("🔄 [PATCH /api/etudiants/{}/toggle-statut] Basculement du statut", id);
 
@@ -209,7 +209,7 @@ public class EtudiantController {
 
 
     @PostMapping("/import/excel")
-    @PreAuthorize("hasAuthority('ETUDIANT_CREATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EtudiantImportResponseDTO> importEtudiantsFromExcel(
             @RequestParam("file") MultipartFile file,
             @RequestParam("classeId") Long classeId) {
@@ -241,7 +241,7 @@ public class EtudiantController {
      * @return Un fichier Excel modèle prêt à être rempli
      */
     @GetMapping("/template/excel")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<byte[]> downloadExcelTemplate() {
         log.info("📋 [GET /api/etudiants/template/excel] Téléchargement du fichier Excel modèle");
 
@@ -267,7 +267,7 @@ public class EtudiantController {
     // ========================================
 
     @PostMapping("/migrer")
-    @PreAuthorize("hasAuthority('ETUDIANT_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<EtudiantDTO>> migrerEtudiants(@RequestBody MigrationRequestDTO dto) {
         log.info("POST /api/etudiants/migrer - Migration de {} étudiant(s) vers classe {}",
                 dto.getEtudiantIds().size(), dto.getClasseDestinationId());
@@ -276,7 +276,7 @@ public class EtudiantController {
     }
 
     @GetMapping("/{id}/historique")
-    @PreAuthorize("hasAuthority('ETUDIANT_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<HistoriqueClasseDTO>> getHistorique(@PathVariable Long id) {
         log.info("GET /api/etudiants/{}/historique", id);
         List<HistoriqueClasseDTO> historique = etudiantService.getHistorique(id);

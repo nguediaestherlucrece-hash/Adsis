@@ -22,31 +22,31 @@ public class NiveauController {
     private final NiveauService niveauService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('NIVEAU_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<NiveauDTO>> getAllNiveaux() {
         return ResponseEntity.ok(niveauService.getAllNiveaux());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('NIVEAU_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NiveauDTO> getNiveauById(@PathVariable Long id) {
         return ResponseEntity.ok(niveauService.getNiveauById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('NIVEAU_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NiveauDTO> createNiveau(@RequestBody NiveauCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(niveauService.createNiveau(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('NIVEAU_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NiveauDTO> updateNiveau(@PathVariable Long id, @RequestBody NiveauUpdateDTO dto) {
         return ResponseEntity.ok(niveauService.updateNiveau(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('NIVEAU_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteNiveau(@PathVariable Long id) {
         niveauService.deleteNiveau(id);
         return ResponseEntity.noContent().build();

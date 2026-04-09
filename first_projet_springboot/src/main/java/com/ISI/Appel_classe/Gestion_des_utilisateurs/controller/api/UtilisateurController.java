@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class UtilisateurController {
      * Rechercher les utilisateurs avec filtres
      */
     @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UtilisateurDTO>> searchWithFilters(
             @RequestParam(required = false) String recherche,
             @RequestParam String type,
@@ -39,6 +41,7 @@ public class UtilisateurController {
      * Récupérer la liste de tous les utilisateurs
      */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UtilisateurDTO>> getAllUtilisateurs() {
         log.info("Récupération de tous les utilisateurs");
         return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
@@ -48,6 +51,7 @@ public class UtilisateurController {
      * Récupérer un utilisateur par son ID
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
         log.info("Récupération de l'utilisateur avec id={}", id);
         return ResponseEntity.ok(utilisateurService.getUtilisateurById(id));
@@ -57,6 +61,7 @@ public class UtilisateurController {
      * Récupérer un utilisateur par son email
      */
     @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurDTO> getUtilisateurByEmail(@PathVariable String email) {
         log.info("Récupération de l'utilisateur avec email={}", email);
         return ResponseEntity.ok(utilisateurService.getUtilisateurByEmail(email));
@@ -66,6 +71,7 @@ public class UtilisateurController {
      * Créer un nouvel utilisateur
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurDTO> createUtilisateur(@RequestBody UtilisateurCreateDTO dto) {
         log.info("Création d'un nouvel utilisateur: {}", dto.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(utilisateurService.createUtilisateur(dto));
@@ -75,6 +81,7 @@ public class UtilisateurController {
      * Mettre à jour un utilisateur existant
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurDTO> updateUtilisateur(@PathVariable Long id,
             @RequestBody UtilisateurUpdateDTO dto) {
         log.info("Mise à jour de l'utilisateur id={}", id);
@@ -85,6 +92,7 @@ public class UtilisateurController {
      * Supprimer un utilisateur
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {
         log.info("Suppression de l'utilisateur id={}", id);
         utilisateurService.deleteUtilisateur(id);
@@ -95,6 +103,7 @@ public class UtilisateurController {
      * Activer/Désactiver un utilisateur
      */
     @PatchMapping("/statut/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurDTO> toggleStatut(@PathVariable String email) {
         log.info("Changement de statut pour l'utilisateur email={}", email);
         return ResponseEntity.ok(utilisateurService.toggleStatut(email));
