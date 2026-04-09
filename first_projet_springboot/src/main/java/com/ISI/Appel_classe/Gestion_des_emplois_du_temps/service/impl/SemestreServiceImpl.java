@@ -100,4 +100,28 @@ public class SemestreServiceImpl implements SemestreService {
         semestreRepository.deleteById(id);
         log.info("Semestre supprimé avec l'id {}", id);
     }
+
+    @Override
+    @Transactional
+    public SemestreDTO activerSemestre(Long id) {
+        Semestre semestre = semestreRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Semestre non trouvé avec l'id: " + id));
+
+        // Désactiver tous les semestres
+        semestreRepository.deactivateAll();
+
+        // Activer celui demandé
+        semestre.setStatut(true);
+        Semestre saved = semestreRepository.save(semestre);
+        log.info("Semestre activé avec l'id {}", saved.getId());
+        return mapper.toDTO(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SemestreDTO> getSemestresByAnnee(Long anneeId) {
+        return semestreRepository.findByAnneeId(anneeId).stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

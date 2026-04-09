@@ -22,35 +22,35 @@ public class SemestreController {
     private final SemestreService semestreService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SEMESTRE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SemestreDTO>> getAllSemestres() {
         List<SemestreDTO> semestres = semestreService.getAllSemestres();
         return ResponseEntity.ok(semestres);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SEMESTRE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SemestreDTO> getSemestreById(@PathVariable Long id) {
         SemestreDTO dto = semestreService.getSemestreById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idSemestre}")
-    @PreAuthorize("hasAuthority('SEMESTRE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SemestreDTO> getSemestreByCode(@PathVariable String idSemestre) {
         SemestreDTO dto = semestreService.getSemestreByCode(idSemestre);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('SEMESTRE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SemestreDTO> createSemestre(@RequestBody SemestreCreateDTO dto) {
         SemestreDTO created = semestreService.createSemestre(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SEMESTRE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SemestreDTO> updateSemestre(
             @PathVariable Long id,
             @RequestBody SemestreUpdateDTO dto) {
@@ -59,9 +59,23 @@ public class SemestreController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SEMESTRE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSemestre(@PathVariable Long id) {
         semestreService.deleteSemestre(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/activer")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SemestreDTO> activerSemestre(@PathVariable Long id) {
+        SemestreDTO activated = semestreService.activerSemestre(id);
+        return ResponseEntity.ok(activated);
+    }
+
+    @GetMapping("/annee/{anneeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<SemestreDTO>> getSemestresByAnnee(@PathVariable Long anneeId) {
+        List<SemestreDTO> semestres = semestreService.getSemestresByAnnee(anneeId);
+        return ResponseEntity.ok(semestres);
     }
 }

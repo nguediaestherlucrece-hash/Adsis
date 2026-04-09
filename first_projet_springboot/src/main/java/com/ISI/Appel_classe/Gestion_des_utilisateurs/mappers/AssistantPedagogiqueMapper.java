@@ -50,8 +50,6 @@ public class AssistantPedagogiqueMapper {
         effectivePermissions.removeAll(removedPermissions);
         dto.setEffectivePermissions(effectivePermissions);
 
-        dto.setDepartement(assistant.getDepartement());
-
         if (assistant.getJustificatifsValides() != null) {
             dto.setNombreJustificatifsValides(assistant.getJustificatifsValides().size());
         }

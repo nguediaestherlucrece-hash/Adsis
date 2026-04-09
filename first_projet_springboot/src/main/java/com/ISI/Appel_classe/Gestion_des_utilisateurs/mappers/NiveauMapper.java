@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 public class NiveauMapper {
 
     public NiveauDTO toDTO(Niveau niveau) {
-        if (niveau == null) return null;
+        if (niveau == null)
+            return null;
         NiveauDTO dto = new NiveauDTO();
         dto.setId(niveau.getId());
         dto.setIdNiveau(niveau.getIdNiveau());
@@ -22,7 +23,8 @@ public class NiveauMapper {
     }
 
     public Niveau fromCreateDTO(NiveauCreateDTO dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
         Niveau n = new Niveau();
         n.setIdNiveau(dto.getIdNiveau());
         n.setNom(dto.getNom());
@@ -30,8 +32,11 @@ public class NiveauMapper {
     }
 
     public void updateFromDTO(Niveau niveau, NiveauUpdateDTO dto) {
-        if (niveau == null || dto == null) return;
-        if (dto.getIdNiveau() != null) niveau.setIdNiveau(dto.getIdNiveau());
-        if (dto.getNom() != null) niveau.setNom(dto.getNom());
+        if (niveau == null || dto == null)
+            return;
+        if (dto.getIdNiveau() != null)
+            niveau.setIdNiveau(dto.getIdNiveau());
+        if (dto.getNom() != null)
+            niveau.setNom(dto.getNom());
     }
 }

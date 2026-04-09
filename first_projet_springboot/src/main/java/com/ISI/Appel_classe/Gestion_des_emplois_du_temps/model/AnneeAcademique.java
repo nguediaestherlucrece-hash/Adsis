@@ -27,6 +27,7 @@ public class AnneeAcademique {
     private String nomAnneeAcademique;
     private LocalDate anneeDebut;
     private LocalDate anneeFin;
+    private boolean actif = false;
 
     @OneToMany(mappedBy = "annee", cascade =CascadeType.ALL)
     private List<Semestre> semestres = new ArrayList<>();

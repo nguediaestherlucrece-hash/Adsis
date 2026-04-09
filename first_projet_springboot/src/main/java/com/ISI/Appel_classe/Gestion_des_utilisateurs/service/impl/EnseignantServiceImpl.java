@@ -15,8 +15,11 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.EnseignantService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.EnseignantMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +45,9 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final EnseignantMapper mapper;
+    private final PasswordEncoder passwordEncoder;
     private final PermissionOverrideHelper permissionOverrideHelper;
+    private final EmailSenderService emailSenderService;
 
     @Override
     public List<EnseignantDTO> getAllEnseignants() {
@@ -68,21 +73,6 @@ public class EnseignantServiceImpl implements EnseignantService {
         return mapper.toDTO(enseignant);
     }
 
-    @Override
-    public List<EnseignantDTO> getEnseignantsBySpecialite(String specialite) {
-        log.info("Récupération des enseignants de spécialité: {}", specialite);
-        return enseignantRepository.findBySpecialite(specialite).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<EnseignantDTO> getEnseignantsByGrade(String grade) {
-        log.info("Récupération des enseignants de grade: {}", grade);
-        return enseignantRepository.findByGrade(grade).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional
@@ -102,16 +92,16 @@ public class EnseignantServiceImpl implements EnseignantService {
         enseignant.setNom(dto.getNom());
         enseignant.setPrenom(dto.getPrenom());
         enseignant.setEmail(dto.getEmail());
-        enseignant.setPassword(dto.getPassword()); // TODO: Hasher
         enseignant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
+
+        String generatedPassword = UserPasswordGenerator.generateRandomPassword();
+        enseignant.setPassword(passwordEncoder.encode(generatedPassword));
+
         enseignant.setEnabled(true);
         enseignant.setAccountNonLocked(true);
         enseignant.setPremiereConnexion(false);
         enseignant.setCreatedAt(LocalDateTime.now());
 
-        // Attributs spécifiques à Enseignant
-        enseignant.setSpecialite(dto.getSpecialite());
-        enseignant.setGrade(dto.getGrade());
 
         // Assigner les rôles
         Set<Role> roles = new HashSet<>();
@@ -144,6 +134,9 @@ public class EnseignantServiceImpl implements EnseignantService {
 
         Enseignant saved = enseignantRepository.save(enseignant);
         log.info("Enseignant créé avec succès - ID: {}", saved.getId());
+
+        // Envoyer le mot de passe par email
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), generatedPassword);
 
         return mapper.toDTO(saved);
     }
@@ -196,11 +189,6 @@ public class EnseignantServiceImpl implements EnseignantService {
             enseignant.setRoles(roles);
         }
 
-        // Mettre à jour les attributs spécifiques
-        if (dto.getSpecialite() != null)
-            enseignant.setSpecialite(dto.getSpecialite());
-        if (dto.getGrade() != null)
-            enseignant.setGrade(dto.getGrade());
 
         // Mettre à jour les cours (seulement si l'enseignant est toujours actif)
         if (dto.getCoursIds() != null && enseignant.getStatut() != Statut.INACTIF) {

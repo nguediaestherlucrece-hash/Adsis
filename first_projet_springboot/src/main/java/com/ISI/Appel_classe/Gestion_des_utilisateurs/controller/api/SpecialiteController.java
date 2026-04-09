@@ -22,31 +22,31 @@ public class SpecialiteController {
     private final SpecialiteService specialiteService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SPECIALITE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SpecialiteDTO>> getAllSpecialites() {
         return ResponseEntity.ok(specialiteService.getAllSpecialites());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SPECIALITE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SpecialiteDTO> getSpecialiteById(@PathVariable Long id) {
         return ResponseEntity.ok(specialiteService.getSpecialiteById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('SPECIALITE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SpecialiteDTO> createSpecialite(@RequestBody SpecialiteCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(specialiteService.createSpecialite(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SPECIALITE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SpecialiteDTO> updateSpecialite(@PathVariable Long id, @RequestBody SpecialiteUpdateDTO dto) {
         return ResponseEntity.ok(specialiteService.updateSpecialite(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SPECIALITE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSpecialite(@PathVariable Long id) {
         specialiteService.deleteSpecialite(id);
         return ResponseEntity.noContent().build();

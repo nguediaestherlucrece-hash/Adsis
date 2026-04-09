@@ -4,7 +4,7 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.EmploiDuTe
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Semestre;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
-import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Classe;
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import org.springframework.stereotype.Component;
 
 @Component

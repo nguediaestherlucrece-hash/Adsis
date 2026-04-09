@@ -21,16 +21,8 @@ public class EnseignantCreateDTO {
     private String prenom;
     private String email;
     private String matricule;
-    private String password;
     private Statut statut;
     private Set<String> roleNames; // Si vide, "ENSEIGNANT" par défaut
-
-    // ========================================
-    // CHAMPS SPÉCIFIQUES À ENSEIGNANT
-    // ========================================
-
-    private String specialite; // Ex: "Mathématiques", "Informatique", "Physique"
-    private String grade; // Ex: "Professeur", "Maître de conférences", "Assistant"
 
     // ========================================
     // RELATIONS SPÉCIFIQUES

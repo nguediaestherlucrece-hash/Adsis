@@ -22,31 +22,31 @@ public class CycleController {
     private final CycleService cycleService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CYCLE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<CycleDTO>> getAllCycle() {
         return ResponseEntity.ok(cycleService.getAllCycles());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('CYCLE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CycleDTO> getCycleById(@PathVariable Long id) {
         return ResponseEntity.ok(cycleService.getCycleById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CYCLE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CycleDTO> createCycle(@RequestBody CycleCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cycleService.createCycle(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('CYCLE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CycleDTO> updateCycle(@PathVariable Long id, @RequestBody CycleUpdateDTO dto) {
         return ResponseEntity.ok(cycleService.updateCycle(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('CYCLE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCycle(@PathVariable Long id) {
         cycleService.deleteCycle(id);
         return ResponseEntity.noContent().build();

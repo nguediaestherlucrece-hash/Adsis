@@ -15,8 +15,11 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.RoleRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.AssistantPedagogiqueService;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.mappers.AssistantPedagogiqueMapper;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
+import com.ISI.Appel_classe.mail.EmailSenderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +39,10 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     private final RoleRepository roleRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AssistantPedagogiqueMapper mapper;
+    private final PasswordEncoder passwordEncoder;
     private final com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.FiliereRepository filiereRepository;
     private final PermissionOverrideHelper permissionOverrideHelper;
+    private final EmailSenderService emailSenderService;
 
     @Override
     public List<AssistantPedagogiqueDTO> getAllAssistants() {
@@ -61,13 +66,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
     }
 
     @Override
-    public List<AssistantPedagogiqueDTO> getAssistantsByDepartement(String departement) {
-        return assistantRepository.findByDepartement(departement).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public AssistantPedagogiqueDTO createAssistant(AssistantPedagogiqueCreateDTO dto) {
         // ⚠️ IMPORTANT: Vérifier l'unicité de l'email au niveau de TOUS les
@@ -83,8 +81,11 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
         assistant.setNom(dto.getNom());
         assistant.setPrenom(dto.getPrenom());
         assistant.setEmail(dto.getEmail());
-        assistant.setPassword(dto.getPassword()); // TODO: Hasher
         assistant.setStatut(dto.getStatut() != null ? dto.getStatut() : Statut.ACTIF);
+
+        String generatedPassword = UserPasswordGenerator.generateRandomPassword();
+        assistant.setPassword(passwordEncoder.encode(generatedPassword));
+
         assistant.setEnabled(true);
         assistant.setAccountNonLocked(true);
         assistant.setPremiereConnexion(false);
@@ -95,9 +96,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
                     .orElseThrow(() -> new ResourceNotFoundException("Filière non trouvée: " + dto.getFiliereId()));
             assistant.setFiliere(filiere);
         }
-
-        // Attributs spécifiques
-        assistant.setDepartement(dto.getDepartement());
 
         // Rôles
         Set<Role> roles = new HashSet<>();
@@ -119,6 +117,9 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
 
         AssistantPedagogique saved = assistantRepository.save(assistant);
         log.info("Assistant pédagogique créé - ID: {}", saved.getId());
+
+        // Envoyer le mot de passe par email
+        emailSenderService.sendPasswordEmail(saved.getEmail(), saved.getNom(), saved.getPrenom(), generatedPassword);
 
         return mapper.toDTO(saved);
     }
@@ -146,8 +147,6 @@ public class AssistantPedagogiqueServiceImpl implements AssistantPedagogiqueServ
 
         if (dto.getStatut() != null)
             assistant.setStatut(dto.getStatut());
-        if (dto.getDepartement() != null)
-            assistant.setDepartement(dto.getDepartement());
 
         if (dto.getRoleNames() != null) {
             Set<Role> roles = new HashSet<>();

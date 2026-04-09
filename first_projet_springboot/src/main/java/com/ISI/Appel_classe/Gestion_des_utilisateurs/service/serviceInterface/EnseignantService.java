@@ -17,10 +17,6 @@ public interface EnseignantService {
 
     EnseignantDTO getEnseignantByEmail(String email);
 
-    List<EnseignantDTO> getEnseignantsBySpecialite(String specialite);
-
-    List<EnseignantDTO> getEnseignantsByGrade(String grade);
-
     EnseignantDTO createEnseignant(EnseignantCreateDTO dto);
 
     EnseignantDTO updateEnseignant(Long id, EnseignantUpdateDTO dto);

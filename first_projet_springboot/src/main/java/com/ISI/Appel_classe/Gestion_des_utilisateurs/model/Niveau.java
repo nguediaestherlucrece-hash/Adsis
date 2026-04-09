@@ -32,6 +32,6 @@ public class Niveau {
     @JoinColumn(name = "filiere_id")
     private Filiere filiere;
 
-    @OneToMany(mappedBy = "niveau", cascade =CascadeType.ALL)
+    @OneToMany(mappedBy = "niveau", cascade = CascadeType.ALL)
     private List<Specialite> specialites = new ArrayList<>();
 }

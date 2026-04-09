@@ -12,11 +12,8 @@ import lombok.NoArgsConstructor;
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Administrateur extends Utilisateur {
-
-    private String niveauAcces; // "super-admin", "admin-local"
 
     // 🔹 Méthodes de logique métier
     public void gererUtilisateurs() {

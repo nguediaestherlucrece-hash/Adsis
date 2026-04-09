@@ -22,31 +22,31 @@ public class FiliereController {
     private final FiliereService filiereService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('FILIERE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<FiliereDTO>> getAllFiliere() {
         return ResponseEntity.ok(filiereService.getAllFilieres());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('FILIERE_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FiliereDTO> getFiliereById(@PathVariable Long id) {
         return ResponseEntity.ok(filiereService.getFiliereById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('FILIERE_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FiliereDTO> createFiliere(@RequestBody FiliereCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(filiereService.createFiliere(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('FILIERE_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FiliereDTO> updateFiliere(@PathVariable Long id, @RequestBody FiliereUpdateDTO dto) {
         return ResponseEntity.ok(filiereService.updateFiliere(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('FILIERE_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFiliere(@PathVariable Long id) {
         filiereService.deleteFiliere(id);
         return ResponseEntity.noContent().build();

@@ -20,8 +20,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class Surveillant extends Utilisateur {
 
-    private String affectation;
-
     // 🔹 Relations JPA
     @ManyToOne
     @JoinColumn(name = "filiere_id")

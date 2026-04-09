@@ -22,31 +22,25 @@ public class SurveillantController {
     private final SurveillantService surveillantService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SurveillantDTO>> getAll() {
         return ResponseEntity.ok(surveillantService.getAllSurveillants());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SurveillantDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(surveillantService.getSurveillantById(id));
     }
 
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SurveillantDTO> getByEmail(@PathVariable String email) {
         return ResponseEntity.ok(surveillantService.getSurveillantByEmail(email));
     }
 
-    @GetMapping("/affectation/{affectation}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
-    public ResponseEntity<List<SurveillantDTO>> getByAffectation(@PathVariable String affectation) {
-        return ResponseEntity.ok(surveillantService.getSurveillantsByAffectation(affectation));
-    }
-
     @PostMapping
-    @PreAuthorize("hasAuthority('SURVEILLANT_CREATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SurveillantDTO> create(@RequestBody SurveillantCreateDTO dto) {
         log.info("Création surveillant: {}", dto.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,7 +48,7 @@ public class SurveillantController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')  or hasRole('SURVEILLANT')")
     public ResponseEntity<SurveillantDTO> update(
             @PathVariable Long id,
             @RequestBody SurveillantUpdateDTO dto) {
@@ -62,20 +56,20 @@ public class SurveillantController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_DELETE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         surveillantService.deleteSurveillant(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/filiere/{filiereId}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SurveillantDTO>> getSurveillantByFiliere(@PathVariable Long filiereId) {
         return ResponseEntity.ok(surveillantService.getSurveillantsByFiliere(filiereId));
     }
 
     @PostMapping("/{id}/filiere/{filiereId}")
-    @PreAuthorize("hasAuthority('SURVEILLANT_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SurveillantDTO> assignByFiliere(@PathVariable Long id, @PathVariable Long filiereId) {
         return ResponseEntity.ok(surveillantService.assignSurveillantToFiliere(id, filiereId));
     }

@@ -15,9 +15,5 @@ public interface EnseignantRepository extends JpaRepository<Enseignant, Long> {
 
     boolean existsByEmail(String email);
 
-    List<Enseignant> findBySpecialite(String specialite);
-
-    List<Enseignant> findByGrade(String grade);
-
     List<Enseignant> findByStatutAndAccountNonLocked(Statut statut, Boolean accountNonLocked);
 }

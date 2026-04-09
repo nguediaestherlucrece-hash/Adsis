@@ -14,7 +14,5 @@ public interface SurveillantRepository extends JpaRepository<Surveillant, Long> 
 
     boolean existsByEmail(String email);
 
-    List<Surveillant> findByAffectation(String affectation);
-
     List<Surveillant> findByFiliere_Id(Long filiereId);
 }

@@ -35,7 +35,6 @@ public class Filiere {
     @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
     private List<Niveau> niveaux = new ArrayList<>();
 
-
     @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL)
     private List<AssistantPedagogique> assistantPedagogiques = new ArrayList<>();
 

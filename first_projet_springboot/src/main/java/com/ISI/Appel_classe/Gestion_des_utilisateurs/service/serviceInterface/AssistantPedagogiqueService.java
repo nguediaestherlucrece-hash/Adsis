@@ -14,8 +14,6 @@ public interface AssistantPedagogiqueService {
 
     AssistantPedagogiqueDTO getAssistantByEmail(String email);
 
-    List<AssistantPedagogiqueDTO> getAssistantsByDepartement(String departement);
-
     AssistantPedagogiqueDTO createAssistant(AssistantPedagogiqueCreateDTO dto);
 
     AssistantPedagogiqueDTO updateAssistant(Long id, AssistantPedagogiqueUpdateDTO dto);

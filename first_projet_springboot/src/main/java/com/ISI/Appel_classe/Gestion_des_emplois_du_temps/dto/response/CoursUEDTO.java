@@ -12,6 +12,7 @@ public class CoursUEDTO {
     private String codeUE;
     private String intitule;
     private Integer volumeHoraire;
+    private Integer credit;
 
     private Long specialiteId;
     private String specialiteNom;

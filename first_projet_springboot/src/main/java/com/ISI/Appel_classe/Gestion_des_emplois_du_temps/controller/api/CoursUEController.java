@@ -22,35 +22,35 @@ public class CoursUEController {
     private final CourUEService courUEService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('COURS_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<CoursUEDTO>> getAllCours() {
         List<CoursUEDTO> cours = courUEService.getAllCours();
         return ResponseEntity.ok(cours);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('COURS_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<CoursUEDTO> getCoursById(@PathVariable Long id) {
         CoursUEDTO dto = courUEService.getCoursById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idCours}")
-    @PreAuthorize("hasAuthority('COURS_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<CoursUEDTO> getCoursByCode(@PathVariable String idCours) {
         CoursUEDTO dto = courUEService.getCoursByCode(idCours);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('COURS_CREATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<CoursUEDTO> createCours(@RequestBody coursUECreateDTO dto) {
         CoursUEDTO created = courUEService.createCours(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('COURS_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<CoursUEDTO> updateCours(
             @PathVariable Long id,
             @RequestBody coursUEUpdateDTO dto) {
@@ -59,14 +59,14 @@ public class CoursUEController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('COURS_DELETE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<Void> deleteCours(@PathVariable Long id) {
         courUEService.deleteCours(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/specialite/{specialiteId}")
-    @PreAuthorize("hasAuthority('COURS_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<CoursUEDTO>> getCoursBySpecialite(@PathVariable Long specialiteId) {
         List<CoursUEDTO> cours = courUEService.getCoursBySpecialite(specialiteId);
         return ResponseEntity.ok(cours);

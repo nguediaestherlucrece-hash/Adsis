@@ -19,6 +19,7 @@ public class CoursUEMapper {
         dto.setCodeUE(cours.getCodeUE());
         dto.setIntitule(cours.getIntitule());
         dto.setVolumeHoraire(cours.getVolumeHoraire());
+        dto.setCredit(cours.getCredit());
         dto.setSpecialiteId(cours.getSpecialite() != null ? cours.getSpecialite().getId() : null);
         dto.setSpecialiteNom(cours.getSpecialite() != null ? cours.getSpecialite().getNom() : null);
 

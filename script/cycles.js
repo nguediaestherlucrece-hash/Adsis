@@ -6,6 +6,8 @@ let niveaux = [];
 let filieres = [];
 let specialites = [];
 let classes = [];
+let anneesAcademiques = [];
+let semestres = [];
 
 let activeTab = 'cycles';
 
@@ -148,16 +150,18 @@ async function loadAll() {
         return [];
     });
     try {
-        [cycles, niveaux, filieres, specialites, classes] = await Promise.all([
+        [cycles, niveaux, filieres, specialites, classes, anneesAcademiques, semestres] = await Promise.all([
             safeLoad('/cycles'),
             safeLoad('/niveaux'),
             safeLoad('/filieres'),
             safeLoad('/specialites'),
             safeLoad('/classes'),
+            safeLoad('/annees-academiques'),
+            safeLoad('/semestres'),
         ]);
     } catch (e) {
         showToast('Erreur critique de chargement : ' + parseError(e), 'danger');
-        cycles = []; niveaux = []; filieres = []; specialites = []; classes = [];
+        cycles = []; niveaux = []; filieres = []; specialites = []; classes = []; anneesAcademiques = []; semestres = [];
     }
     updateCounts();
     renderCurrentTab();
@@ -165,8 +169,8 @@ async function loadAll() {
 
 // Met à jour les compteurs affichés dans chaque onglet
 function updateCounts() {
-    const counts = { cycles: cycles.length, niveaux: niveaux.length, filieres: filieres.length, specialites: specialites.length, classes: classes.length };
-    const labels = { cycles: 'Cycles', niveaux: 'Niveaux', filieres: 'Filières', specialites: 'Spécialités', classes: 'Classes' };
+    const counts = { cycles: cycles.length, niveaux: niveaux.length, filieres: filieres.length, specialites: specialites.length, classes: classes.length, annees: anneesAcademiques.length, semestres: semestres.length };
+    const labels = { cycles: 'Cycles', niveaux: 'Niveaux', filieres: 'Filières', specialites: 'Spécialités', classes: 'Classes', annees: 'Années Scolaires', semestres: 'Semestres' };
     document.querySelectorAll('.filter-tab').forEach(t => {
         const name = t.dataset.tab;
         if (labels[name] !== undefined) t.textContent = `${labels[name]} (${counts[name] ?? 0})`;
@@ -180,6 +184,8 @@ function renderCurrentTab() {
     if (activeTab === 'niveaux') renderNiveaux();
     if (activeTab === 'specialites') renderSpecialites();
     if (activeTab === 'classes') renderClasses();
+    if (activeTab === 'annees') renderAnnees();
+    if (activeTab === 'semestres') renderSemestres();
 }
 
 // ─── CYCLES ─────────────────────────────────────────────────────────────────
@@ -799,8 +805,11 @@ function renderClasses() {
                 <button class="btn btn-sm btn-outline-primary border-0 me-1" title="Modifier" onclick="openEditClasse(${cl.id})">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger border-0" title="Supprimer" onclick="deleteClasse(${cl.id})">
+                <button class="btn btn-sm btn-outline-danger border-0 me-1" title="Supprimer" onclick="deleteClasse(${cl.id})">
                     <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning border-0" title="Migrer des étudiants" onclick="openMigrationModal(${cl.id})">
+                    <i class="bi bi-arrow-left-right"></i>
                 </button>
             </td>
         </tr>`;
@@ -997,6 +1006,315 @@ window.openCreateClasse = openCreateClasse;
 window.openEditClasse = openEditClasse;
 window.deleteClasse = deleteClasse;
 
+// Années Scolaires
+window.openCreateAnnee = openCreateAnnee;
+window.openEditAnnee = openEditAnnee;
+window.saveAnnee = saveAnnee;
+window.deleteAnnee = deleteAnnee;
+window.activerAnnee = activerAnnee;
+
+// Semestres
+window.openCreateSemestre = openCreateSemestre;
+window.openEditSemestre = openEditSemestre;
+window.saveSemestre = saveSemestre;
+window.deleteSemestre = deleteSemestre;
+window.activerSemestre = activerSemestre;
+
+// Migration
+window.openMigrationModal = openMigrationModal;
+window.executeMigration = executeMigration;
+window.toggleAllMigration = toggleAllMigration;
+
 document.addEventListener('DOMContentLoaded', () => {
     loadAll();
 });
+
+// ─── ANNÉES SCOLAIRES ──────────────────────────────────────────────────────
+
+function renderAnnees() {
+    const tbody = document.getElementById('anneesTableBody');
+    if (!anneesAcademiques.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Aucune année scolaire enregistrée.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = anneesAcademiques.map(a => {
+        const statutBadge = a.actif
+            ? '<span class="badge bg-success">Actif</span>'
+            : '<span class="badge bg-secondary">Inactif</span>';
+        const activerBtn = a.actif
+            ? '<button class="btn btn-sm btn-outline-secondary" disabled title="Déjà actif"><i class="bi bi-check-circle"></i></button>'
+            : `<button class="btn btn-sm btn-outline-success" title="Activer" onclick="activerAnnee(${a.id})"><i class="bi bi-lightning"></i></button>`;
+        const semCount = a.nombreSemestres || 0;
+        return `<tr>
+            <td class="ps-4 fw-semibold">${a.nomAnneeAcademique || ''}</td>
+            <td><code>${a.idAnneeAcademique || ''}</code></td>
+            <td>${a.anneeDebut || '-'}</td>
+            <td>${a.anneeFin || '-'}</td>
+            <td><span class="badge bg-light text-dark">${semCount} semestre(s)</span></td>
+            <td>${statutBadge}</td>
+            <td class="text-center pe-4">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="openEditAnnee(${a.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-outline-danger" onclick="deleteAnnee(${a.id})"><i class="bi bi-trash"></i></button>
+                    ${activerBtn}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openCreateAnnee() {
+    document.getElementById('anneeModalTitle').textContent = 'Nouvelle année scolaire';
+    document.getElementById('anneeId').value = '';
+    document.getElementById('anneeNom').value = '';
+    document.getElementById('anneeCode').value = '';
+    document.getElementById('anneeDebut').value = '';
+    document.getElementById('anneeFin').value = '';
+    new bootstrap.Modal(document.getElementById('anneeModal')).show();
+}
+
+function openEditAnnee(id) {
+    const a = anneesAcademiques.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('anneeModalTitle').textContent = 'Modifier l\'année scolaire';
+    document.getElementById('anneeId').value = a.id;
+    document.getElementById('anneeNom').value = a.nomAnneeAcademique || '';
+    document.getElementById('anneeCode').value = a.idAnneeAcademique || '';
+    document.getElementById('anneeDebut').value = a.anneeDebut || '';
+    document.getElementById('anneeFin').value = a.anneeFin || '';
+    new bootstrap.Modal(document.getElementById('anneeModal')).show();
+}
+
+async function saveAnnee() {
+    const id = document.getElementById('anneeId').value;
+    const dto = {
+        nomAnneeAcademique: document.getElementById('anneeNom').value.trim(),
+        idAnneeAcademique: document.getElementById('anneeCode').value.trim(),
+        anneeDebut: document.getElementById('anneeDebut').value || null,
+        anneeFin: document.getElementById('anneeFin').value || null,
+        actif: false
+    };
+    if (!dto.nomAnneeAcademique || !dto.idAnneeAcademique) {
+        showToast('Nom et code requis.', 'warning');
+        return;
+    }
+    try {
+        if (id) {
+            await apiFetch(`/annees-academiques/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
+            showToast('Année mise à jour.', 'success');
+        } else {
+            await apiFetch('/annees-academiques', { method: 'POST', body: JSON.stringify(dto) });
+            showToast('Année créée.', 'success');
+        }
+        bootstrap.Modal.getInstance(document.getElementById('anneeModal'))?.hide();
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+async function deleteAnnee(id) {
+    const ok = await showConfirm('Supprimer', 'Supprimer cette année scolaire ?');
+    if (!ok) return;
+    try {
+        await apiFetch(`/annees-academiques/${id}`, { method: 'DELETE' });
+        showToast('Année supprimée.', 'success');
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+async function activerAnnee(id) {
+    const ok = await showConfirm('Activer', 'Activer cette année ? L\'année actuellement active sera désactivée.');
+    if (!ok) return;
+    try {
+        await apiFetch(`/annees-academiques/${id}/activer`, { method: 'PATCH' });
+        showToast('Année activée.', 'success');
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+// ─── SEMESTRES ─────────────────────────────────────────────────────────────
+
+function renderSemestres() {
+    const tbody = document.getElementById('semestresTableBody');
+    if (!semestres.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Aucun semestre enregistré.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = semestres.map(s => {
+        const statutBadge = s.statut
+            ? '<span class="badge bg-success">Actif</span>'
+            : '<span class="badge bg-secondary">Inactif</span>';
+        const activerBtn = s.statut
+            ? '<button class="btn btn-sm btn-outline-secondary" disabled title="Déjà actif"><i class="bi bi-check-circle"></i></button>'
+            : `<button class="btn btn-sm btn-outline-success" title="Activer" onclick="activerSemestre(${s.id})"><i class="bi bi-lightning"></i></button>`;
+        return `<tr>
+            <td class="ps-4 fw-semibold">${s.nomSemestre || ''}</td>
+            <td><code>${s.idSemestre || ''}</code></td>
+            <td>${s.anneeNom || '-'}</td>
+            <td>${statutBadge}</td>
+            <td class="text-center pe-4">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="openEditSemestre(${s.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-outline-danger" onclick="deleteSemestre(${s.id})"><i class="bi bi-trash"></i></button>
+                    ${activerBtn}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function populateAnneeSelect(selectId, selectedId = '') {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Sélectionnez une année --</option>';
+    anneesAcademiques.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.nomAnneeAcademique;
+        if (String(a.id) === String(selectedId)) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function openCreateSemestre() {
+    document.getElementById('semestreModalTitle').textContent = 'Nouveau semestre';
+    document.getElementById('semestreId').value = '';
+    document.getElementById('semestreNom').value = '';
+    document.getElementById('semestreCode').value = '';
+    populateAnneeSelect('semestreAnneeId');
+    new bootstrap.Modal(document.getElementById('semestreModal')).show();
+}
+
+function openEditSemestre(id) {
+    const s = semestres.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('semestreModalTitle').textContent = 'Modifier le semestre';
+    document.getElementById('semestreId').value = s.id;
+    document.getElementById('semestreNom').value = s.nomSemestre || '';
+    document.getElementById('semestreCode').value = s.idSemestre || '';
+    populateAnneeSelect('semestreAnneeId', s.anneeAcademiqueId);
+    new bootstrap.Modal(document.getElementById('semestreModal')).show();
+}
+
+async function saveSemestre() {
+    const id = document.getElementById('semestreId').value;
+    const anneeId = document.getElementById('semestreAnneeId').value;
+    const dto = {
+        nomSemestre: document.getElementById('semestreNom').value.trim(),
+        idSemestre: document.getElementById('semestreCode').value.trim(),
+        statut: false,
+        anneeAcademiqueId: anneeId ? parseInt(anneeId) : null
+    };
+    if (!dto.nomSemestre || !dto.idSemestre) {
+        showToast('Nom et code requis.', 'warning');
+        return;
+    }
+    try {
+        if (id) {
+            await apiFetch(`/semestres/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
+            showToast('Semestre mis à jour.', 'success');
+        } else {
+            await apiFetch('/semestres', { method: 'POST', body: JSON.stringify(dto) });
+            showToast('Semestre créé.', 'success');
+        }
+        bootstrap.Modal.getInstance(document.getElementById('semestreModal'))?.hide();
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+async function deleteSemestre(id) {
+    const ok = await showConfirm('Supprimer', 'Supprimer ce semestre ?');
+    if (!ok) return;
+    try {
+        await apiFetch(`/semestres/${id}`, { method: 'DELETE' });
+        showToast('Semestre supprimé.', 'success');
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+async function activerSemestre(id) {
+    const ok = await showConfirm('Activer', 'Activer ce semestre ? Le semestre actuellement actif sera désactivé.');
+    if (!ok) return;
+    try {
+        await apiFetch(`/semestres/${id}/activer`, { method: 'PATCH' });
+        showToast('Semestre activé.', 'success');
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+// ─── MIGRATION ────────────────────────────────────────────────────────────
+
+async function openMigrationModal(classeId) {
+    const cls = classes.find(c => c.id === classeId);
+    if (!cls) return;
+
+    document.getElementById('migrationSourceClasseId').value = classeId;
+    document.getElementById('migrationSourceNom').value = cls.nomClasse;
+
+    // Charger les étudiants de cette classe
+    try {
+        const etudiants = await apiFetch(`/etudiants/classe/${classeId}`);
+        const list = document.getElementById('migrationEtudiantsList');
+        if (!etudiants || !etudiants.length) {
+            list.innerHTML = '<p class="text-muted text-center py-3">Aucun étudiant dans cette classe.</p>';
+        } else {
+            list.innerHTML = etudiants.map(e => `
+                <div class="form-check">
+                    <input class="form-check-input migration-cb" type="checkbox" value="${e.id}" id="mig-${e.id}" onchange="updateMigrationCount()">
+                    <label class="form-check-label" for="mig-${e.id}">
+                        <strong>${e.nom} ${e.prenom}</strong> <small class="text-muted">(${e.matricule || '-'})</small>
+                    </label>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        document.getElementById('migrationEtudiantsList').innerHTML = '<p class="text-danger">Erreur de chargement.</p>';
+    }
+
+    // Remplir le select destination (exclure la classe source)
+    const destSel = document.getElementById('migrationDestClasse');
+    destSel.innerHTML = '<option value="">-- Sélectionnez --</option>';
+    classes.filter(c => c.id !== classeId).forEach(c => {
+        destSel.innerHTML += `<option value="${c.id}">${c.nomClasse}</option>`;
+    });
+
+    updateMigrationCount();
+    new bootstrap.Modal(document.getElementById('migrationModal')).show();
+}
+
+function toggleAllMigration(checked) {
+    document.querySelectorAll('.migration-cb').forEach(cb => cb.checked = checked);
+    updateMigrationCount();
+}
+
+function updateMigrationCount() {
+    const count = document.querySelectorAll('.migration-cb:checked').length;
+    const btn = document.getElementById('migrationSubmitBtn');
+    if (btn) btn.textContent = `Migrer (${count} étudiant${count > 1 ? 's' : ''})`;
+}
+window.updateMigrationCount = updateMigrationCount;
+
+async function executeMigration() {
+    const selected = [...document.querySelectorAll('.migration-cb:checked')].map(cb => parseInt(cb.value));
+    const destId = document.getElementById('migrationDestClasse').value;
+    const motif = document.getElementById('migrationMotif').value;
+
+    if (!selected.length) { showToast('Sélectionnez au moins un étudiant.', 'warning'); return; }
+    if (!destId) { showToast('Sélectionnez une classe destination.', 'warning'); return; }
+
+    const ok = await showConfirm('Migration', `Migrer ${selected.length} étudiant(s) ? Cette action est irréversible.`);
+    if (!ok) return;
+
+    try {
+        await apiFetch('/etudiants/migrer', {
+            method: 'POST',
+            body: JSON.stringify({
+                etudiantIds: selected,
+                classeDestinationId: parseInt(destId),
+                motif: motif
+            })
+        });
+        showToast(`${selected.length} étudiant(s) migré(s) avec succès.`, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('migrationModal'))?.hide();
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}

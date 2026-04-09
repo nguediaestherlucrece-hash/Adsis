@@ -22,35 +22,35 @@ public class EmploiDuTempsController {
     private final EmploiDuTempsService emploiDuTempsService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('EMPLOI_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<EmploiDuTempsDTO>> getAllEmplois() {
         List<EmploiDuTempsDTO> emplois = emploiDuTempsService.getAllEmplois();
         return ResponseEntity.ok(emplois);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('EMPLOI_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EmploiDuTempsDTO> getEmploiById(@PathVariable Long id) {
         EmploiDuTempsDTO dto = emploiDuTempsService.getEmploiById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idEmploi}")
-    @PreAuthorize("hasAuthority('EMPLOI_READ')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EmploiDuTempsDTO> getEmploiByCode(@PathVariable String idEmploi) {
         EmploiDuTempsDTO dto = emploiDuTempsService.getEmploiByCode(idEmploi);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('EMPLOI_CREATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EmploiDuTempsDTO> createEmploi(@RequestBody EmploiDuTempsCreateDTO dto) {
         EmploiDuTempsDTO created = emploiDuTempsService.createEmploi(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('EMPLOI_UPDATE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EmploiDuTempsDTO> updateEmploi(
             @PathVariable Long id,
             @RequestBody EmploiDuTempsUpdateDTO dto) {
@@ -59,7 +59,7 @@ public class EmploiDuTempsController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('EMPLOI_DELETE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<Void> deleteEmploi(@PathVariable Long id) {
         emploiDuTempsService.deleteEmploi(id);
         return ResponseEntity.noContent().build();
