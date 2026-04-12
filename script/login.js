@@ -1,7 +1,5 @@
 /* ===== ADSIS – login.js ===== */
 
-const API_BASE = ''; // e.g. 'https://api.adsis.com'
-
 const emailInput   = document.getElementById('email');
 const passInput    = document.getElementById('password');
 const btnLogin     = document.getElementById('btn-login');
@@ -19,107 +17,81 @@ togglePw.addEventListener('click', () => {
     : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
 });
 
-// ── Show alert ───────────────────────────────────────────────────────────────
+// ── Show / clear alert ───────────────────────────────────────────────────────
 function showAlert(msg, type = 'error') {
   alertBox.textContent = msg;
   alertBox.className = 'alert-box ' + (type === 'error' ? 'show-error' : 'show-success');
 }
-
 function clearAlert() {
   alertBox.textContent = '';
   alertBox.className = 'alert-box';
 }
 
-// ── Field validation ──────────────────────────────────────────────────────────
+// ── Validation des champs ──────────────────────────────────────────────────────
 function validate() {
   const email = emailInput.value.trim();
   const pass  = passInput.value;
   let ok = true;
-
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    emailInput.classList.add('error-field');
-    ok = false;
-  } else {
-    emailInput.classList.remove('error-field');
-  }
-
+    emailInput.classList.add('error-field'); ok = false;
+  } else emailInput.classList.remove('error-field');
   if (pass.length < 4) {
-    passInput.classList.add('error-field');
-    ok = false;
-  } else {
-    passInput.classList.remove('error-field');
-  }
-
+    passInput.classList.add('error-field'); ok = false;
+  } else passInput.classList.remove('error-field');
   return ok;
 }
 
-// ── Loading state ─────────────────────────────────────────────────────────────
+// ── État du bouton ─────────────────────────────────────────────────────────────
 function setLoading(state) {
   btnLogin.disabled = state;
-  btnText.style.display  = state ? 'none' : 'inline';
+  btnText.style.display    = state ? 'none' : 'inline';
   btnSpinner.style.display = state ? 'inline-block' : 'none';
 }
 
-// ── Route by role ─────────────────────────────────────────────────────────────
-function routeByRole(role) {
-  const routes = {
-    enseignant:       'dashboardens.html',
-    teacher:          'dashboardens.html',
-    admin:            'dashboardens.html', // extend as needed
-    etudiant:         'dashboardens.html', // placeholder – add student dashboard
-    student:          'dashboardens.html',
-  };
-  const dest = routes[(role || '').toLowerCase()] || 'dashboardens.html';
-  window.location.href = dest;
+// ── Routing par rôle ─────────────────────────────────────────────────────────
+function routeByRole(roles = []) {
+  if (roles.includes('ADMIN'))
+    window.location.href = '../admin/tableaudebord.html';
+  else if (roles.includes('ENSEIGNANT'))
+    window.location.href = 'dashboardens.html';
+  else if (roles.includes('ASSISTANT_PEDAGOGIQUE') || roles.includes('SURVEILLANT'))
+    window.location.href = '../assistant/tableaudebordass.html';
+  else
+    window.location.href = 'dashboardens.html';
 }
 
-// ── Login ─────────────────────────────────────────────────────────────────────
+// ── Connexion réelle ──────────────────────────────────────────────────────────
 async function doLogin() {
   clearAlert();
-  if (!validate()) {
-    showAlert('Veuillez remplir correctement tous les champs.');
-    return;
-  }
-
+  if (!validate()) { showAlert('Veuillez remplir correctement tous les champs.'); return; }
   setLoading(true);
-
   try {
-    // ── DEMO MODE (no real API) ──────────────────────────────────────────────
-    // Remove this block and uncomment the fetch below when a real API is ready.
-    await new Promise(r => setTimeout(r, 1000));
-    const fakeRole = emailInput.value.includes('admin') ? 'admin' : 'enseignant';
-    const fakeUser = {
-      id: 1,
-      name: 'Marie Dupont',
-      email: emailInput.value.trim(),
-      role: fakeRole,
-      etablissement: 'Saint Jean Ingénieur',
-      token: 'demo-token-123',
-    };
-    localStorage.setItem('adsis_user', JSON.stringify(fakeUser));
-    localStorage.setItem('adsis_token', fakeUser.token);
-    showAlert('Connexion réussie !', 'success');
-    setTimeout(() => routeByRole(fakeUser.role), 600);
-    // ── END DEMO MODE ────────────────────────────────────────────────────────
-
-    /*
-    // Real API call – uncomment when backend is ready:
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
+    const res = await fetch('http://localhost:8081/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: emailInput.value.trim(),
+        email:    emailInput.value.trim(),
         password: passInput.value,
       }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Email ou mot de passe incorrect.');
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Identifiants incorrects.');
-    localStorage.setItem('adsis_user', JSON.stringify(data.user));
-    localStorage.setItem('adsis_token', data.token);
+    // Stocker token + rôles + permissions dans localStorage
+    localStorage.setItem('adsis_token',         data.accessToken);
+    localStorage.setItem('adsis_refresh_token', data.refreshToken);
+    localStorage.setItem('adsis_user', JSON.stringify({
+      id:          data.id,
+      nom:         data.nom,
+      prenom:      data.prenom,
+      email:       data.email,
+      roles:       data.roles       || [],
+      permissions: data.permissions || [],
+    }));
     showAlert('Connexion réussie !', 'success');
-    setTimeout(() => routeByRole(data.user.role), 600);
-    */
-
+    setTimeout(() => routeByRole(data.roles || []), 600);
   } catch (err) {
     showAlert(err.message || 'Erreur de connexion. Réessayez.');
   } finally {

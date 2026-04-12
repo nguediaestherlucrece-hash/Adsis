@@ -12,19 +12,31 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final PermissionService permissionService;
-    private final RoleService roleService;
+    private final PermissionService     permissionService;
+    private final RoleService           roleService;
+    private final SeedUsersInitializer  seedUsersInitializer;
 
     @Override
     public void run(String... args) {
-        log.info("=== Initialisation des données de base ===");
+        log.info("╔══════════════════════════════════════════════════╗");
+        log.info("║       ADSIS — Initialisation au démarrage        ║");
+        log.info("╚══════════════════════════════════════════════════╝");
 
-        // 1. Initialiser les permissions
+        // Étape 1 — Permissions (doivent exister avant les rôles)
+        log.info("── Étape 1 : Permissions");
         permissionService.initializeDefaultPermissions();
 
-        // 2. Initialiser les rôles avec leurs permissions
+        // Étape 2 — Rôles (associés aux permissions)
+        log.info("── Étape 2 : Rôles");
         roleService.initializeDefaultRoles();
 
-        log.info("=== Initialisation terminée ===");
+        // Étape 3 — Comptes maîtres (clés de secours par rôle)
+        log.info("── Étape 3 : Comptes maîtres");
+        seedUsersInitializer.seedDefaultUsers();
+
+        log.info("╔══════════════════════════════════════════════════╗");
+        log.info("║              Initialisation terminée             ║");
+        log.info("╚══════════════════════════════════════════════════╝");
     }
 }
+

@@ -25,4 +25,6 @@ public interface UtilisateurService {
     void deleteUtilisateur(Long id);
 
     UtilisateurDTO toggleStatut(String email);
+
+    void changePassword(String email, String ancienMotDePasse, String nouveauMotDePasse);
 }

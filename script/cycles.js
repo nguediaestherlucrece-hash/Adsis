@@ -1,3 +1,8 @@
+import { requireRole, authFetch } from './auth.js';
+
+// Guard : réservé aux administrateurs
+if (!requireRole(['ADMIN'])) { throw new Error('Unauthorized'); }
+
 const API_BASE = 'http://localhost:8081/api';
 
 // État global de l'application
@@ -266,7 +271,7 @@ async function saveCycle() {
             cycles = cycles.map(c => c.id == id ? updated : c);
             showToast('Cycle modifié avec succès.', 'success');
         } else {
-            const created = await apiFetch('/cycles', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/api/cycles', { method: 'POST', body: JSON.stringify(payload) });
             cycles.push(created);
             showToast('Cycle créé avec succès.', 'success');
         }
@@ -388,7 +393,7 @@ async function saveFiliere() {
             filieres = filieres.map(f => f.id == id ? { ...updated, cycleId: payload.cycleId } : f);
             showToast('Filière modifiée.', 'success');
         } else {
-            const created = await apiFetch('/filieres', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/api/filieres', { method: 'POST', body: JSON.stringify(payload) });
             if (!created.cycleId) created.cycleId = payload.cycleId;
             filieres.push(created);
             showToast('Filière créée.', 'success');
@@ -568,7 +573,7 @@ async function saveNiveau() {
             niveaux = niveaux.map(n => n.id == id ? updated : n);
             showToast('Niveau modifié.', 'success');
         } else {
-            const created = await apiFetch('/niveaux', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/api/niveaux', { method: 'POST', body: JSON.stringify(payload) });
             if (!created.filiereId) created.filiereId = payload.filiereId;
             niveaux.push(created);
             showToast('Niveau créé.', 'success');
@@ -684,7 +689,7 @@ async function saveSpecialite() {
             specialites = specialites.map(s => s.id == id ? { ...updated, niveauId: payload.niveauId } : s);
             showToast('Spécialité modifiée.', 'success');
         } else {
-            const created = await apiFetch('/specialites', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/api/specialites', { method: 'POST', body: JSON.stringify(payload) });
             if (!created.niveauId) created.niveauId = payload.niveauId;
             specialites.push(created);
             showToast('Spécialité créée.', 'success');
@@ -890,7 +895,7 @@ async function saveClasse() {
             classes = classes.map(cl => cl.id == id ? updated : cl);
             showToast('Classe modifiée.', 'success');
         } else {
-            const created = await apiFetch('/classes', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/api/classes', { method: 'POST', body: JSON.stringify(payload) });
             const spIdFinal = created.specialiteId || created.speciliteId || payload.specialiteId;
             created.specialiteId = spIdFinal;
             classes.push(created);
@@ -1103,7 +1108,7 @@ async function saveAnnee() {
             await apiFetch(`/annees-academiques/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
             showToast('Année mise à jour.', 'success');
         } else {
-            await apiFetch('/annees-academiques', { method: 'POST', body: JSON.stringify(dto) });
+            await apiFetch('/api/annees-academiques', { method: 'POST', body: JSON.stringify(dto) });
             showToast('Année créée.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('anneeModal'))?.hide();
@@ -1213,7 +1218,7 @@ async function saveSemestre() {
             await apiFetch(`/semestres/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
             showToast('Semestre mis à jour.', 'success');
         } else {
-            await apiFetch('/semestres', { method: 'POST', body: JSON.stringify(dto) });
+            await apiFetch('/api/semestres', { method: 'POST', body: JSON.stringify(dto) });
             showToast('Semestre créé.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('semestreModal'))?.hide();
@@ -1305,7 +1310,7 @@ async function executeMigration() {
     if (!ok) return;
 
     try {
-        await apiFetch('/etudiants/migrer', {
+        await apiFetch('/api/etudiants/migrer', {
             method: 'POST',
             body: JSON.stringify({
                 etudiantIds: selected,

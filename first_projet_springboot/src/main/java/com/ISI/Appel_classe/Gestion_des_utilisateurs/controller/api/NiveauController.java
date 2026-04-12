@@ -21,18 +21,20 @@ public class NiveauController {
 
     private final NiveauService niveauService;
 
+    // Lecture : accessible à tous les rôles staff (filtres cascadants)
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<NiveauDTO>> getAllNiveaux() {
         return ResponseEntity.ok(niveauService.getAllNiveaux());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<NiveauDTO> getNiveauById(@PathVariable Long id) {
         return ResponseEntity.ok(niveauService.getNiveauById(id));
     }
 
+    // Écriture : ADMIN uniquement
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NiveauDTO> createNiveau(@RequestBody NiveauCreateDTO dto) {

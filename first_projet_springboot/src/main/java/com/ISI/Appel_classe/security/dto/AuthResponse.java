@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,4 +28,10 @@ public class AuthResponse {
     private String nom;
 
     private String prenom;
+
+    /** Ex: ["ENSEIGNANT"] */
+    private List<String> roles;
+
+    /** Permissions effectives (rôle - overrides retirées) */
+    private List<String> permissions;
 }

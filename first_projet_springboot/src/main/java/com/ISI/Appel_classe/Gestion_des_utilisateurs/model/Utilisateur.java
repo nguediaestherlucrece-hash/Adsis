@@ -67,17 +67,29 @@ public class Utilisateur implements UserDetails {
     // Implémentation de UserDetails pour Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 1. Collecter les noms des permissions retirées
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+
+        // 1. Ajouter les RÔLES avec le préfixe ROLE_ (convention Spring Security)
+        //    hasRole('ADMIN') → cherche ROLE_ADMIN
+        roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .forEach(authorities::add);
+
+        // 2. Collecter les noms des permissions retirées (overrides)
         Set<String> removedNames = permissionOverrides.stream()
                 .map(o -> o.getPermission().getName())
                 .collect(Collectors.toSet());
-        // 2. Permissions des rôles moins les permissions retirées
-        return roles.stream()
+
+        // 3. Ajouter les PERMISSIONS effectives (rôle - overrides retirées)
+        //    hasAuthority('ATTENDANCE_MANAGE') → cherche exactement ce nom
+        roles.stream()
                 .flatMap(role -> role.getPermissions().stream())
                 .map(Permission::getName)
                 .filter(name -> !removedNames.contains(name))
                 .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toSet());
+                .forEach(authorities::add);
+
+        return authorities;
     }
 
     @Override

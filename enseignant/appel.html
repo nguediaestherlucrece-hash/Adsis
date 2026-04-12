@@ -1,2610 +1,2336 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ADSIS – Séance d'appel</title>
-    <!-- html5-qrcode CDN -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- QRCode.js pour générer les QR codes étudiants -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        /* ===== ADSIS – shared.css ===== */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-          --primary:       #3B55E6;
-          --primary-dark:  #2a3fc2;
-          --primary-light: #6478f0;
-          --accent:        #7C3AED;
-          --teal:          #0d9488;
-          --surface:       #ffffff;
-          --surface-2:     #f4f6ff;
-          --bg:            #f0f2ff;
-          --text:          #1a1f36;
-          --text-muted:    #6b7280;
-          --border:        #e2e5f1;
-          --danger:        #ef4444;
-          --warning:       #f59e0b;
-          --success:       #10b981;
-          --sidebar-w:     300px;
-          --topbar-h:      70px;
-          --radius:        16px;
-          --radius-sm:     10px;
-          --shadow:        0 4px 20px rgba(59,85,230,0.10);
-          --shadow-card:   0 2px 12px rgba(0,0,0,0.07);
-          --transition:    0.22s cubic-bezier(0.4,0,0.2,1);
-          --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
-        html, body {
-          height: 100%;
-          font-family: var(--font);
-          background: var(--bg);
-          color: var(--text);
-        }
-
-        /* ══════════════ SIDEBAR ══════════════ */
-        .sidebar {
-          position: fixed;
-          top: 0; left: 0;
-          width: var(--sidebar-w);
-          height: 100%;
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          display: flex;
-          flex-direction: column;
-          z-index: 200;
-          transition: transform var(--transition);
-          overflow-y: auto;
-          overflow-x: hidden;
-        }
-
-        .sidebar-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 24px 20px 20px;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .sidebar-logo {
-          width: 40px; height: 40px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          display: flex; align-items: center; justify-content: center;
-          overflow: hidden; flex-shrink: 0;
-        }
-
-        .sidebar-logo img {
-          width: 100%; height: 100%;
-          object-fit: cover; border-radius: 10px;
-        }
-
-        .logo-txt-fb { color: #fff; font-size: 20px; }
-
-        .sidebar-brand {
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: var(--text);
-          letter-spacing: -0.3px;
-          flex: 1;
-        }
-
-        .sidebar-close {
-          display: none;
-          background: none; border: none;
-          font-size: 1.1rem;
-          color: var(--text-muted);
-          cursor: pointer;
-          padding: 4px 8px;
-          border-radius: 6px;
-          transition: background var(--transition);
-        }
-        .sidebar-close:hover { background: var(--surface-2); }
-
-        .sidebar-etab {
-          padding: 18px 20px 10px;
-          display: flex; flex-direction: column; gap: 4px;
-        }
-
-        .etab-label {
-          font-size: 0.7rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          color: var(--text-muted);
-        }
-
-        .etab-name {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--text);
-        }
-
-        .sidebar-nav {
-          flex: 1;
-          padding: 10px 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .nav-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
-          border-radius: 12px;
-          font-size: 0.95rem;
-          font-weight: 500;
-          color: var(--text-muted);
-          text-decoration: none;
-          transition: background var(--transition), color var(--transition);
-          cursor: pointer;
-          border: none;
-          background: none;
-          width: 100%;
-          text-align: left;
-          font-family: var(--font);
-        }
-
-        .nav-item svg {
-          width: 20px; height: 20px;
-          flex-shrink: 0;
-          stroke: currentColor;
-        }
-
-        .nav-item:hover {
-          background: var(--surface-2);
-          color: var(--primary);
-        }
-
-        .nav-item.active {
-          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: #fff;
-          font-weight: 600;
-          box-shadow: 0 4px 14px rgba(59,85,230,0.3);
-        }
-
-        .nav-logout { color: var(--danger); }
-        .nav-logout:hover { background: #fef2f2; color: #dc2626; }
-
-        .sidebar-footer {
-          padding: 12px;
-          border-top: 1px solid var(--border);
-        }
-
-        /* ══════════════ OVERLAY ══════════════ */
-        .sidebar-overlay {
-          display: none;
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.4);
-          z-index: 199;
-          backdrop-filter: blur(2px);
-        }
-
-        /* ══════════════ MAIN WRAP ══════════════ */
-        .main-wrap {
-          margin-left: var(--sidebar-w);
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          transition: margin-left var(--transition);
-        }
-
-        /* ══════════════ TOPBAR ══════════════ */
-        .topbar {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          height: var(--topbar-h);
-          background: var(--surface);
-          border-bottom: 1px solid var(--border);
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 0 28px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-
-        .burger {
-          display: none;
-          flex-direction: column;
-          gap: 5px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 6px;
-          border-radius: 8px;
-          transition: background var(--transition);
-        }
-        .burger:hover { background: var(--surface-2); }
-        .burger span {
-          display: block;
-          width: 22px; height: 2.5px;
-          background: var(--text);
-          border-radius: 2px;
-          transition: var(--transition);
-        }
-
-        .topbar-title { flex: 1; }
-        .topbar-title h2 {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: var(--text);
-          line-height: 1.2;
-        }
-        .topbar-date {
-          font-size: 0.8rem;
-          color: var(--text-muted);
-        }
-
-        .topbar-user {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .user-info {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-        }
-
-        .user-name {
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: var(--text);
-          line-height: 1.2;
-        }
-
-        .user-email {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-        }
-
-        .avatar {
-          width: 40px; height: 40px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          color: #fff;
-          font-weight: 700;
-          font-size: 0.9rem;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-          cursor: pointer;
-          user-select: none;
-        }
-
-        /* ══════════════ CONTENT ══════════════ */
-        .content {
-          flex: 1;
-          padding: 28px;
-          max-width: 1200px;
-          width: 100%;
-        }
-
-        /* ══════════════ RESPONSIVE ══════════════ */
-        @media (max-width: 768px) {
-          .sidebar {
-            transform: translateX(-100%);
-          }
-          .sidebar.open {
-            transform: translateX(0);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.15);
-          }
-          .sidebar-close { display: flex; }
-          .sidebar-overlay.open { display: block; }
-          .main-wrap { margin-left: 0; }
-          .burger { display: flex; }
-          .user-info { display: none; }
-          .topbar { padding: 0 16px; }
-          .content { padding: 20px 16px; }
-        }
-
-        @media (max-width: 480px) {
-          .content { padding: 16px 12px; }
-        }
-
-        /* ===== ADSIS – appel.css ===== */
-
-        /* ── Topbar extra ── */
-        .topbar-appel { gap: 10px; }
-
-        .back-btn {
-          width: 36px; height: 36px;
-          border-radius: 10px;
-          border: 1.5px solid var(--border);
-          background: var(--surface);
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer;
-          color: var(--text);
-          flex-shrink: 0;
-          transition: background var(--transition), border-color var(--transition);
-        }
-        .back-btn:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary); }
-
-        /* ── Session banner ── */
-        .session-banner {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          padding: 18px 22px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-bottom: 20px;
-          box-shadow: var(--shadow-card);
-          animation: fadeUp 0.3s both;
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .session-info h3 {
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: var(--text);
-          margin-bottom: 4px;
-        }
-        .session-info p { font-size: 0.85rem; color: var(--text-muted); }
-
-        .session-status {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          background: #f0fdf4;
-          color: var(--success);
-          border: 1px solid #bbf7d0;
-          border-radius: 20px;
-          padding: 6px 14px;
-          font-size: 0.82rem;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        /* ── Counters ── */
-        .counters-row {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          margin-bottom: 24px;
-          animation: fadeUp 0.3s 0.08s both;
-        }
-
-        .counter-card {
-          background: var(--surface);
-          border-radius: var(--radius);
-          padding: 20px 12px;
-          text-align: center;
-          border-left: 4px solid transparent;
-          box-shadow: var(--shadow-card);
-          border: 1px solid var(--border);
-          display: flex; flex-direction: column; gap: 4px;
-          transition: transform var(--transition);
-        }
-        .counter-card:hover { transform: translateY(-2px); }
-
-        .counter-present { border-left-color: var(--success); }
-        .counter-retard  { border-left-color: var(--warning); }
-        .counter-absent  { border-left-color: var(--danger); }
-
-        .counter-num {
-          font-size: 2rem;
-          font-weight: 900;
-          line-height: 1;
-        }
-        .counter-present .counter-num { color: var(--success); }
-        .counter-retard  .counter-num { color: var(--warning); }
-        .counter-absent  .counter-num { color: var(--danger); }
-
-        .counter-lbl {
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          color: var(--text-muted);
-        }
-
-        /* ── Tabs ── */
-        .tabs-bar {
-          display: flex;
-          background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-radius: 12px;
-          padding: 4px;
-          gap: 4px;
-          margin-bottom: 20px;
-          width: fit-content;
-          animation: fadeUp 0.3s 0.12s both;
-        }
-
-        .tab-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 9px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          color: var(--text-muted);
-          background: transparent;
-          transition: background var(--transition), color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .tab-btn.active {
-          background: var(--primary);
-          color: #fff;
-          box-shadow: 0 2px 10px rgba(59,85,230,0.3);
-        }
-        .tab-btn:not(.active):hover { background: var(--surface-2); color: var(--text); }
-
-        /* ── Tab panels ── */
-        .tab-panel { animation: fadeUp 0.25s both; }
-        .tab-panel.hidden { display: none; }
-
-        /* ── Scan panel ── */
-        .scan-wrap {
-          background: var(--surface);
-          border-radius: var(--radius);
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow-card);
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 20px;
-        }
-
-        #reader-container {
-          width: 100%;
-          max-width: 420px;
-          position: relative;
-          border-radius: 12px;
-          overflow: hidden;
-          background: #000;
-          min-height: 240px;
-          display: flex; align-items: center; justify-content: center;
-        }
-
-        #reader {
-          width: 100%;
-        }
-
-        /* Override html5-qrcode styles */
-        #reader video { border-radius: 12px; }
-        #reader img  { display: none; }
-        #reader__dashboard_section_csr button {
-          background: var(--primary) !important;
-          color: #fff !important;
-          border-radius: 8px !important;
-          border: none !important;
-          padding: 10px 20px !important;
-          font-weight: 600 !important;
-          cursor: pointer !important;
-          font-family: var(--font) !important;
-        }
-
-        .scan-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-        }
-
-        .scan-frame {
-          width: 200px; height: 200px;
-          position: relative;
-        }
-
-        .scan-corner {
-          position: absolute;
-          width: 28px; height: 28px;
-          border-color: #fff;
-          border-style: solid;
-        }
-        .scan-corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-        .scan-corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-        .scan-corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-        .scan-corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
-
-        .scan-line {
-          position: absolute;
-          left: 10px; right: 10px;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #3B55E6, transparent);
-          animation: scanMove 2s ease-in-out infinite;
-          top: 20px;
-          border-radius: 2px;
-        }
-
-        @keyframes scanMove {
-          0%   { top: 20px; opacity: 1; }
-          50%  { top: calc(100% - 20px); opacity: 0.7; }
-          100% { top: 20px; opacity: 1; }
-        }
-
-        .camera-error {
-          text-align: center;
-          padding: 32px 20px;
-          color: var(--text-muted);
-          display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
-        .camera-error svg { color: #9ca3af; }
-        .camera-error-title { font-weight: 700; font-size: 1rem; color: var(--text); }
-        .camera-error-sub   { font-size: 0.85rem; }
-        .camera-error-hint  { font-size: 0.82rem; color: var(--primary); font-style: italic; }
-
-        .scan-result {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          background: #f0fdf4;
-          border: 1.5px solid #bbf7d0;
-          color: var(--success);
-          border-radius: 10px;
-          padding: 12px 20px;
-          font-weight: 700;
-          font-size: 0.95rem;
-          width: 100%;
-          max-width: 420px;
-          animation: popIn 0.3s both;
-        }
-        @keyframes popIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-
-        .scan-controls {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-
-        .btn-start-scan, .btn-stop-scan {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 13px 24px;
-          border: none;
-          border-radius: 12px;
-          font-size: 0.95rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: transform var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-
-        .btn-start-scan {
-          background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-          color: #fff;
-          box-shadow: 0 4px 14px rgba(59,85,230,0.35);
-        }
-        .btn-start-scan:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,85,230,0.4); }
-
-        .btn-stop-scan {
-          background: #fee2e2;
-          color: var(--danger);
-        }
-        .btn-stop-scan:hover { background: #fecaca; transform: translateY(-2px); }
-
-        /* ── Student list ── */
-        .list-search-wrap {
-          position: relative;
-          margin-bottom: 16px;
-        }
-        .search-icon {
-          position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-          color: #9ca3af; pointer-events: none;
-        }
-        .student-search {
-          width: 100%;
-          padding: 12px 14px 12px 44px;
-          border: 1.5px solid var(--border);
-          border-radius: var(--radius-sm);
-          font-size: 0.9rem;
-          color: var(--text);
-          background: var(--surface);
-          outline: none;
-          transition: border-color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .student-search:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
-        }
-
-        .student-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          max-height: 460px;
-          overflow-y: auto;
-          padding-right: 4px;
-        }
-
-        .student-list::-webkit-scrollbar { width: 5px; }
-        .student-list::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 4px; }
-        .student-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-        .student-row {
-          background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 14px 16px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
-        }
-        .student-row:hover { border-color: rgba(59,85,230,0.25); box-shadow: 0 2px 10px rgba(59,85,230,0.08); }
-
-        .student-row.is-present { border-left: 3px solid var(--success); }
-        .student-row.is-retard  { border-left: 3px solid var(--warning); }
-        .student-row.is-absent  { border-left: 3px solid var(--danger); }
-
-        .student-avatar {
-          width: 38px; height: 38px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          color: #fff;
-          font-weight: 700;
-          font-size: 0.85rem;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .student-info { flex: 1; min-width: 0; }
-        .student-name {
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: var(--text);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .student-mat {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          margin-top: 1px;
-        }
-
-        /* Status radio group */
-        .status-group {
-          display: flex;
-          gap: 6px;
-          flex-shrink: 0;
-        }
-
-        .status-btn {
-          padding: 5px 10px;
-          border-radius: 8px;
-          border: 1.5px solid transparent;
-          font-size: 0.75rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all var(--transition);
-          background: var(--surface-2);
-          color: var(--text-muted);
-          font-family: var(--font);
-        }
-
-        .status-btn[data-status="present"].selected {
-          background: #f0fdf4; color: var(--success); border-color: var(--success);
-        }
-        .status-btn[data-status="retard"].selected {
-          background: #fffbeb; color: var(--warning); border-color: var(--warning);
-        }
-        .status-btn[data-status="absent"].selected {
-          background: #fef2f2; color: var(--danger); border-color: var(--danger);
-        }
-
-        .status-btn:hover:not(.selected) { background: var(--border); color: var(--text); }
-
-        .list-actions {
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 14px;
-        }
-
-        .btn-mark-all {
-          display: inline-flex; align-items: center; gap: 7px;
-          padding: 10px 18px;
-          background: #f0fdf4;
-          color: var(--success);
-          border: 1.5px solid #bbf7d0;
-          border-radius: 10px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background var(--transition), transform var(--transition);
-          font-family: var(--font);
-        }
-        .btn-mark-all:hover { background: #dcfce7; transform: translateY(-1px); }
-
-        /* ── Clôture bar ── */
-        .close-appel-bar {
-          margin-top: 28px;
-          display: flex;
-          justify-content: center;
-          animation: fadeUp 0.35s 0.3s both;
-        }
-
-        .btn-cloture {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 16px 36px;
-          background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-          color: #fff;
-          border: none;
-          border-radius: 14px;
-          font-size: 1rem;
-          font-weight: 800;
-          cursor: pointer;
-          box-shadow: 0 4px 16px rgba(16,185,129,0.35);
-          transition: transform var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-          letter-spacing: 0.01em;
-        }
-        .btn-cloture:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(16,185,129,0.4); }
-        .btn-cloture:active { transform: translateY(0); }
-
-        /* ── Toast ── */
-        .toast {
-          position: fixed;
-          bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-          background: var(--text);
-          color: #fff;
-          padding: 12px 24px;
-          border-radius: 12px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.3s, transform 0.3s;
-          z-index: 500;
-          white-space: nowrap;
-          box-shadow: 0 6px 24px rgba(0,0,0,0.25);
-          max-width: calc(100vw - 32px);
-          text-align: center;
-        }
-        .toast.show {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
-        }
-        .toast.success-toast { background: var(--success); }
-        .toast.error-toast   { background: var(--danger); }
-        .toast.info-toast    { background: var(--primary); }
-
-        /* ── Modal ── */
-        .modal-overlay {
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.5);
-          z-index: 600;
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
-          backdrop-filter: blur(4px);
-        }
-
-        .modal-box {
-          background: var(--surface);
-          border-radius: var(--radius);
-          padding: 32px;
-          max-width: 420px; width: 100%;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-          animation: popIn 0.3s both;
-        }
-
-        .modal-title {
-          font-size: 1.15rem;
-          font-weight: 800;
-          color: var(--text);
-          margin-bottom: 10px;
-        }
-
-        .modal-text {
-          font-size: 0.9rem;
-          color: var(--text-muted);
-          margin-bottom: 24px;
-          line-height: 1.5;
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 10px;
-          justify-content: flex-end;
-        }
-
-        .modal-btn {
-          padding: 11px 22px;
-          border-radius: 10px;
-          border: none;
-          font-size: 0.9rem;
-          font-weight: 700;
-          cursor: pointer;
-          font-family: var(--font);
-          transition: background var(--transition), transform var(--transition);
-        }
-        .modal-cancel  { background: var(--surface-2); color: var(--text-muted); }
-        .modal-cancel:hover { background: var(--border); }
-        .modal-confirm { background: var(--success); color: #fff; }
-        .modal-confirm:hover { background: #059669; transform: translateY(-1px); }
-
-
-        /* ════════════════════════════════════════════════════════
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADSIS – Séance d'appel</title>
+  <!-- html5-qrcode CDN -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- QRCode.js pour générer les QR codes étudiants -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ===== ADSIS – shared.css ===== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #3B55E6;
+      --primary-dark: #2a3fc2;
+      --primary-light: #6478f0;
+      --accent: #7C3AED;
+      --teal: #0d9488;
+      --surface: #ffffff;
+      --surface-2: #f4f6ff;
+      --bg: #f0f2ff;
+      --text: #1a1f36;
+      --text-muted: #6b7280;
+      --border: #e2e5f1;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --sidebar-w: 300px;
+      --topbar-h: 70px;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 20px rgba(59, 85, 230, 0.10);
+      --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.07);
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ══════════════ SIDEBAR ══════════════ */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100%;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 200;
+      transition: transform var(--transition);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .logo-txt-fb {
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .sidebar-brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      flex: 1;
+    }
+
+    .sidebar-close {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background var(--transition);
+    }
+
+    .sidebar-close:hover {
+      background: var(--surface-2);
+    }
+
+    .sidebar-etab {
+      padding: 18px 20px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .etab-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .etab-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: background var(--transition), color var(--transition);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: var(--font);
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      stroke: currentColor;
+    }
+
+    .nav-item:hover {
+      background: var(--surface-2);
+      color: var(--primary);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(59, 85, 230, 0.3);
+    }
+
+    .nav-logout {
+      color: var(--danger);
+    }
+
+    .nav-logout:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ══════════════ OVERLAY ══════════════ */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 199;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ══════════════ MAIN WRAP ══════════════ */
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left var(--transition);
+    }
+
+    /* ══════════════ TOPBAR ══════════════ */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--topbar-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 28px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .burger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: background var(--transition);
+    }
+
+    .burger:hover {
+      background: var(--surface-2);
+    }
+
+    .burger span {
+      display: block;
+      width: 22px;
+      height: 2.5px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: var(--transition);
+    }
+
+    .topbar-title {
+      flex: 1;
+    }
+
+    .topbar-title h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .topbar-date {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ══════════════ CONTENT ══════════════ */
+    .content {
+      flex: 1;
+      padding: 28px;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    /* ══════════════ RESPONSIVE ══════════════ */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .sidebar-close {
+        display: flex;
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      .main-wrap {
+        margin-left: 0;
+      }
+
+      .burger {
+        display: flex;
+      }
+
+      .user-info {
+        display: none;
+      }
+
+      .topbar {
+        padding: 0 16px;
+      }
+
+      .content {
+        padding: 20px 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        padding: 16px 12px;
+      }
+    }
+
+    /* ===== ADSIS – appel.css ===== */
+
+    /* ── Topbar extra ── */
+    .topbar-appel {
+      gap: 10px;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .back-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* ── Session banner ── */
+    .session-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      animation: fadeUp 0.3s both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .session-info h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .session-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .session-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* ── Counters ── */
+    .counters-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.3s 0.08s both;
+    }
+
+    .counter-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px 12px;
+      text-align: center;
+      border-left: 4px solid transparent;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform var(--transition);
+    }
+
+    .counter-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .counter-present {
+      border-left-color: var(--success);
+    }
+
+    .counter-retard {
+      border-left-color: var(--warning);
+    }
+
+    .counter-absent {
+      border-left-color: var(--danger);
+    }
+
+    .counter-num {
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .counter-present .counter-num {
+      color: var(--success);
+    }
+
+    .counter-retard .counter-num {
+      color: var(--warning);
+    }
+
+    .counter-absent .counter-num {
+      color: var(--danger);
+    }
+
+    .counter-lbl {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ── Tabs ── */
+    .tabs-bar {
+      display: flex;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 20px;
+      width: fit-content;
+      animation: fadeUp 0.3s 0.12s both;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: transparent;
+      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(59, 85, 230, 0.3);
+    }
+
+    .tab-btn:not(.active):hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    /* ── Tab panels ── */
+    .tab-panel {
+      animation: fadeUp 0.25s both;
+    }
+
+    .tab-panel.hidden {
+      display: none;
+    }
+
+    /* ── Scan panel ── */
+    .scan-wrap {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #reader-container {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    /* Override html5-qrcode styles */
+    #reader video {
+      border-radius: 12px;
+    }
+
+    #reader img {
+      display: none;
+    }
+
+    #reader__dashboard_section_csr button {
+      background: var(--primary) !important;
+      color: #fff !important;
+      border-radius: 8px !important;
+      border: none !important;
+      padding: 10px 20px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      font-family: var(--font) !important;
+    }
+
+    .scan-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .scan-frame {
+      width: 200px;
+      height: 200px;
+      position: relative;
+    }
+
+    .scan-corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: #fff;
+      border-style: solid;
+    }
+
+    .scan-corner.tl {
+      top: 0;
+      left: 0;
+      border-width: 3px 0 0 3px;
+      border-radius: 4px 0 0 0;
+    }
+
+    .scan-corner.tr {
+      top: 0;
+      right: 0;
+      border-width: 3px 3px 0 0;
+      border-radius: 0 4px 0 0;
+    }
+
+    .scan-corner.bl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 3px 3px;
+      border-radius: 0 0 0 4px;
+    }
+
+    .scan-corner.br {
+      bottom: 0;
+      right: 0;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 4px 0;
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #3B55E6, transparent);
+      animation: scanMove 2s ease-in-out infinite;
+      top: 20px;
+      border-radius: 2px;
+    }
+
+    @keyframes scanMove {
+      0% {
+        top: 20px;
+        opacity: 1;
+      }
+
+      50% {
+        top: calc(100% - 20px);
+        opacity: 0.7;
+      }
+
+      100% {
+        top: 20px;
+        opacity: 1;
+      }
+    }
+
+    .camera-error {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .camera-error svg {
+      color: #9ca3af;
+    }
+
+    .camera-error-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .camera-error-sub {
+      font-size: 0.85rem;
+    }
+
+    .camera-error-hint {
+      font-size: 0.82rem;
+      color: var(--primary);
+      font-style: italic;
+    }
+
+    .scan-result {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f0fdf4;
+      border: 1.5px solid #bbf7d0;
+      color: var(--success);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 420px;
+      animation: popIn 0.3s both;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .scan-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-start-scan,
+    .btn-stop-scan {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .btn-start-scan {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 85, 230, 0.35);
+    }
+
+    .btn-start-scan:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 85, 230, 0.4);
+    }
+
+    .btn-stop-scan {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .btn-stop-scan:hover {
+      background: #fecaca;
+      transform: translateY(-2px);
+    }
+
+    /* ── Student list ── */
+    .list-search-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    .student-search {
+      width: 100%;
+      padding: 12px 14px 12px 44px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--surface);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .student-search:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 85, 230, 0.1);
+    }
+
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 460px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .student-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .student-list::-webkit-scrollbar-track {
+      background: var(--surface-2);
+      border-radius: 4px;
+    }
+
+    .student-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .student-row {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+
+    .student-row:hover {
+      border-color: rgba(59, 85, 230, 0.25);
+      box-shadow: 0 2px 10px rgba(59, 85, 230, 0.08);
+    }
+
+    .student-row.is-present {
+      border-left: 3px solid var(--success);
+    }
+
+    .student-row.is-retard {
+      border-left: 3px solid var(--warning);
+    }
+
+    .student-row.is-absent {
+      border-left: 3px solid var(--danger);
+    }
+
+    .student-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .student-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .student-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .student-mat {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* Status radio group */
+    .status-group {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .status-btn {
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-family: var(--font);
+    }
+
+    .status-btn[data-status="present"].selected {
+      background: #f0fdf4;
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    .status-btn[data-status="retard"].selected {
+      background: #fffbeb;
+      color: var(--warning);
+      border-color: var(--warning);
+    }
+
+    .status-btn[data-status="absent"].selected {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .status-btn:hover:not(.selected) {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .list-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .btn-mark-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 18px;
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1.5px solid #bbf7d0;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+      font-family: var(--font);
+    }
+
+    .btn-mark-all:hover {
+      background: #dcfce7;
+      transform: translateY(-1px);
+    }
+
+    /* ── Clôture bar ── */
+    .close-appel-bar {
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+      animation: fadeUp 0.35s 0.3s both;
+    }
+
+    .btn-cloture {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      transition: transform var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+      letter-spacing: 0.01em;
+    }
+
+    .btn-cloture:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-cloture:active {
+      transform: translateY(0);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 500;
+      white-space: nowrap;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success-toast {
+      background: var(--success);
+    }
+
+    .toast.error-toast {
+      background: var(--danger);
+    }
+
+    .toast.info-toast {
+      background: var(--primary);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      animation: popIn 0.3s both;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .modal-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background var(--transition), transform var(--transition);
+    }
+
+    .modal-cancel {
+      background: var(--surface-2);
+      color: var(--text-muted);
+    }
+
+    .modal-cancel:hover {
+      background: var(--border);
+    }
+
+    .modal-confirm {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .modal-confirm:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+
+    /* ════════════════════════════════════════════════════════
            QR PRÉSENCE – styles
         ════════════════════════════════════════════════════════ */
 
-        /* ── Wrapper ── */
-        .qrgen-wrap {
-          background: var(--surface);
-          border-radius: var(--radius);
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow-card);
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
+    /* ── Wrapper ── */
+    .qrgen-wrap {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-        /* ── Intro banner ── */
-        .qrgen-intro {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          background: #eef2ff;
-          border: 1px solid #c7d2fe;
-          border-radius: 12px;
-          padding: 14px 16px;
-          font-size: 0.88rem;
-          color: #3730a3;
-          line-height: 1.5;
-        }
-        .qrgen-intro-icon {
-          flex-shrink: 0;
-          color: var(--primary);
-          margin-top: 1px;
-        }
+    /* ── Intro banner ── */
+    .qrgen-intro {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      color: #3730a3;
+      line-height: 1.5;
+    }
 
-        /* ── Mode bar ── */
-        .qrgen-mode-bar {
-          display: flex;
-          gap: 8px;
-          background: var(--surface-2);
-          border-radius: 12px;
-          padding: 4px;
-          width: fit-content;
-        }
+    .qrgen-intro-icon {
+      flex-shrink: 0;
+      color: var(--primary);
+      margin-top: 1px;
+    }
 
-        .qrgen-mode-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 9px 18px;
-          border: none;
-          border-radius: 9px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          cursor: pointer;
-          color: var(--text-muted);
-          background: transparent;
-          transition: background var(--transition), color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .qrgen-mode-btn.active {
-          background: var(--surface);
-          color: var(--primary);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .qrgen-mode-btn:not(.active):hover { color: var(--text); }
+    /* ── Mode bar ── */
+    .qrgen-mode-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 4px;
+      width: fit-content;
+    }
 
-        /* ── Hint text ── */
-        .qrgen-hint {
-          font-size: 0.85rem;
-          color: var(--text-muted);
-          line-height: 1.5;
-          margin-bottom: 4px;
-        }
+    .qrgen-mode-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: transparent;
+      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
 
-        /* ── Timer row ── */
-        .qrgen-timer-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-        .qrgen-timer-label {
-          font-size: 0.85rem;
-          color: var(--text-muted);
-          font-weight: 600;
-        }
-        .qrgen-timer-val {
-          font-size: 1.25rem;
-          font-weight: 900;
-          color: var(--primary);
-          font-variant-numeric: tabular-nums;
-          letter-spacing: 1px;
-          min-width: 56px;
-          transition: color 0.3s;
-        }
-        .qrgen-timer-val.expiring { color: var(--danger); animation: pulse 0.8s ease-in-out infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .qrgen-mode-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
 
-        .btn-refresh-qr {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 7px 14px;
-          border: 1.5px solid var(--primary);
-          border-radius: 9px;
-          background: transparent;
-          color: var(--primary);
-          font-size: 0.82rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background var(--transition), color var(--transition);
-          font-family: var(--font);
-        }
-        .btn-refresh-qr:hover { background: var(--primary); color: #fff; }
-        .btn-refresh-qr svg { transition: transform 0.4s; }
-        .btn-refresh-qr:hover svg { transform: rotate(180deg); }
+    .qrgen-mode-btn:not(.active):hover {
+      color: var(--text);
+    }
 
-        /* ── QR display box ── */
-        .qrgen-display {
-          display: flex;
-          justify-content: center;
-          position: relative;
-        }
+    /* ── Hint text ── */
+    .qrgen-hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
 
-        .qrgen-qr-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 14px;
-          background: #fff;
-          border: 2px solid var(--border);
-          border-radius: var(--radius);
-          padding: 24px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-          position: relative;
-        }
+    /* ── Timer row ── */
+    .qrgen-timer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-        #qr-canvas-session canvas,
-        #qr-fullscreen-canvas canvas {
-          display: block;
-          border-radius: 8px;
-        }
+    .qrgen-timer-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
 
-        .qrgen-qr-label {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 3px;
-          text-align: center;
-        }
-        .qrgen-qr-label strong {
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: var(--text);
-        }
-        .qrgen-qr-label span {
-          font-size: 0.78rem;
-          color: var(--text-muted);
-        }
+    .qrgen-timer-val {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1px;
+      min-width: 56px;
+      transition: color 0.3s;
+    }
 
-        /* ── Expired overlay ── */
-        .qr-expired-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(4px);
-          border-radius: var(--radius);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          color: var(--danger);
-          font-weight: 700;
-          font-size: 0.95rem;
-          z-index: 10;
-        }
-        .qr-expired-overlay svg { color: var(--danger); }
-        .qr-expired-overlay .btn-qrgen-action {
-          margin-top: 6px;
-          background: var(--danger);
-          color: #fff;
-          border: none;
-        }
-        .qr-expired-overlay .btn-qrgen-action:hover { opacity: 0.85; }
+    .qrgen-timer-val.expiring {
+      color: var(--danger);
+      animation: pulse 0.8s ease-in-out infinite;
+    }
 
-        /* ── Action buttons ── */
-        .qrgen-actions {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
+    @keyframes pulse {
 
-        .btn-qrgen-action {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 11px 20px;
-          border-radius: 11px;
-          font-size: 0.88rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
-          font-family: var(--font);
-          border: none;
-        }
+      0%,
+      100% {
+        opacity: 1;
+      }
 
-        .btn-fullscreen {
-          background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-          color: #fff;
-          box-shadow: 0 4px 14px rgba(59,85,230,0.3);
-        }
-        .btn-fullscreen:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,85,230,0.4); }
+      50% {
+        opacity: 0.5;
+      }
+    }
 
-        .btn-download-qr {
-          background: var(--surface-2);
-          color: var(--text);
-          border: 1.5px solid var(--border);
-        }
-        .btn-download-qr:hover { background: var(--border); transform: translateY(-1px); }
+    .btn-refresh-qr {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--primary);
+      border-radius: 9px;
+      background: transparent;
+      color: var(--primary);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      font-family: var(--font);
+    }
 
-        /* ── Student QR picker ── */
-        .qrgen-student-picker {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-          align-items: start;
-        }
+    .btn-refresh-qr:hover {
+      background: var(--primary);
+      color: #fff;
+    }
 
-        .qrgen-student-search-wrap {
-          position: relative;
-          margin-bottom: 10px;
-        }
-        .qrgen-search-icon {
-          position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-          color: #9ca3af; pointer-events: none;
-        }
-        .qrgen-student-search {
-          width: 100%;
-          padding: 10px 12px 10px 36px;
-          border: 1.5px solid var(--border);
-          border-radius: var(--radius-sm);
-          font-size: 0.88rem;
-          color: var(--text);
-          background: var(--surface-2);
-          outline: none;
-          transition: border-color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .qrgen-student-search:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
-          background: #fff;
-        }
+    .btn-refresh-qr svg {
+      transition: transform 0.4s;
+    }
 
-        .qrgen-student-list {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          max-height: 320px;
-          overflow-y: auto;
-          padding-right: 2px;
-        }
-        .qrgen-student-list::-webkit-scrollbar { width: 4px; }
-        .qrgen-student-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .btn-refresh-qr:hover svg {
+      transform: rotate(180deg);
+    }
 
-        .qrgen-stu-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 12px;
-          border-radius: 10px;
-          border: 1.5px solid var(--border);
-          background: var(--surface);
-          cursor: pointer;
-          transition: border-color var(--transition), background var(--transition), transform var(--transition);
-        }
-        .qrgen-stu-item:hover { border-color: var(--primary); background: #f5f7ff; transform: translateX(2px); }
-        .qrgen-stu-item.selected {
-          border-color: var(--primary);
-          background: #eef2ff;
-          color: var(--primary);
-        }
+    /* ── QR display box ── */
+    .qrgen-display {
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
 
-        .qrgen-stu-avatar {
-          width: 32px; height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          color: #fff;
-          font-size: 0.75rem;
-          font-weight: 700;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-        .qrgen-stu-info { flex: 1; min-width: 0; }
-        .qrgen-stu-name { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .qrgen-stu-mat  { font-size: 0.72rem; color: var(--text-muted); }
+    .qrgen-qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
 
-        .qrgen-student-qr {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          gap: 14px;
-        }
+    #qr-canvas-session canvas,
+    #qr-fullscreen-canvas canvas {
+      display: block;
+      border-radius: 8px;
+    }
 
-        .qrgen-student-qr-placeholder {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          color: var(--text-muted);
-          font-size: 0.85rem;
-          text-align: center;
-          padding: 32px 16px;
-          border: 2px dashed var(--border);
-          border-radius: var(--radius);
-          width: 100%;
-        }
-        .qrgen-student-qr-placeholder svg { color: #d1d5db; }
+    .qrgen-qr-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-align: center;
+    }
 
-        .qrgen-stu-qr-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          background: #fff;
-          border: 2px solid var(--border);
-          border-radius: var(--radius);
-          padding: 20px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-          width: 100%;
-          animation: popIn 0.25s both;
-        }
+    .qrgen-qr-label strong {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+    }
 
-        .qrgen-stu-qr-name {
-          font-weight: 800;
-          font-size: 0.95rem;
-          color: var(--text);
-          text-align: center;
-        }
+    .qrgen-qr-label span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
 
-        .qrgen-stu-qr-mat {
-          font-size: 0.78rem;
-          color: var(--text-muted);
-          text-align: center;
-        }
+    /* ── Expired overlay ── */
+    .qr-expired-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 0.95rem;
+      z-index: 10;
+    }
 
-        .qrgen-stu-btn-row {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          justify-content: center;
-          width: 100%;
-        }
+    .qr-expired-overlay svg {
+      color: var(--danger);
+    }
 
-        .btn-stu-dl {
-          background: var(--surface-2);
-          color: var(--text);
-          border: 1.5px solid var(--border);
-          font-size: 0.8rem;
-          padding: 8px 14px;
-        }
-        .btn-stu-dl:hover { background: var(--border); }
+    .qr-expired-overlay .btn-qrgen-action {
+      margin-top: 6px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+    }
 
-        .btn-stu-mark {
-          background: linear-gradient(135deg, var(--success), #059669);
-          color: #fff;
-          font-size: 0.8rem;
-          padding: 8px 14px;
-          box-shadow: 0 2px 8px rgba(16,185,129,0.3);
-        }
-        .btn-stu-mark:hover { opacity: 0.9; transform: translateY(-1px); }
+    .qr-expired-overlay .btn-qrgen-action:hover {
+      opacity: 0.85;
+    }
 
-        /* ── Fullscreen modal ── */
-        .qr-fullscreen-modal {
-          position: fixed;
-          inset: 0;
-          z-index: 900;
-          background: #0f172a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 24px;
-          animation: fadeIn 0.3s both;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* ── Action buttons ── */
+    .qrgen-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-        .qr-fullscreen-close {
-          position: absolute;
-          top: 20px; right: 20px;
-          width: 44px; height: 44px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.1);
-          border: none;
-          color: #fff;
-          cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          transition: background var(--transition);
-          z-index: 910;
-        }
-        .qr-fullscreen-close:hover { background: rgba(255,255,255,0.2); }
+    .btn-qrgen-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 11px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      font-family: var(--font);
+      border: none;
+    }
 
-        .qr-fullscreen-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 20px;
-        }
+    .btn-fullscreen {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 85, 230, 0.3);
+    }
 
-        #qr-fullscreen-canvas canvas {
-          border-radius: 12px;
-          box-shadow: 0 0 60px rgba(59,85,230,0.4);
-        }
+    .btn-fullscreen:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 85, 230, 0.4);
+    }
 
-        .qr-fullscreen-info {
-          text-align: center;
-          color: #fff;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .qr-fullscreen-info h2 {
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: #fff;
-        }
-        .qr-fullscreen-info p {
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.65);
-        }
-        .qr-fs-timer-row {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          font-size: 0.85rem;
-          color: rgba(255,255,255,0.65);
-          margin-top: 4px;
-        }
-        .qr-fs-timer-row .qrgen-timer-val { color: #a5b4fc; font-size: 1.1rem; }
-        .qr-fs-timer-row .qrgen-timer-val.expiring { color: #f87171; }
+    .btn-download-qr {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
 
-        /* ── Responsive ── */
-        @media (max-width: 700px) {
-          .qrgen-student-picker { grid-template-columns: 1fr; }
-          .qrgen-mode-bar { width: 100%; }
-          .qrgen-mode-btn { flex: 1; justify-content: center; }
-          .tabs-bar { flex-wrap: wrap; width: 100%; }
-          .tab-btn  { flex: 1; min-width: 0; font-size: 0.78rem; padding: 9px 8px; }
-        }
+    .btn-download-qr:hover {
+      background: var(--border);
+      transform: translateY(-1px);
+    }
 
-        @media (max-width: 400px) {
-          .qrgen-wrap { padding: 16px; }
-          .qrgen-qr-box { padding: 16px; }
-        }
+    /* ── Student QR picker ── */
+    .qrgen-student-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
 
-          .counters-row { gap: 8px; }
-          .counter-card { padding: 16px 8px; }
-          .counter-num  { font-size: 1.6rem; }
-          .counter-lbl  { font-size: 0.62rem; }
-          .tabs-bar { width: 100%; }
-          .tab-btn  { flex: 1; justify-content: center; padding: 10px 12px; font-size: 0.82rem; }
-          .status-group { gap: 4px; }
-          .status-btn   { padding: 4px 7px; font-size: 0.7rem; }
-          .btn-cloture  { width: 100%; justify-content: center; padding: 14px 20px; }
-          .scan-wrap    { padding: 16px; }
-          .session-banner { padding: 14px 16px; }
-        
+    .qrgen-student-search-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
 
-        @media (max-width: 400px) {
-          .student-row { padding: 10px 12px; gap: 10px; }
-          .student-avatar { width: 32px; height: 32px; font-size: 0.75rem; }
-          .status-btn { padding: 4px 6px; font-size: 0.68rem; }
-        }
+    .qrgen-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    .qrgen-student-search {
+      width: 100%;
+      padding: 10px 12px 10px 36px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--surface-2);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .qrgen-student-search:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 85, 230, 0.1);
+      background: #fff;
+    }
+
+    .qrgen-student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .qrgen-student-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .qrgen-student-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .qrgen-stu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), transform var(--transition);
+    }
+
+    .qrgen-stu-item:hover {
+      border-color: var(--primary);
+      background: #f5f7ff;
+      transform: translateX(2px);
+    }
+
+    .qrgen-stu-item.selected {
+      border-color: var(--primary);
+      background: #eef2ff;
+      color: var(--primary);
+    }
+
+    .qrgen-stu-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .qrgen-stu-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .qrgen-stu-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .qrgen-stu-mat {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .qrgen-student-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 14px;
+    }
+
+    .qrgen-student-qr-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 32px 16px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+    }
+
+    .qrgen-student-qr-placeholder svg {
+      color: #d1d5db;
+    }
+
+    .qrgen-stu-qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+      width: 100%;
+      animation: popIn 0.25s both;
+    }
+
+    .qrgen-stu-qr-name {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .qrgen-stu-qr-mat {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .qrgen-stu-btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .btn-stu-dl {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      font-size: 0.8rem;
+      padding: 8px 14px;
+    }
+
+    .btn-stu-dl:hover {
+      background: var(--border);
+    }
+
+    .btn-stu-mark {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-stu-mark:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* ── Fullscreen modal ── */
+    .qr-fullscreen-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn 0.3s both;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .qr-fullscreen-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition);
+      z-index: 910;
+    }
+
+    .qr-fullscreen-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .qr-fullscreen-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #qr-fullscreen-canvas canvas {
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(59, 85, 230, 0.4);
+    }
+
+    .qr-fullscreen-info {
+      text-align: center;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .qr-fullscreen-info h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .qr-fullscreen-info p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .qr-fs-timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.65);
+      margin-top: 4px;
+    }
+
+    .qr-fs-timer-row .qrgen-timer-val {
+      color: #a5b4fc;
+      font-size: 1.1rem;
+    }
+
+    .qr-fs-timer-row .qrgen-timer-val.expiring {
+      color: #f87171;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .qrgen-student-picker {
+        grid-template-columns: 1fr;
+      }
+
+      .qrgen-mode-bar {
+        width: 100%;
+      }
+
+      .qrgen-mode-btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .tabs-bar {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .tab-btn {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.78rem;
+        padding: 9px 8px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .qrgen-wrap {
+        padding: 16px;
+      }
+
+      .qrgen-qr-box {
+        padding: 16px;
+      }
+    }
+
+    .counters-row {
+      gap: 8px;
+    }
+
+    .counter-card {
+      padding: 16px 8px;
+    }
+
+    .counter-num {
+      font-size: 1.6rem;
+    }
+
+    .counter-lbl {
+      font-size: 0.62rem;
+    }
+
+    .tabs-bar {
+      width: 100%;
+    }
+
+    .tab-btn {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+    }
+
+    .status-group {
+      gap: 4px;
+    }
+
+    .status-btn {
+      padding: 4px 7px;
+      font-size: 0.7rem;
+    }
+
+    .btn-cloture {
+      width: 100%;
+      justify-content: center;
+      padding: 14px 20px;
+    }
+
+    .scan-wrap {
+      padding: 16px;
+    }
+
+    .session-banner {
+      padding: 14px 16px;
+    }
 
 
-        /* ── Session selector in topbar ── */
-        .topbar-appel {
-          flex-wrap: nowrap;
-          gap: 8px;
-        }
+    @media (max-width: 400px) {
+      .student-row {
+        padding: 10px 12px;
+        gap: 10px;
+      }
 
-        .session-selector-wrap {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--surface-2);
-          border: 1.5px solid var(--border);
-          border-radius: 12px;
-          padding: 7px 12px;
-          flex-shrink: 0;
-          max-width: 280px;
-          transition: border-color var(--transition), box-shadow var(--transition);
-        }
-        .session-selector-wrap:focus-within {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
-        }
-        .session-selector-wrap svg { color: var(--primary); flex-shrink: 0; }
+      .student-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+      }
 
-        .session-select {
-          appearance: none;
-          -webkit-appearance: none;
-          border: none;
-          background: transparent;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--text);
-          cursor: pointer;
-          outline: none;
-          font-family: var(--font);
-          min-width: 0;
-          flex: 1;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+      .status-btn {
+        padding: 4px 6px;
+        font-size: 0.68rem;
+      }
+    }
 
-        @media (max-width: 900px) {
-          .session-selector-wrap { max-width: 200px; }
-          .session-select { font-size: 0.78rem; }
-        }
-        @media (max-width: 640px) {
-          .topbar-appel { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
-          .session-selector-wrap { max-width: 100%; width: 100%; order: 3; }
-          .topbar-title { order: 1; }
-          .topbar-user  { order: 2; margin-left: auto; }
-          .back-btn, .burger { order: 0; }
-        }
-    </style>
+
+    /* ── Session selector in topbar ── */
+    .topbar-appel {
+      flex-wrap: nowrap;
+      gap: 8px;
+    }
+
+    .session-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 7px 12px;
+      flex-shrink: 0;
+      max-width: 280px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .session-selector-wrap:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 85, 230, 0.1);
+    }
+
+    .session-selector-wrap svg {
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .session-select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      font-family: var(--font);
+      min-width: 0;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 900px) {
+      .session-selector-wrap {
+        max-width: 200px;
+      }
+
+      .session-select {
+        font-size: 0.78rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-appel {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 10px 16px;
+        gap: 8px;
+      }
+
+      .session-selector-wrap {
+        max-width: 100%;
+        width: 100%;
+        order: 3;
+      }
+
+      .topbar-title {
+        order: 1;
+      }
+
+      .topbar-user {
+        order: 2;
+        margin-left: auto;
+      }
+
+      .back-btn,
+      .burger {
+        order: 0;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ══ SIDEBAR ══ -->
-<aside class="sidebar" id="sidebar">
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <img src="../assets/image.png" alt="ADSIS" onerror="this.style.display='none';document.querySelector('.logo-txt-fb').style.display='flex';" />
-            <span class="logo-txt-fb" style="display:none;">✔</span>
-        </div>
-        <span class="sidebar-brand">ADSIS</span>
-        <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
+      <div class="sidebar-logo">
+        <img src="../assets/image.png" alt="ADSIS"
+          onerror="this.style.display='none';document.querySelector('.logo-txt-fb').style.display='flex';" />
+        <span class="logo-txt-fb" style="display:none;">✔</span>
+      </div>
+      <span class="sidebar-brand">ADSIS</span>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
     </div>
     <div class="sidebar-etab">
-        <span class="etab-label">ÉTABLISSEMENT</span>
-        <span class="etab-name" id="sb-etab"></span>
+      <span class="etab-label">ÉTABLISSEMENT</span>
+      <span class="etab-name" id="sb-etab"></span>
     </div>
     <nav class="sidebar-nav">
-        <a href="dashboardens.html" class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            <span>Tableau de bord</span>
-        </a>
-        <a href="emploiens.html" class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>Emploi de temps</span>
-        </a>
-        <a href="appel.html" class="nav-item active">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span>Appel</span>
-        </a>
-        <a href="profilens.html" class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Mon profil</span>
-        </a>
+      <a href="dashboardens.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        <span>Tableau de bord</span>
+      </a>
+      <a href="emploiens.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span>Emploi de temps</span>
+      </a>
+      <a href="appel.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+        <span>Appel</span>
+      </a>
+      <a href="../shared/profil.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>Mon profil</span>
+      </a>
     </nav>
-    <div class="sidebar-footer">
-        <button class="nav-item nav-logout" id="btn-logout">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span>Déconnexion</span>
-        </button>
-    </div>
-</aside>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-<!-- ══ MAIN ══ -->
-<div class="main-wrap">
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main-wrap">
 
     <!-- TOPBAR -->
     <header class="topbar topbar-appel">
-        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
-        <button class="back-btn" id="back-btn" onclick="history.back()" aria-label="Retour">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="topbar-title">
-            <h2 id="page-title">Séance d'appel</h2>
-            <p id="page-date" class="topbar-date"></p>
-        </div>
+      <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <button class="back-btn" id="back-btn" onclick="history.back()" aria-label="Retour">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <div class="topbar-title">
+        <h2 id="page-title">Séance d'appel</h2>
+        <p id="page-date" class="topbar-date"></p>
+      </div>
 
-        <!-- Sélecteur de séance -->
-        <div class="session-selector-wrap" id="session-selector-wrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <select id="session-select" class="session-select" aria-label="Choisir une séance">
-                <!-- Populated by JS -->
-            </select>
-        </div>
+      <!-- Sélecteur de séance -->
+      <div class="session-selector-wrap" id="session-selector-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <select id="session-select" class="session-select" aria-label="Choisir une séance">
+          <!-- Populated by JS -->
+        </select>
+      </div>
 
-        <div class="topbar-user">
-            <div class="user-info">
-                <span id="user-name-top" class="user-name"></span>
-                <span id="user-email-top" class="user-email"></span>
-            </div>
-            <div class="avatar" id="user-avatar">DM</div>
+      <div class="topbar-user">
+        <div class="user-info">
+          <span id="user-name-top" class="user-name"></span>
+          <span id="user-email-top" class="user-email"></span>
         </div>
+        <div class="avatar" id="user-avatar">DM</div>
+      </div>
     </header>
 
     <main class="content">
 
-        <!-- Session info banner -->
-        <div class="session-banner" id="session-banner">
-            <div class="session-info">
-                <h3 id="session-course">Base de données</h3>
-                <p id="session-meta">L1 Info A • Salle C105 • 14:00 – 16:00</p>
+      <!-- Session info banner -->
+      <div class="session-banner" id="session-banner">
+        <div class="session-info">
+          <h3 id="session-course">Base de données</h3>
+          <p id="session-meta">L1 Info A • Salle C105 • 14:00 – 16:00</p>
+        </div>
+        <div class="session-status" id="session-status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <line x1="12" y1="20" x2="12.01" y2="20" />
+          </svg>
+          En ligne
+        </div>
+      </div>
+
+      <!-- Stats counters -->
+      <div class="counters-row">
+        <div class="counter-card counter-present">
+          <span class="counter-num" id="cnt-present">0</span>
+          <span class="counter-lbl">PRÉSENTS</span>
+        </div>
+        <div class="counter-card counter-retard">
+          <span class="counter-num" id="cnt-retard">0</span>
+          <span class="counter-lbl">RETARDS</span>
+        </div>
+        <div class="counter-card counter-absent">
+          <span class="counter-num" id="cnt-absent">0</span>
+          <span class="counter-lbl">ABSENTS</span>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-bar" role="tablist">
+        <button class="tab-btn active" id="tab-scan" role="tab" aria-selected="true" aria-controls="panel-scan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+            <path d="M23 7V1h-6" />
+            <path d="M1 7V1h6" />
+            <path d="M23 17v6h-6" />
+            <path d="M1 17v6h6" />
+            <rect x="7" y="7" width="4" height="4" />
+            <rect x="13" y="7" width="4" height="4" />
+            <rect x="7" y="13" width="4" height="4" />
+            <rect x="13" y="13" width="4" height="4" />
+          </svg>
+          Scan QR
+        </button>
+        <button class="tab-btn" id="tab-qrgen" role="tab" aria-selected="false" aria-controls="panel-qrgen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+            <rect x="3" y="3" width="5" height="5" rx="1" />
+            <rect x="16" y="3" width="5" height="5" rx="1" />
+            <rect x="3" y="16" width="5" height="5" rx="1" />
+            <path d="M21 16h-5v5" />
+            <path d="M21 21v.01" />
+            <path d="M12 7v3" />
+            <path d="M12 3v.01" />
+            <path d="M12 14v.01" />
+            <path d="M7 12h-4" />
+            <path d="M16 12h-1" />
+          </svg>
+          QR Présence
+        </button>
+        <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" aria-controls="panel-list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          Liste de classe
+        </button>
+      </div>
+
+      <!-- Panel: Scan QR -->
+      <div class="tab-panel" id="panel-scan" role="tabpanel" aria-labelledby="tab-scan">
+        <div class="scan-wrap">
+          <div id="reader-container">
+            <div id="reader"></div>
+            <div class="scan-overlay" id="scan-overlay">
+              <div class="scan-frame">
+                <div class="scan-corner tl"></div>
+                <div class="scan-corner tr"></div>
+                <div class="scan-corner bl"></div>
+                <div class="scan-corner br"></div>
+                <div class="scan-line" id="scan-line"></div>
+              </div>
             </div>
-            <div class="session-status" id="session-status">
+          </div>
+
+          <div class="camera-error" id="camera-error" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+            <p class="camera-error-title">Impossible d'accéder à la caméra.</p>
+            <p class="camera-error-sub">Veuillez autoriser l'accès dans les paramètres du navigateur.</p>
+            <p class="camera-error-hint">Demandez aux étudiants de présenter leur QR code à l'entrée</p>
+          </div>
+
+          <div class="scan-result" id="scan-result" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span id="scan-result-text">Étudiant marqué !</span>
+          </div>
+
+          <div class="scan-controls">
+            <button class="btn-start-scan" id="btn-start-scan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <path d="M23 7V1h-6" />
+                <path d="M1 7V1h6" />
+                <path d="M23 17v6h-6" />
+                <path d="M1 17v6h6" />
+              </svg>
+              Démarrer le scan
+            </button>
+            <button class="btn-stop-scan" id="btn-stop-scan" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <rect x="6" y="6" width="12" height="12" />
+              </svg>
+              Arrêter le scan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel: QR Présence (généré pour les étudiants) -->
+      <div class="tab-panel hidden" id="panel-qrgen" role="tabpanel" aria-labelledby="tab-qrgen">
+        <div class="qrgen-wrap">
+
+          <!-- Explication -->
+          <div class="qrgen-intro">
+            <div class="qrgen-intro-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <p>Affichez ce QR code aux étudiants. Chaque étudiant scanne <strong>son propre QR code</strong> personnel
+              depuis l'application pour être marqué présent automatiquement.</p>
+          </div>
+
+          <!-- Mode selector -->
+          <div class="qrgen-mode-bar">
+            <button class="qrgen-mode-btn active" id="qrgen-mode-session" data-mode="session">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              QR de séance
+            </button>
+            <button class="qrgen-mode-btn" id="qrgen-mode-student" data-mode="student">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              QR par étudiant
+            </button>
+          </div>
+
+          <!-- ─── Mode séance : un seul QR à afficher en grand ─── -->
+          <div id="qrgen-session-panel">
+            <p class="qrgen-hint">Ce QR code identifie la séance. Projetez-le au tableau ou affichez-le sur votre écran
+              pendant 2 minutes.</p>
+
+            <div class="qrgen-timer-row">
+              <span class="qrgen-timer-label">Expire dans :</span>
+              <span class="qrgen-timer-val" id="qr-timer">02:00</span>
+              <button class="btn-refresh-qr" id="btn-refresh-qr" title="Renouveler">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+                Renouveler
+              </button>
+            </div>
+
+            <div class="qrgen-display" id="qrgen-display">
+              <div class="qrgen-qr-box">
+                <div id="qr-canvas-session"></div>
+                <div class="qrgen-qr-label">
+                  <strong id="qr-label-course"></strong>
+                  <span id="qr-label-meta"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="qrgen-actions">
+              <button class="btn-qrgen-action btn-fullscreen" id="btn-fullscreen-qr">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-                    <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                    <line x1="12" y1="20" x2="12.01" y2="20"/>
+                  <path
+                    d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                 </svg>
-                En ligne
-            </div>
-        </div>
-
-        <!-- Stats counters -->
-        <div class="counters-row">
-            <div class="counter-card counter-present">
-                <span class="counter-num" id="cnt-present">0</span>
-                <span class="counter-lbl">PRÉSENTS</span>
-            </div>
-            <div class="counter-card counter-retard">
-                <span class="counter-num" id="cnt-retard">0</span>
-                <span class="counter-lbl">RETARDS</span>
-            </div>
-            <div class="counter-card counter-absent">
-                <span class="counter-num" id="cnt-absent">0</span>
-                <span class="counter-lbl">ABSENTS</span>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs-bar" role="tablist">
-            <button class="tab-btn active" id="tab-scan" role="tab" aria-selected="true" aria-controls="panel-scan">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
-                    <path d="M23 7V1h-6"/><path d="M1 7V1h6"/><path d="M23 17v6h-6"/><path d="M1 17v6h6"/>
-                    <rect x="7" y="7" width="4" height="4"/><rect x="13" y="7" width="4" height="4"/>
-                    <rect x="7" y="13" width="4" height="4"/><rect x="13" y="13" width="4" height="4"/>
+                Plein écran
+              </button>
+              <button class="btn-qrgen-action btn-download-qr" id="btn-download-qr">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Scan QR
-            </button>
-            <button class="tab-btn" id="tab-qrgen" role="tab" aria-selected="false" aria-controls="panel-qrgen">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
-                    <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/>
-                    <rect x="3" y="16" width="5" height="5" rx="1"/>
-                    <path d="M21 16h-5v5"/><path d="M21 21v.01"/><path d="M12 7v3"/><path d="M12 3v.01"/>
-                    <path d="M12 14v.01"/><path d="M7 12h-4"/><path d="M16 12h-1"/>
+                Télécharger
+              </button>
+            </div>
+
+            <!-- QR expiré overlay -->
+            <div class="qr-expired-overlay" id="qr-expired-overlay" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <p>QR code expiré</p>
+              <button class="btn-qrgen-action" onclick="renewQR()">Renouveler</button>
+            </div>
+          </div>
+
+          <!-- ─── Mode par étudiant : QR individuel pour chaque étudiant ─── -->
+          <div id="qrgen-student-panel" style="display:none;">
+            <p class="qrgen-hint">Chaque étudiant dispose d'un QR code unique. Affichez-les un par un ou imprimez-les
+              pour les distribuer.</p>
+
+            <div class="qrgen-student-picker">
+              <div class="qrgen-student-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"
+                  class="qrgen-search-icon">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                QR Présence
-            </button>
-            <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" aria-controls="panel-list">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
-                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-                    <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
-                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                <input type="search" id="qrgen-student-search" class="qrgen-student-search"
+                  placeholder="Rechercher un étudiant…" />
+              </div>
+              <div class="qrgen-student-list" id="qrgen-student-list">
+                <!-- populated by JS -->
+              </div>
+            </div>
+
+            <div class="qrgen-student-qr" id="qrgen-student-qr">
+              <div class="qrgen-student-qr-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
-                Liste de classe
-            </button>
+                <p>Sélectionnez un étudiant pour afficher son QR code</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel: Liste de classe -->
+      <div class="tab-panel hidden" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
+        <div class="list-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"
+            class="search-icon">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="search" id="student-search" class="student-search" placeholder="Rechercher un étudiant…" />
         </div>
 
-        <!-- Panel: Scan QR -->
-        <div class="tab-panel" id="panel-scan" role="tabpanel" aria-labelledby="tab-scan">
-            <div class="scan-wrap">
-                <div id="reader-container">
-                    <div id="reader"></div>
-                    <div class="scan-overlay" id="scan-overlay">
-                        <div class="scan-frame">
-                            <div class="scan-corner tl"></div>
-                            <div class="scan-corner tr"></div>
-                            <div class="scan-corner bl"></div>
-                            <div class="scan-corner br"></div>
-                            <div class="scan-line" id="scan-line"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="camera-error" id="camera-error" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                    <p class="camera-error-title">Impossible d'accéder à la caméra.</p>
-                    <p class="camera-error-sub">Veuillez autoriser l'accès dans les paramètres du navigateur.</p>
-                    <p class="camera-error-hint">Demandez aux étudiants de présenter leur QR code à l'entrée</p>
-                </div>
-
-                <div class="scan-result" id="scan-result" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span id="scan-result-text">Étudiant marqué !</span>
-                </div>
-
-                <div class="scan-controls">
-                    <button class="btn-start-scan" id="btn-start-scan">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                            <path d="M23 7V1h-6"/><path d="M1 7V1h6"/>
-                            <path d="M23 17v6h-6"/><path d="M1 17v6h6"/>
-                        </svg>
-                        Démarrer le scan
-                    </button>
-                    <button class="btn-stop-scan" id="btn-stop-scan" style="display:none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                            <rect x="6" y="6" width="12" height="12"/>
-                        </svg>
-                        Arrêter le scan
-                    </button>
-                </div>
-            </div>
+        <div class="student-list" id="student-list">
+          <!-- Populated by JS -->
         </div>
 
-        <!-- Panel: QR Présence (généré pour les étudiants) -->
-        <div class="tab-panel hidden" id="panel-qrgen" role="tabpanel" aria-labelledby="tab-qrgen">
-            <div class="qrgen-wrap">
-
-                <!-- Explication -->
-                <div class="qrgen-intro">
-                    <div class="qrgen-intro-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                    </div>
-                    <p>Affichez ce QR code aux étudiants. Chaque étudiant scanne <strong>son propre QR code</strong> personnel depuis l'application pour être marqué présent automatiquement.</p>
-                </div>
-
-                <!-- Mode selector -->
-                <div class="qrgen-mode-bar">
-                    <button class="qrgen-mode-btn active" id="qrgen-mode-session" data-mode="session">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                        </svg>
-                        QR de séance
-                    </button>
-                    <button class="qrgen-mode-btn" id="qrgen-mode-student" data-mode="student">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        QR par étudiant
-                    </button>
-                </div>
-
-                <!-- ─── Mode séance : un seul QR à afficher en grand ─── -->
-                <div id="qrgen-session-panel">
-                    <p class="qrgen-hint">Ce QR code identifie la séance. Projetez-le au tableau ou affichez-le sur votre écran pendant 2 minutes.</p>
-
-                    <div class="qrgen-timer-row">
-                        <span class="qrgen-timer-label">Expire dans :</span>
-                        <span class="qrgen-timer-val" id="qr-timer">02:00</span>
-                        <button class="btn-refresh-qr" id="btn-refresh-qr" title="Renouveler">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                                <polyline points="23 4 23 10 17 10"/>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                            </svg>
-                            Renouveler
-                        </button>
-                    </div>
-
-                    <div class="qrgen-display" id="qrgen-display">
-                        <div class="qrgen-qr-box">
-                            <div id="qr-canvas-session"></div>
-                            <div class="qrgen-qr-label">
-                                <strong id="qr-label-course"></strong>
-                                <span id="qr-label-meta"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="qrgen-actions">
-                        <button class="btn-qrgen-action btn-fullscreen" id="btn-fullscreen-qr">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                            </svg>
-                            Plein écran
-                        </button>
-                        <button class="btn-qrgen-action btn-download-qr" id="btn-download-qr">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            Télécharger
-                        </button>
-                    </div>
-
-                    <!-- QR expiré overlay -->
-                    <div class="qr-expired-overlay" id="qr-expired-overlay" style="display:none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <p>QR code expiré</p>
-                        <button class="btn-qrgen-action" onclick="renewQR()">Renouveler</button>
-                    </div>
-                </div>
-
-                <!-- ─── Mode par étudiant : QR individuel pour chaque étudiant ─── -->
-                <div id="qrgen-student-panel" style="display:none;">
-                    <p class="qrgen-hint">Chaque étudiant dispose d'un QR code unique. Affichez-les un par un ou imprimez-les pour les distribuer.</p>
-
-                    <div class="qrgen-student-picker">
-                        <div class="qrgen-student-search-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="qrgen-search-icon">
-                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                            </svg>
-                            <input type="search" id="qrgen-student-search" class="qrgen-student-search" placeholder="Rechercher un étudiant…" />
-                        </div>
-                        <div class="qrgen-student-list" id="qrgen-student-list">
-                            <!-- populated by JS -->
-                        </div>
-                    </div>
-
-                    <div class="qrgen-student-qr" id="qrgen-student-qr">
-                        <div class="qrgen-student-qr-placeholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                            </svg>
-                            <p>Sélectionnez un étudiant pour afficher son QR code</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+        <div class="list-actions">
+          <button class="btn-mark-all" id="btn-mark-all-present">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Tous présents
+          </button>
         </div>
+      </div>
 
-        <!-- Panel: Liste de classe -->
-        <div class="tab-panel hidden" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
-            <div class="list-search-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="search-icon">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input type="search" id="student-search" class="student-search" placeholder="Rechercher un étudiant…" />
-            </div>
-
-            <div class="student-list" id="student-list">
-                <!-- Populated by JS -->
-            </div>
-
-            <div class="list-actions">
-                <button class="btn-mark-all" id="btn-mark-all-present">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Tous présents
-                </button>
-            </div>
-        </div>
-
-        <!-- Clôturer -->
-        <div class="close-appel-bar">
-            <button class="btn-cloture" id="btn-cloture">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Clôturer l'appel
-            </button>
-        </div>
+      <!-- Clôturer -->
+      <div class="close-appel-bar">
+        <button class="btn-cloture" id="btn-cloture">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Clôturer l'appel
+        </button>
+      </div>
 
     </main>
-</div>
+  </div>
 
-<!-- Toast notification -->
-<div class="toast" id="toast" aria-live="polite"></div>
+  <!-- Toast notification -->
+  <div class="toast" id="toast" aria-live="polite"></div>
 
-<!-- Confirm modal -->
-<div class="modal-overlay" id="modal-overlay" style="display:none;">
+  <!-- Confirm modal -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none;">
     <div class="modal-box">
-        <h3 class="modal-title">Clôturer l'appel</h3>
-        <p class="modal-text" id="modal-text">Êtes-vous sûr de vouloir clôturer cet appel ?</p>
-        <div class="modal-actions">
-            <button class="modal-btn modal-cancel" id="modal-cancel">Annuler</button>
-            <button class="modal-btn modal-confirm" id="modal-confirm">Clôturer</button>
-        </div>
+      <h3 class="modal-title">Clôturer l'appel</h3>
+      <p class="modal-text" id="modal-text">Êtes-vous sûr de vouloir clôturer cet appel ?</p>
+      <div class="modal-actions">
+        <button class="modal-btn modal-cancel" id="modal-cancel">Annuler</button>
+        <button class="modal-btn modal-confirm" id="modal-confirm">Clôturer</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Fullscreen QR Modal -->
-<div class="qr-fullscreen-modal" id="qr-fullscreen-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="QR code plein écran">
+  <!-- Fullscreen QR Modal -->
+  <div class="qr-fullscreen-modal" id="qr-fullscreen-modal" style="display:none;" role="dialog" aria-modal="true"
+    aria-label="QR code plein écran">
     <button class="qr-fullscreen-close" id="qr-fullscreen-close" aria-label="Fermer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
     </button>
     <div class="qr-fullscreen-content">
-        <div id="qr-fullscreen-canvas"></div>
-        <div class="qr-fullscreen-info">
-            <h2 id="qr-fs-course"></h2>
-            <p id="qr-fs-meta"></p>
-            <div class="qr-fs-timer-row">
-                <span>Expire dans :</span>
-                <span class="qrgen-timer-val" id="qr-fs-timer">02:00</span>
-            </div>
+      <div id="qr-fullscreen-canvas"></div>
+      <div class="qr-fullscreen-info">
+        <h2 id="qr-fs-course"></h2>
+        <p id="qr-fs-meta"></p>
+        <div class="qr-fs-timer-row">
+          <span>Expire dans :</span>
+          <span class="qrgen-timer-val" id="qr-fs-timer">02:00</span>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    /* ===== ADSIS – shared.js ===== */
+  <script type="module" src="../script/shared.js"></script>
 
-    // ── Auth guard ────────────────────────────────────────────────────────────────
-    function getUser() {
-      try { return JSON.parse(localStorage.getItem('adsis_user') || 'null'); }
-      catch { return null; }
-    }
-
-    (function authGuard() {
-      const user = getUser();
-      if (!user) { window.location.href = 'login.html'; return; }
-
-      // Populate common UI
-      ['user-name-top','user-name-prof'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = user.name || 'Utilisateur';
-      });
-      ['user-email-top','user-email-prof'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = user.email || '';
-      });
-
-      // Avatar initials
-      const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-      document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
-
-      // Établissement
-      document.querySelectorAll('#sb-etab, .sb-etab').forEach(el => {
-        el.textContent = user.etablissement || '';
-      });
-    })();
-
-    // ── Sidebar toggle ─────────────────────────────────────────────────────────────
-    const sidebar  = document.getElementById('sidebar');
-    const overlay  = document.getElementById('sidebar-overlay');
-    const burger   = document.getElementById('burger');
-    const sidebarClose = document.getElementById('sidebar-close');
-
-    function openSidebar()  { sidebar?.classList.add('open'); overlay?.classList.add('open'); }
-    function closeSidebar() { sidebar?.classList.remove('open'); overlay?.classList.remove('open'); }
-
-    burger?.addEventListener('click', openSidebar);
-    sidebarClose?.addEventListener('click', closeSidebar);
-    overlay?.addEventListener('click', closeSidebar);
-
-    // ── Logout ────────────────────────────────────────────────────────────────────
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
-      localStorage.removeItem('adsis_user');
-      localStorage.removeItem('adsis_token');
-      window.location.href = 'login.html';
-    });
-
-    // ── Date helper ───────────────────────────────────────────────────────────────
-    function formatDate(d = new Date(), opts = {}) {
-      return d.toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        ...opts
-      });
-    }
-
-    const dateEl = document.getElementById('page-date');
-    if (dateEl) dateEl.textContent = formatDate();
-
-    // ── Day name helper ───────────────────────────────────────────────────────────
-    const DAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    function todayName() { return DAYS[new Date().getDay()]; }
-
-    // ── Demo timetable data (shared across pages) ─────────────────────────────────
-    window.ADSIS_SCHEDULE = [
-      { id:1, course:'Mathématiques',    class:'L1 Info A', room:'Salle A101', day:'Lundi',    start:'08:00', end:'10:00', color:'#3B55E6' },
-      { id:2, course:'Algorithmes',      class:'L2 Info B', room:'Salle B203', day:'Lundi',    start:'10:30', end:'12:30', color:'#10b981' },
-      { id:3, course:'Base de données',  class:'L1 Info A', room:'Salle C105', day:'Mardi',    start:'14:00', end:'16:00', color:'#7C3AED' },
-      { id:4, course:'Réseaux',          class:'L3 Info C', room:'Salle D210', day:'Mercredi', start:'08:00', end:'10:00', color:'#f59e0b' },
-      { id:5, course:'Syst. exploitation',class:'L2 Info B',room:'Salle B101', day:'Mercredi', start:'13:00', end:'15:00', color:'#ef4444' },
-      { id:6, course:'Programmation Web', class:'L1 Info A', room:'Salle C105', day:'Jeudi',   start:'09:00', end:'11:00', color:'#0d9488' },
-      { id:7, course:'Intelligence Artif.',class:'L3 Info C',room:'Salle A210',day:'Vendredi', start:'14:00', end:'16:00', color:'#e11d48' },
-    ];
-
-    // Demo students
-    window.ADSIS_STUDENTS = [
-      { id:1,  name:'Amara Diallo',    matricule:'2024001' },
-      { id:2,  name:'Fatou Ndiaye',    matricule:'2024002' },
-      { id:3,  name:'Moussa Traoré',   matricule:'2024003' },
-      { id:4,  name:'Aïcha Koné',      matricule:'2024004' },
-      { id:5,  name:'Seydou Coulibaly',matricule:'2024005' },
-      { id:6,  name:'Mariam Sissoko',  matricule:'2024006' },
-      { id:7,  name:'Ibrahim Touré',   matricule:'2024007' },
-      { id:8,  name:'Kadiatou Bah',    matricule:'2024008' },
-      { id:9,  name:'Oumar Sow',       matricule:'2024009' },
-      { id:10, name:'Hawa Camara',     matricule:'2024010' },
-      { id:11, name:'Souleymane Diop', matricule:'2024011' },
-      { id:12, name:'Mariama Barry',   matricule:'2024012' },
-      { id:13, name:'Aliou Baldé',     matricule:'2024013' },
-      { id:14, name:'Fatoumata Sy',    matricule:'2024014' },
-      { id:15, name:'Mamadou Keïta',   matricule:'2024015' },
-    ];
-
-</script>
-<script>
-    /* ===== ADSIS – appel.js ===== */
-
-    const schedule = window.ADSIS_SCHEDULE || [];
-    const students = window.ADSIS_STUDENTS || [];
-
-    // ── Session selector: populate options ────────────────────────────────────────
-    const sessionSelectEl = document.getElementById('session-select');
-    const DAYS_ORDER = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-
-    // Sort schedule by day then start time
-    const sortedSchedule = [...schedule].sort((a, b) => {
-      const di = DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day);
-      if (di !== 0) return di;
-      return a.start.localeCompare(b.start);
-    });
-
-    sortedSchedule.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.day} · ${s.start} – ${s.course} (${s.class})`;
-      sessionSelectEl.appendChild(opt);
-    });
-
-    // ── Read session id from URL ───────────────────────────────────────────────────
-    const urlParams = new URLSearchParams(window.location.search);
-    let sessionId = parseInt(urlParams.get('id')) || (schedule[0] && schedule[0].id);
-    let session   = schedule.find(s => s.id === sessionId) || schedule[0] || {
-      id: 0, course: 'Séance', class: '', room: '', start: '', end: '', day: '', color: '#3B55E6'
-    };
-
-    // Sync select to current session
-    sessionSelectEl.value = session.id;
-
-    // ── Session change handler ─────────────────────────────────────────────────────
-    function loadSession(newId) {
-      const newSession = schedule.find(s => s.id === newId);
-      if (!newSession) return;
-      session = newSession;
-      sessionId = newSession.id;
-
-      // Update banner
-      document.getElementById('session-course').textContent = session.course;
-      document.getElementById('session-meta').textContent =
-        [session.class, session.room, `${session.start} – ${session.end}`].filter(Boolean).join(' • ');
-
-      // Reset attendance for new session
-      students.forEach(s => { attendance[s.id] = 'absent'; });
-      updateCounters();
-      renderList();
-
-      // Reset QR gen state if it was inited
-      qrGenInited = false;
-      const qrCanvas = document.getElementById('qr-canvas-session');
-      if (qrCanvas) qrCanvas.innerHTML = '';
-      const fsCanvas = document.getElementById('qr-fullscreen-canvas');
-      if (fsCanvas) fsCanvas.innerHTML = '';
-      clearInterval(qrTimerInterval);
-
-      // Update QR labels if visible
-      const labelCourse = document.getElementById('qr-label-course');
-      if (labelCourse) labelCourse.textContent = session.course;
-      const labelMeta = document.getElementById('qr-label-meta');
-      if (labelMeta) labelMeta.textContent =
-        [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
-
-      showToast(`Séance changée : ${session.course} — ${session.day} ${session.start}`, 'info', 3000);
-    }
-
-    sessionSelectEl.addEventListener('change', () => {
-      loadSession(parseInt(sessionSelectEl.value));
-    });
-
-    // ── Populate session info (initial) ──────────────────────────────────────────
-    document.getElementById('session-course').textContent = session.course;
-    document.getElementById('session-meta').textContent   =
-      [session.class, session.room, `${session.start} – ${session.end}`].filter(Boolean).join(' • ');
-    document.getElementById('page-title').textContent = 'Séance d\'appel';
-
-    // ── Attendance state: { studentId: 'present' | 'absent' | 'retard' } ──────────
-    const attendance = {};
-    students.forEach(s => { attendance[s.id] = 'absent'; }); // default: absent
-
-    // ── Update counters ───────────────────────────────────────────────────────────
-    function updateCounters() {
-      const vals = Object.values(attendance);
-      document.getElementById('cnt-present').textContent = vals.filter(v => v === 'present').length;
-      document.getElementById('cnt-retard').textContent  = vals.filter(v => v === 'retard').length;
-      document.getElementById('cnt-absent').textContent  = vals.filter(v => v === 'absent').length;
-    }
-    updateCounters();
-
-    // ── Toast ─────────────────────────────────────────────────────────────────────
-    let toastTimer = null;
-    function showToast(msg, type = 'info', duration = 3000) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.className = `toast ${type}-toast show`;
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toast.className = 'toast'; }, duration);
-    }
-
-    // ── TABS ─────────────────────────────────────────────────────────────────────
-    const tabScan    = document.getElementById('tab-scan');
-    const tabQrgen   = document.getElementById('tab-qrgen');
-    const tabList    = document.getElementById('tab-list');
-    const panelScan  = document.getElementById('panel-scan');
-    const panelQrgen = document.getElementById('panel-qrgen');
-    const panelList  = document.getElementById('panel-list');
-
-    function activateTab(tab) {
-      // Reset all
-      [tabScan, tabQrgen, tabList].forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
-      [panelScan, panelQrgen, panelList].forEach(p => p.classList.add('hidden'));
-
-      if (tab === 'scan') {
-        tabScan.classList.add('active');  tabScan.setAttribute('aria-selected','true');
-        panelScan.classList.remove('hidden');
-      } else if (tab === 'qrgen') {
-        tabQrgen.classList.add('active'); tabQrgen.setAttribute('aria-selected','true');
-        panelQrgen.classList.remove('hidden');
-        stopScan();
-        initQRGen();
-      } else {
-        tabList.classList.add('active');  tabList.setAttribute('aria-selected','true');
-        panelList.classList.remove('hidden');
-        stopScan();
-      }
-    }
-
-    tabScan.addEventListener('click',   () => activateTab('scan'));
-    tabQrgen.addEventListener('click',  () => activateTab('qrgen'));
-    tabList.addEventListener('click',   () => activateTab('list'));
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // QR SCAN
-    // ═══════════════════════════════════════════════════════════════════════════════
-    let html5QrCode = null;
-    let scanning    = false;
-
-    const btnStart  = document.getElementById('btn-start-scan');
-    const btnStop   = document.getElementById('btn-stop-scan');
-    const camError  = document.getElementById('camera-error');
-    const scanResult= document.getElementById('scan-result');
-    const scanResultText = document.getElementById('scan-result-text');
-    let resultTimer = null;
-
-    function showScanResult(name) {
-      scanResultText.textContent = `${name} marqué présent !`;
-      scanResult.style.display = 'flex';
-      clearTimeout(resultTimer);
-      resultTimer = setTimeout(() => { scanResult.style.display = 'none'; }, 3000);
-    }
-
-    async function startScan() {
-      if (scanning) return;
-
-      // Check camera permission
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-      } catch (e) {
-        camError.style.display = 'flex';
-        btnStart.style.display = 'none';
-        return;
-      }
-
-      camError.style.display = 'none';
-
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode('reader');
-      }
-
-      const config = {
-        fps: 10,
-        qrbox: { width: 200, height: 200 },
-        aspectRatio: 1.0,
-      };
-
-      try {
-        await html5QrCode.start(
-          { facingMode: 'environment' },
-          config,
-          onQrSuccess,
-          () => {} // suppress errors
-        );
-        scanning = true;
-        btnStart.style.display = 'none';
-        btnStop.style.display  = 'inline-flex';
-      } catch (err) {
-        // Try front camera
-        try {
-          await html5QrCode.start(
-            { facingMode: 'user' },
-            config,
-            onQrSuccess,
-            () => {}
-          );
-          scanning = true;
-          btnStart.style.display = 'none';
-          btnStop.style.display  = 'inline-flex';
-        } catch (e2) {
-          camError.style.display = 'flex';
-        }
-      }
-    }
-
-    async function stopScan() {
-      if (!scanning || !html5QrCode) return;
-      try { await html5QrCode.stop(); } catch {}
-      scanning = false;
-      btnStart.style.display = 'inline-flex';
-      btnStop.style.display  = 'none';
-    }
-
-    // QR code format: ADSIS:<studentId>:<matricule>
-    function onQrSuccess(decodedText) {
-      const parts = decodedText.split(':');
-      let studentId = null;
-
-      if (parts[0] === 'ADSIS' && parts[1]) {
-        studentId = parseInt(parts[1]);
-      } else {
-        // Try raw numeric id
-        studentId = parseInt(decodedText);
-      }
-
-      const student = students.find(s => s.id === studentId);
-      if (!student) {
-        showToast('QR code non reconnu.', 'error');
-        return;
-      }
-
-      if (attendance[student.id] === 'present') {
-        showToast(`${student.name} est déjà présent.`, 'info');
-        return;
-      }
-
-      attendance[student.id] = 'present';
-      updateCounters();
-      updateStudentRow(student.id);
-      showScanResult(student.name);
-      showToast(`✓ ${student.name} marqué présent`, 'success');
-    }
-
-    btnStart.addEventListener('click', startScan);
-    btnStop.addEventListener('click',  stopScan);
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // STUDENT LIST
-    // ═══════════════════════════════════════════════════════════════════════════════
-    const studentList = document.getElementById('student-list');
-    const searchInput = document.getElementById('student-search');
-
-    function getInitials(name) {
-      return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-    }
-
-    function buildStudentRow(student) {
-      const row = document.createElement('div');
-      row.className = 'student-row';
-      row.id = `row-${student.id}`;
-      row.dataset.name = student.name.toLowerCase();
-
-      row.innerHTML = `
-        <div class="student-avatar">${getInitials(student.name)}</div>
-        <div class="student-info">
-          <div class="student-name">${student.name}</div>
-          <div class="student-mat">${student.matricule}</div>
-        </div>
-        <div class="status-group" role="group" aria-label="Statut de ${student.name}">
-          <button class="status-btn ${attendance[student.id]==='present'?'selected':''}"
-            data-id="${student.id}" data-status="present" title="Présent">P</button>
-          <button class="status-btn ${attendance[student.id]==='retard'?'selected':''}"
-            data-id="${student.id}" data-status="retard" title="Retard">R</button>
-          <button class="status-btn ${attendance[student.id]==='absent'?'selected':''}"
-            data-id="${student.id}" data-status="absent" title="Absent">A</button>
-        </div>
-      `;
-
-      row.querySelectorAll('.status-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id     = parseInt(btn.dataset.id);
-          const status = btn.dataset.status;
-          attendance[id] = status;
-          updateStudentRow(id);
-          updateCounters();
-        });
-      });
-
-      return row;
-    }
-
-    function updateStudentRow(studentId) {
-      const row = document.getElementById(`row-${studentId}`);
-      if (!row) return;
-      const status = attendance[studentId];
-      row.className = `student-row is-${status}`;
-      row.querySelectorAll('.status-btn').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.status === status);
-      });
-    }
-
-    function renderList() {
-      studentList.innerHTML = '';
-      students.forEach(s => {
-        studentList.appendChild(buildStudentRow(s));
-      });
-    }
-    renderList();
-
-    // Search filter
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.toLowerCase();
-      studentList.querySelectorAll('.student-row').forEach(row => {
-        row.style.display = row.dataset.name.includes(q) ? '' : 'none';
-      });
-    });
-
-    // Mark all present
-    document.getElementById('btn-mark-all-present').addEventListener('click', () => {
-      students.forEach(s => { attendance[s.id] = 'present'; });
-      students.forEach(s => updateStudentRow(s.id));
-      updateCounters();
-      showToast('Tous les étudiants marqués présents.', 'success');
-    });
-
-
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // QR PRÉSENCE – GÉNÉRATION
-    // ═══════════════════════════════════════════════════════════════════════════════
-
-    let qrGenInited      = false;
-    let sessionQRCode    = null;   // QRCode instance – séance
-    let fsQRCode         = null;   // QRCode instance – fullscreen
-    let studentQRCode    = null;   // QRCode instance – étudiant sélectionné
-    let qrTimerInterval  = null;
-    let qrTimeLeft       = 120;    // 2 minutes in seconds
-    let currentToken     = '';
-    let selectedStudentId = null;
-
-    // ── Mode toggle ───────────────────────────────────────────────────────────────
-    const modeSessionBtn = document.getElementById('qrgen-mode-session');
-    const modeStudentBtn = document.getElementById('qrgen-mode-student');
-    const sessionPanel   = document.getElementById('qrgen-session-panel');
-    const studentPanel   = document.getElementById('qrgen-student-panel');
-
-    modeSessionBtn?.addEventListener('click', () => {
-      modeSessionBtn.classList.add('active');
-      modeStudentBtn.classList.remove('active');
-      sessionPanel.style.display = '';
-      studentPanel.style.display = 'none';
-    });
-
-    modeStudentBtn?.addEventListener('click', () => {
-      modeStudentBtn.classList.add('active');
-      modeSessionBtn.classList.remove('active');
-      studentPanel.style.display = '';
-      sessionPanel.style.display = 'none';
-      renderStudentPicker();
-    });
-
-    // ── Token generator (pseudo-random, changes each renewal) ─────────────────────
-    function genToken() {
-      return `ADSIS-SESSION:${session.id}:${Date.now()}:${Math.random().toString(36).slice(2,8).toUpperCase()}`;
-    }
-
-    // ── Init QR gen (called once when tab is first opened) ────────────────────────
-    function initQRGen() {
-      if (qrGenInited) return;
-      qrGenInited = true;
-
-      // Set labels
-      document.getElementById('qr-label-course').textContent = session.course;
-      document.getElementById('qr-label-meta').textContent =
-        [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
-      document.getElementById('qr-fs-course').textContent = session.course;
-      document.getElementById('qr-fs-meta').textContent =
-        [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
-
-      generateSessionQR();
-    }
-
-    // ── Generate/renew session QR ─────────────────────────────────────────────────
-    function generateSessionQR() {
-      currentToken = genToken();
-
-      // Clear previous
-      const container  = document.getElementById('qr-canvas-session');
-      const containerFS = document.getElementById('qr-fullscreen-canvas');
-      container.innerHTML  = '';
-      containerFS.innerHTML = '';
-
-      // Hide expired overlay
-      const expiredOverlay = document.getElementById('qr-expired-overlay');
-      if (expiredOverlay) expiredOverlay.style.display = 'none';
-
-      // QR size — responsive
-      const qrSize = Math.min(220, window.innerWidth - 100);
-
-      try {
-        sessionQRCode = new QRCode(container, {
-          text: currentToken,
-          width:  qrSize,
-          height: qrSize,
-          colorDark:  '#1a1f36',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.H,
-        });
-
-        fsQRCode = new QRCode(containerFS, {
-          text: currentToken,
-          width:  Math.min(320, window.innerWidth - 80),
-          height: Math.min(320, window.innerWidth - 80),
-          colorDark:  '#ffffff',
-          colorLight: '#0f172a',
-          correctLevel: QRCode.CorrectLevel.H,
-        });
-      } catch (e) {
-        container.innerHTML = '<p style="color:var(--danger);font-size:.85rem;">Erreur de génération du QR code.</p>';
-      }
-
-      // Start / restart timer
-      startQRTimer();
-    }
-
-    window.renewQR = generateSessionQR; // for inline onclick
-
-    // ── Timer ─────────────────────────────────────────────────────────────────────
-    function startQRTimer() {
-      clearInterval(qrTimerInterval);
-      qrTimeLeft = 120;
-      updateTimerDisplay();
-
-      qrTimerInterval = setInterval(() => {
-        qrTimeLeft--;
-        updateTimerDisplay();
-
-        if (qrTimeLeft <= 0) {
-          clearInterval(qrTimerInterval);
-          // Show expired overlay
-          const expiredOverlay = document.getElementById('qr-expired-overlay');
-          if (expiredOverlay) {
-            expiredOverlay.style.display = 'flex';
-            // Blur QR to make it obviously invalid
-            const canvas = document.querySelector('#qr-canvas-session canvas');
-            if (canvas) canvas.style.filter = 'blur(6px)';
-          }
-        }
-      }, 1000);
-    }
-
-    function updateTimerDisplay() {
-      const mins = String(Math.floor(qrTimeLeft / 60)).padStart(2,'0');
-      const secs = String(qrTimeLeft % 60).padStart(2,'0');
-      const str  = `${mins}:${secs}`;
-      const expiring = qrTimeLeft <= 30;
-
-      ['qr-timer','qr-fs-timer'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = str;
-        el.classList.toggle('expiring', expiring);
-      });
-    }
-
-    // ── Renew button ──────────────────────────────────────────────────────────────
-    document.getElementById('btn-refresh-qr')?.addEventListener('click', generateSessionQR);
-
-    // ── Fullscreen ────────────────────────────────────────────────────────────────
-    const fsModal     = document.getElementById('qr-fullscreen-modal');
-    const fsCloseBtn  = document.getElementById('qr-fullscreen-close');
-
-    document.getElementById('btn-fullscreen-qr')?.addEventListener('click', () => {
-      fsModal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    });
-
-    fsCloseBtn?.addEventListener('click', closeFullscreen);
-    fsModal?.addEventListener('click', e => { if (e.target === fsModal) closeFullscreen(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFullscreen(); });
-
-    function closeFullscreen() {
-      fsModal.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-
-    // ── Download session QR ───────────────────────────────────────────────────────
-    document.getElementById('btn-download-qr')?.addEventListener('click', () => {
-      const canvas = document.querySelector('#qr-canvas-session canvas');
-      if (!canvas) return;
-
-      // Draw a decorated version with label
-      const label   = session.course || 'Séance';
-      const meta    = [session.class, session.room].filter(Boolean).join(' • ');
-      const padding = 20;
-      const textH   = 52;
-
-      const out = document.createElement('canvas');
-      out.width  = canvas.width + padding * 2;
-      out.height = canvas.height + padding * 2 + textH;
-      const ctx = out.getContext('2d');
-
-      // White bg
-      ctx.fillStyle = '#fff';
-      ctx.roundRect(0, 0, out.width, out.height, 16);
-      ctx.fill();
-
-      // QR
-      ctx.drawImage(canvas, padding, padding);
-
-      // Label
-      ctx.fillStyle = '#1a1f36';
-      ctx.font = 'bold 16px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(label, out.width / 2, canvas.height + padding + 24);
-
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '13px system-ui, sans-serif';
-      ctx.fillText(meta, out.width / 2, canvas.height + padding + 44);
-
-      const a = document.createElement('a');
-      a.download = `QR_${label.replace(/\s+/g,'-')}_${session.class || 'seance'}.png`;
-      a.href = out.toDataURL('image/png');
-      a.click();
-    });
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // QR PAR ÉTUDIANT
-    // ═══════════════════════════════════════════════════════════════════════════════
-
-    function renderStudentPicker() {
-      const listEl = document.getElementById('qrgen-student-list');
-      if (!listEl) return;
-      listEl.innerHTML = '';
-
-      students.forEach(s => {
-        const item = document.createElement('div');
-        item.className = 'qrgen-stu-item';
-        item.dataset.id   = s.id;
-        item.dataset.name = s.name.toLowerCase();
-
-        const initials = s.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-        item.innerHTML = `
-          <div class="qrgen-stu-avatar">${initials}</div>
-          <div class="qrgen-stu-info">
-            <div class="qrgen-stu-name">${s.name}</div>
-            <div class="qrgen-stu-mat">${s.matricule}</div>
-          </div>
-        `;
-
-        item.addEventListener('click', () => {
-          listEl.querySelectorAll('.qrgen-stu-item').forEach(i => i.classList.remove('selected'));
-          item.classList.add('selected');
-          showStudentQR(s);
-        });
-
-        listEl.appendChild(item);
-      });
-    }
-
-    // Student search filter
-    document.getElementById('qrgen-student-search')?.addEventListener('input', function() {
-      const q = this.value.toLowerCase();
-      document.querySelectorAll('.qrgen-stu-item').forEach(item => {
-        item.style.display = item.dataset.name.includes(q) ? '' : 'none';
-      });
-    });
-
-    function showStudentQR(student) {
-      selectedStudentId = student.id;
-      const container = document.getElementById('qrgen-student-qr');
-      container.innerHTML = '';
-
-      // QR data: ADSIS:<studentId>:<matricule>:<sessionId>
-      const qrData = `ADSIS:${student.id}:${student.matricule}:${session.id}`;
-      const qrSize = Math.min(180, window.innerWidth - 160);
-
-      const box = document.createElement('div');
-      box.className = 'qrgen-stu-qr-box';
-
-      const canvasWrap = document.createElement('div');
-      canvasWrap.id = `stu-qr-${student.id}`;
-
-      box.innerHTML = `
-        <div class="qrgen-stu-qr-name">${student.name}</div>
-      `;
-      box.insertBefore(canvasWrap, box.firstChild);
-
-      const matEl = document.createElement('div');
-      matEl.className = 'qrgen-stu-qr-mat';
-      matEl.textContent = student.matricule;
-      box.appendChild(matEl);
-
-      // Buttons row
-      const btnRow = document.createElement('div');
-      btnRow.className = 'qrgen-stu-btn-row';
-
-      const btnDl = document.createElement('button');
-      btnDl.className = 'btn-qrgen-action btn-stu-dl btn-download-qr';
-      btnDl.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Télécharger
-      `;
-
-      const btnMark = document.createElement('button');
-      btnMark.className = 'btn-qrgen-action btn-stu-mark';
-      btnMark.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Marquer présent
-      `;
-
-      btnRow.appendChild(btnDl);
-      btnRow.appendChild(btnMark);
-      box.appendChild(btnRow);
-      container.appendChild(box);
-
-      // Generate QR
-      try {
-        studentQRCode = new QRCode(canvasWrap, {
-          text: qrData,
-          width:  qrSize,
-          height: qrSize,
-          colorDark:  '#1a1f36',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.H,
-        });
-      } catch(e) {
-        canvasWrap.textContent = 'Erreur QR';
-      }
-
-      // Download student QR
-      btnDl.addEventListener('click', () => {
-        const canvas = canvasWrap.querySelector('canvas');
-        if (!canvas) return;
-        const a = document.createElement('a');
-        a.download = `QR_${student.name.replace(/\s+/g,'-')}.png`;
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-      });
-
-      // Mark present manually
-      btnMark.addEventListener('click', () => {
-        attendance[student.id] = 'present';
-        updateCounters();
-        updateStudentRow(student.id);
-        showToast(`✓ ${student.name} marqué présent`, 'success');
-        btnMark.disabled = true;
-        btnMark.style.opacity = '0.6';
-        btnMark.textContent = 'Présent ✓';
-      });
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    const modalOverlay = document.getElementById('modal-overlay');
-    const modalText    = document.getElementById('modal-text');
-    const modalCancel  = document.getElementById('modal-cancel');
-    const modalConfirm = document.getElementById('modal-confirm');
-
-    document.getElementById('btn-cloture').addEventListener('click', () => {
-      const vals = Object.values(attendance);
-      const p = vals.filter(v => v === 'present').length;
-      const r = vals.filter(v => v === 'retard').length;
-      const a = vals.filter(v => v === 'absent').length;
-      modalText.textContent =
-        `Résumé : ${p} présent(s), ${r} en retard, ${a} absent(s). Confirmer la clôture ?`;
-      modalOverlay.style.display = 'flex';
-    });
-
-    modalCancel.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
-    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
-
-    modalConfirm.addEventListener('click', async () => {
-      modalOverlay.style.display = 'none';
-      await clotureAppel();
-    });
-
-    async function clotureAppel() {
-      stopScan();
-      const user  = JSON.parse(localStorage.getItem('adsis_user') || '{}');
-      const token = localStorage.getItem('adsis_token') || '';
-
-      const payload = {
-        sessionId: session.id,
-        course:    session.course,
-        class:     session.class,
-        date:      new Date().toISOString(),
-        teacher:   user.name || '',
-        records:   students.map(s => ({
-          studentId:  s.id,
-          name:       s.name,
-          matricule:  s.matricule,
-          status:     attendance[s.id] || 'absent',
-        })),
-      };
-
-      // Try to send to server
-      let sent = false;
-      try {
-        const res = await fetch('/api/appel/cloture', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) sent = true;
-      } catch { /* offline */ }
-
-      if (!sent) {
-        // Store in IndexedDB for offline sync
-        await saveToIndexedDB(payload);
-        showToast('Appel sauvegardé hors ligne. Il sera synchronisé à la reconnexion.', 'info', 5000);
-      } else {
-        showToast('Appel clôturé et envoyé avec succès !', 'success', 4000);
-      }
-
-      setTimeout(() => { window.location.href = 'dashboardens.html'; }, 2500);
-    }
-
-    // ── IndexedDB helper ──────────────────────────────────────────────────────────
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open('adsis_db', 1);
-        req.onupgradeneeded = e => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains('appels')) {
-            db.createObjectStore('appels', { keyPath: 'id', autoIncrement: true });
-          }
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror   = e => reject(e.target.error);
-      });
-    }
-
-    async function saveToIndexedDB(payload) {
-      try {
-        const db  = await openDB();
-        const tx  = db.transaction('appels', 'readwrite');
-        const store = tx.objectStore('appels');
-        store.add({ ...payload, savedAt: new Date().toISOString(), synced: false });
-        await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
-        db.close();
-      } catch (err) {
-        // Fallback to localStorage
-        const key = `adsis_appel_${Date.now()}`;
-        try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
-      }
-    }
-
-</script>
+  <script type="module" src="../script/appel.js"></script>
 </body>
+
 </html>

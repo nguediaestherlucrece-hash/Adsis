@@ -2,6 +2,7 @@ package com.ISI.Appel_classe.security.service;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -78,8 +79,12 @@ public class JwtService {
      *
      * @return La clé secrète au format SecretKey
      */
+    /** Algorithme de signature utilisé — HS512 requiert une clé ≥ 512 bits */
+    private static final MacAlgorithm ALGO = Jwts.SIG.HS512;
+
     private SecretKey getSigningKey() {
-        // Convertir la chaîne de caractères en tableau de bytes
+        // Convertir la chaîne de caractères en tableau de bytes (UTF-8)
+        // La clé doit faire ≥ 64 caractères ASCII (64 * 8 = 512 bits) pour HS512
         byte[] decodedKey = jwtSecret.getBytes(StandardCharsets.UTF_8);
 
         // Générer une clé HMAC-SHA compatible avec JJWT
@@ -141,8 +146,8 @@ public class JwtService {
                 .issuedAt(now)
                 // Date d'expiration du token
                 .expiration(expiryDate)
-                // Signe le token avec la clé secrète et algorithme HS512
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                // Signe le token avec la clé secrète et algorithme HS512 (API 0.12.x)
+                .signWith(getSigningKey(), ALGO)
                 // Convertit en chaîne base64 compacte
                 .compact();
     }
@@ -176,7 +181,7 @@ public class JwtService {
                 .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(getSigningKey(), ALGO)
                 .compact();
     }
 

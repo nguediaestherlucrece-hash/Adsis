@@ -1,3 +1,7 @@
+import { requireRole, authFetch } from './auth.js';
+
+// Guard : réservé aux assistants pédagogiques, surveillants et admins
+if (!requireRole(['ASSISTANT_PEDAGOGIQUE', 'SURVEILLANT', 'ADMIN'])) { throw new Error('Unauthorized'); }
 
 const API_BASE_URL = 'http://localhost:8081/api';
 

@@ -21,18 +21,20 @@ public class SpecialiteController {
 
     private final SpecialiteService specialiteService;
 
+    // Lecture : accessible à tous les rôles staff (filtres cascadants)
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<SpecialiteDTO>> getAllSpecialites() {
         return ResponseEntity.ok(specialiteService.getAllSpecialites());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<SpecialiteDTO> getSpecialiteById(@PathVariable Long id) {
         return ResponseEntity.ok(specialiteService.getSpecialiteById(id));
     }
 
+    // Écriture : ADMIN uniquement
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SpecialiteDTO> createSpecialite(@RequestBody SpecialiteCreateDTO dto) {

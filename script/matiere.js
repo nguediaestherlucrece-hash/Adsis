@@ -1,4 +1,8 @@
 // script/matiere.js
+import { requireRole, authFetch } from './auth.js';
+
+// Guard : assistants pédagogiques et surveillants uniquement
+if (!requireRole(['ASSISTANT_PEDAGOGIQUE', 'SURVEILLANT', 'ADMIN'])) { throw new Error('Unauthorized'); }
 
 let matieres = [];
 let specialites = [];

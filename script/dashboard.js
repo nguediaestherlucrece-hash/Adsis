@@ -1,12 +1,12 @@
+import { requireRole, authFetch, getUser } from './auth.js';
 import { Api } from './api.js';
 
-const API_BASE = 'http://localhost:8081/api';
+// Guard : seuls les ADMINs accèdent au tableau de bord admin
+if (!requireRole(['ADMIN'])) { /* redirection gérée par requireRole */ throw new Error('Unauthorized'); }
 
-// Interroge l'API et retourne les données en JSON
+// authFetch préfixe déjà avec http://localhost:8081
 function apiFetch(path) {
-    return fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' } })
-        .then(r => r.ok ? r.json() : [])
-        .catch(() => []);
+    return authFetch(path).then(r => r && r.ok ? r.json() : []).catch(() => []);
 }
 
 // Anime le défilement d'un nombre (0 jusqu'à la valeur finale)
@@ -35,6 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         });
     }
+    
+    // Topbar dynamique
+    const user = getUser();
+    if (user) {
+        const topbarName = document.querySelector('.topbar .fw-bold.small');
+        if (topbarName) topbarName.textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Administrateur';
+        const topbarEmail = document.querySelector('.topbar .text-muted');
+        if (topbarEmail && topbarEmail.id !== 'dashboardDate') topbarEmail.textContent = user.email || '';
+        const avatar = document.querySelector('.topbar .rounded-circle');
+        if (avatar) avatar.textContent = ((user.prenom?.charAt(0) || '') + (user.nom?.charAt(0) || '')).toUpperCase() || 'A';
+    }
+
     loadDashboard();
 });
 
@@ -42,11 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadDashboard() {
     const [staff, cycles, niveaux, filieres, specialites, classes] = await Promise.all([
         Api.getStaff().catch(() => []),
-        apiFetch('/cycles'),
-        apiFetch('/niveaux'),
-        apiFetch('/filieres'),
-        apiFetch('/specialites'),
-        apiFetch('/classes'),
+        apiFetch('/api/cycles'),
+        apiFetch('/api/niveaux'),
+        apiFetch('/api/filieres'),
+        apiFetch('/api/specialites'),
+        apiFetch('/api/classes'),
     ]);
 
     renderKPIs(staff, cycles, filieres, classes);

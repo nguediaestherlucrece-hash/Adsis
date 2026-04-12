@@ -1,12 +1,11 @@
+import { requireRole, authFetch } from './auth.js';
 import { Api } from './api.js';
 
-const API_BASE = 'http://localhost:8081/api';
+// Guard : seuls les ENSEIGNANTs accèdent à cette page
+if (!requireRole(['ENSEIGNANT'])) { throw new Error('Unauthorized'); }
 
-// Interroge l'API et retourne les données en JSON
 function apiFetch(path) {
-    return fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' } })
-        .then(r => r.ok ? r.json() : [])
-        .catch(() => []);
+    return authFetch(path).then(r => r && r.ok ? r.json() : []).catch(() => []);
 }
 
 // Anime le défilement d'un nombre (0 jusqu'à la valeur finale)
@@ -42,11 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadDashboard() {
     const [staff, cycles, niveaux, filieres, specialites, classes] = await Promise.all([
         Api.getStaff().catch(() => []),
-        apiFetch('/cycles'),
-        apiFetch('/niveaux'),
-        apiFetch('/filieres'),
-        apiFetch('/specialites'),
-        apiFetch('/classes'),
+        apiFetch('/api/cycles'),
+        apiFetch('/api/niveaux'),
+        apiFetch('/api/filieres'),
+        apiFetch('/api/specialites'),
+        apiFetch('/api/classes'),
     ]);
 
     renderKPIs(staff, cycles, filieres, classes);

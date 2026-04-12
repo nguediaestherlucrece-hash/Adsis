@@ -1,989 +1,1074 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ADSIS – Emploi de temps</title>
-    <style>
-        /* ===== ADSIS – shared.css ===== */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADSIS – Emploi de temps</title>
+  <style>
+    /* ===== ADSIS – shared.css ===== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        :root {
-          --primary:       #3B55E6;
-          --primary-dark:  #2a3fc2;
-          --primary-light: #6478f0;
-          --accent:        #7C3AED;
-          --teal:          #0d9488;
-          --surface:       #ffffff;
-          --surface-2:     #f4f6ff;
-          --bg:            #f0f2ff;
-          --text:          #1a1f36;
-          --text-muted:    #6b7280;
-          --border:        #e2e5f1;
-          --danger:        #ef4444;
-          --warning:       #f59e0b;
-          --success:       #10b981;
-          --sidebar-w:     300px;
-          --topbar-h:      64px;
-          --radius:        16px;
-          --radius-sm:     10px;
-          --shadow:        0 4px 20px rgba(59,85,230,0.10);
-          --shadow-card:   0 2px 12px rgba(0,0,0,0.07);
-          --transition:    0.22s cubic-bezier(0.4,0,0.2,1);
-          --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
+    :root {
+      --primary: #3B55E6;
+      --primary-dark: #2a3fc2;
+      --primary-light: #6478f0;
+      --accent: #7C3AED;
+      --teal: #0d9488;
+      --surface: #ffffff;
+      --surface-2: #f4f6ff;
+      --bg: #f0f2ff;
+      --text: #1a1f36;
+      --text-muted: #6b7280;
+      --border: #e2e5f1;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --sidebar-w: 300px;
+      --topbar-h: 64px;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 20px rgba(59, 85, 230, 0.10);
+      --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.07);
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-        html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); }
+    html,
+    body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
 
-        /* ══ SIDEBAR ══ */
-        .sidebar {
-          position: fixed; top: 0; left: 0;
-          width: var(--sidebar-w); height: 100%;
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          display: flex; flex-direction: column;
-          z-index: 400;
-          transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-          overflow-y: auto; overflow-x: hidden;
-        }
-        .sidebar-header {
-          display: flex; align-items: center; gap: 12px;
-          padding: 22px 20px 18px;
-          border-bottom: 1px solid var(--border);
-          flex-shrink: 0;
-        }
-        .sidebar-logo {
-          width: 40px; height: 40px; border-radius: 10px;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          display: flex; align-items: center; justify-content: center;
-          overflow: hidden; flex-shrink: 0;
-        }
-        .sidebar-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
-        .logo-txt-fb { color: #fff; font-size: 20px; }
-        .sidebar-brand { font-size: 1.25rem; font-weight: 800; color: var(--text); letter-spacing: -0.3px; flex: 1; }
+    /* ══ SIDEBAR ══ */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100%;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 400;
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
 
-        .sidebar-close {
-          display: none;
-          background: none; border: none;
-          font-size: 1.4rem; line-height: 1;
-          color: var(--text-muted); cursor: pointer;
-          padding: 2px 8px; border-radius: 6px;
-          transition: background var(--transition), color var(--transition);
-        }
-        .sidebar-close:hover { background: var(--surface-2); color: var(--text); }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
 
-        .sidebar-etab { padding: 16px 20px 8px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
-        .etab-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); }
-        .etab-name  { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
 
-        .sidebar-nav { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
 
-        .nav-item {
-          display: flex; align-items: center; gap: 12px;
-          padding: 11px 14px; border-radius: 12px;
-          font-size: 0.93rem; font-weight: 500; color: var(--text-muted);
-          text-decoration: none;
-          transition: background var(--transition), color var(--transition);
-          cursor: pointer; border: none; background: none;
-          width: 100%; text-align: left; font-family: var(--font);
-        }
-        .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; stroke: currentColor; fill: none; }
-        .nav-item:hover { background: var(--surface-2); color: var(--primary); }
-        .nav-item.active {
-          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-          color: #fff; font-weight: 600;
-          box-shadow: 0 4px 14px rgba(59,85,230,0.28);
-        }
-        .nav-logout { color: var(--danger); }
-        .nav-logout:hover { background: #fef2f2; color: #dc2626; }
+    .logo-txt-fb {
+      color: #fff;
+      font-size: 20px;
+    }
 
-        .sidebar-footer { padding: 10px 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .sidebar-brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      flex: 1;
+    }
 
-        /* ══ OVERLAY ══ */
-        .sidebar-overlay {
-          display: none; position: fixed; inset: 0;
-          background: rgba(0,0,0,0.45); z-index: 399;
-          backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-          cursor: pointer;
-        }
-        .sidebar-overlay.open { display: block; }
+    .sidebar-close {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      line-height: 1;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 6px;
+      transition: background var(--transition), color var(--transition);
+    }
 
-        /* ══ MAIN WRAP ══ */
-        .main-wrap {
-          margin-left: var(--sidebar-w);
-          min-height: 100vh; display: flex; flex-direction: column;
-          transition: margin-left 0.28s cubic-bezier(0.4,0,0.2,1);
-        }
+    .sidebar-close:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
 
-        /* ══ TOPBAR ══ */
-        .topbar {
-          position: sticky; top: 0; z-index: 100;
-          min-height: var(--topbar-h);
-          background: var(--surface); border-bottom: 1px solid var(--border);
-          display: flex; align-items: center; gap: 12px;
-          padding: 0 24px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
+    .sidebar-etab {
+      padding: 16px 20px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
 
-        /* BURGER — caché sur desktop */
-        .burger {
-          display: none;
-          flex-direction: column; justify-content: center; gap: 5px;
-          background: none; border: none; cursor: pointer;
-          padding: 8px 6px; border-radius: 8px; flex-shrink: 0;
-          transition: background var(--transition);
-          -webkit-tap-highlight-color: transparent;
-        }
-        .burger:hover { background: var(--surface-2); }
-        .burger span {
-          display: block; width: 22px; height: 2.5px;
-          background: var(--text); border-radius: 2px;
-          pointer-events: none;
-        }
+    .etab-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+    }
 
-        .topbar-title { flex: 1; min-width: 0; }
-        .topbar-title h2 {
-          font-size: 1.05rem; font-weight: 700; color: var(--text);
-          line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .topbar-date { font-size: 0.78rem; color: var(--text-muted); }
+    .etab-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
 
-        .topbar-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .user-info   { display: flex; flex-direction: column; align-items: flex-end; }
-        .user-name   { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.2; }
-        .user-email  { font-size: 0.73rem; color: var(--text-muted); }
+    .sidebar-nav {
+      flex: 1;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-        .avatar {
-          width: 38px; height: 38px; border-radius: 50%;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          color: #fff; font-weight: 700; font-size: 0.88rem;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; cursor: pointer; user-select: none;
-        }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 0.93rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: background var(--transition), color var(--transition);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: var(--font);
+    }
 
-        /* ══ CONTENT ══ */
-        .content { flex: 1; padding: 24px 28px; max-width: 1400px; width: 100%; }
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      stroke: currentColor;
+      fill: none;
+    }
 
-        /* ══ BACK BTN ══ */
-        .back-btn {
-          width: 36px; height: 36px; border-radius: 10px;
-          border: 1.5px solid var(--border); background: var(--surface);
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; color: var(--text); flex-shrink: 0;
-          transition: background var(--transition), border-color var(--transition), color var(--transition);
-        }
-        .back-btn:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary); }
+    .nav-item:hover {
+      background: var(--surface-2);
+      color: var(--primary);
+    }
 
-        /* ══ RESPONSIVE ══ */
-        @media (max-width: 1024px) { :root { --sidebar-w: 260px; } }
+    .nav-item.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(59, 85, 230, 0.28);
+    }
 
-        @media (max-width: 768px) {
-          /* Sidebar tiroir */
-          .sidebar { transform: translateX(-100%); width: min(300px, 85vw); z-index: 500; }
-          .sidebar.open { transform: translateX(0); box-shadow: 6px 0 40px rgba(0,0,0,0.22); }
-          .sidebar-close { display: flex; align-items: center; justify-content: center; }
-          .sidebar-overlay.open { display: block; }
-          /* Layout */
-          .main-wrap { margin-left: 0 !important; }
-          /* Burger visible */
-          .burger { display: flex; }
-          /* Cacher le texte user */
-          .user-info { display: none; }
-          .topbar { padding: 0 14px; gap: 10px; }
-          .content { padding: 16px 14px; }
-        }
+    .nav-logout {
+      color: var(--danger);
+    }
 
-        @media (max-width: 480px) {
-          .content { padding: 12px 10px; }
-          .topbar-title h2 { font-size: 0.95rem; }
-        }
+    .nav-logout:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
 
-        /* ===== ADSIS – emploiens.css ===== */
+    .sidebar-footer {
+      padding: 10px 12px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
 
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes cardIn {
-          from { opacity: 0; transform: scale(0.97) translateY(8px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes dropIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
+    /* ══ OVERLAY ══ */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 399;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      cursor: pointer;
+    }
 
-        /* ── Filter bar ── */
-        .filter-bar {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin-bottom: 20px;
-          /* IMPORTANT : permet au dropdown de dépasser */
-          position: relative;
-          z-index: 10;
-          animation: fadeUp 0.3s both;
-        }
+    .sidebar-overlay.open {
+      display: block;
+    }
 
-        /* ── View toggle ── */
-        .view-toggle {
-          display: flex;
-          background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-radius: 12px;
-          padding: 4px;
-          gap: 4px;
-        }
-        .toggle-btn {
-          padding: 8px 18px;
-          border: none; border-radius: 9px;
-          font-size: 0.875rem; font-weight: 600;
-          cursor: pointer; color: var(--text-muted);
-          background: transparent;
-          transition: background var(--transition), color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .toggle-btn.active {
-          background: var(--primary); color: #fff;
-          box-shadow: 0 2px 10px rgba(59,85,230,0.3);
-        }
-        .toggle-btn:not(.active):hover { background: var(--surface-2); color: var(--text); }
+    /* ══ MAIN WRAP ══ */
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        /* ── Day select ── */
-        .day-select {
-          appearance: none; -webkit-appearance: none;
-          background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
-          border: 1.5px solid var(--border); border-radius: 12px;
-          padding: 9px 36px 9px 14px;
-          font-size: 0.875rem; font-weight: 600; color: var(--text);
-          cursor: pointer; outline: none;
-          transition: border-color var(--transition), box-shadow var(--transition);
-          font-family: var(--font);
-        }
-        .day-select:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
-        }
+    /* ══ TOPBAR ══ */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      min-height: var(--topbar-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
 
-        /* ── Class filter wrapper ── */
-        .class-filter-wrap {
-          position: relative;
-          /* Assure que le dropdown passe au-dessus du contenu */
-          z-index: 200;
-        }
+    /* BURGER — caché sur desktop */
+    .burger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 6px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      transition: background var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* ── Filter toggle button ── */
-        .class-filter-toggle {
-          display: inline-flex; align-items: center; gap: 7px;
-          padding: 9px 14px;
-          background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-radius: 12px;
-          font-size: 0.875rem; font-weight: 600; color: var(--text);
-          cursor: pointer; font-family: var(--font);
-          transition: border-color var(--transition), background var(--transition), color var(--transition);
-          white-space: nowrap;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .class-filter-toggle svg { flex-shrink: 0; }
-        .class-filter-toggle .chevron { transition: transform var(--transition); margin-left: 2px; }
-        .class-filter-toggle.open .chevron { transform: rotate(180deg); }
-        .class-filter-toggle:hover,
-        .class-filter-toggle.filter-active {
-          border-color: var(--primary); color: var(--primary); background: #eef2ff;
-        }
+    .burger:hover {
+      background: var(--surface-2);
+    }
 
-        /* Badge compteur */
-        .filter-count {
-          display: none;
-          background: var(--primary); color: #fff;
-          font-size: 0.7rem; font-weight: 800;
-          border-radius: 20px; padding: 1px 7px;
-          min-width: 22px; text-align: center;
-          line-height: 1.4;
-        }
+    .burger span {
+      display: block;
+      width: 22px;
+      height: 2.5px;
+      background: var(--text);
+      border-radius: 2px;
+      pointer-events: none;
+    }
 
-        /* ── Dropdown panel — z-index élevé pour passer DEVANT les cartes ── */
-        .class-filter-panel {
-          position: absolute;
-          top: calc(100% + 6px);
-          left: 0;
-          z-index: 9999;           /* très haut pour passer devant tout */
-          background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-radius: var(--radius);
-          box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
-          min-width: 230px;
-          padding: 8px;
-          animation: dropIn 0.18s both;
-        }
+    .topbar-title {
+      flex: 1;
+      min-width: 0;
+    }
 
-        .class-filter-header {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 6px 8px 10px;
-          border-bottom: 1px solid var(--border);
-          margin-bottom: 6px;
-        }
-        .class-filter-title {
-          font-size: 0.72rem; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
-        }
-        .class-filter-reset {
-          font-size: 0.78rem; font-weight: 600; color: var(--primary);
-          background: none; border: none; cursor: pointer;
-          font-family: var(--font); padding: 0;
-          transition: color var(--transition);
-        }
-        .class-filter-reset:hover { color: var(--primary-dark); text-decoration: underline; }
+    .topbar-title h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        .class-checkboxes { display: flex; flex-direction: column; gap: 1px; }
+    .topbar-date {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
 
-        .class-checkbox-item {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 10px; border-radius: 9px;
-          cursor: pointer;
-          transition: background var(--transition);
-          user-select: none;
-        }
-        .class-checkbox-item:hover { background: var(--surface-2); }
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
 
-        .class-checkbox-item input[type="checkbox"] {
-          width: 16px; height: 16px;
-          accent-color: var(--primary);
-          cursor: pointer; flex-shrink: 0;
-        }
-        .class-checkbox-dot {
-          width: 10px; height: 10px;
-          border-radius: 50%; flex-shrink: 0;
-        }
-        .class-checkbox-label { font-size: 0.88rem; font-weight: 600; color: var(--text); flex: 1; }
-        .class-checkbox-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
 
-        /* ═══════════════════════════════════════
+    .user-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .user-email {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ══ CONTENT ══ */
+    .content {
+      flex: 1;
+      padding: 24px 28px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    /* ══ BACK BTN ══ */
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .back-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* ══ RESPONSIVE ══ */
+    @media (max-width: 1024px) {
+      :root {
+        --sidebar-w: 260px;
+      }
+    }
+
+    @media (max-width: 768px) {
+
+      /* Sidebar tiroir */
+      .sidebar {
+        transform: translateX(-100%);
+        width: min(300px, 85vw);
+        z-index: 500;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 6px 0 40px rgba(0, 0, 0, 0.22);
+      }
+
+      .sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      /* Layout */
+      .main-wrap {
+        margin-left: 0 !important;
+      }
+
+      /* Burger visible */
+      .burger {
+        display: flex;
+      }
+
+      /* Cacher le texte user */
+      .user-info {
+        display: none;
+      }
+
+      .topbar {
+        padding: 0 14px;
+        gap: 10px;
+      }
+
+      .content {
+        padding: 16px 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        padding: 12px 10px;
+      }
+
+      .topbar-title h2 {
+        font-size: 0.95rem;
+      }
+    }
+
+    /* ===== ADSIS – emploiens.css ===== */
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: scale(0.97) translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes dropIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      /* IMPORTANT : permet au dropdown de dépasser */
+      position: relative;
+      z-index: 10;
+      animation: fadeUp 0.3s both;
+    }
+
+    /* ── View toggle ── */
+    .view-toggle {
+      display: flex;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: transparent;
+      transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .toggle-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(59, 85, 230, 0.3);
+    }
+
+    .toggle-btn:not(.active):hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    /* ── Day select ── */
+    .day-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 36px 9px 14px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      font-family: var(--font);
+    }
+
+    .day-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 85, 230, 0.1);
+    }
+
+    /* ── Class filter wrapper ── */
+    .class-filter-wrap {
+      position: relative;
+      /* Assure que le dropdown passe au-dessus du contenu */
+      z-index: 200;
+    }
+
+    /* ── Filter toggle button ── */
+    .class-filter-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 14px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: border-color var(--transition), background var(--transition), color var(--transition);
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .class-filter-toggle svg {
+      flex-shrink: 0;
+    }
+
+    .class-filter-toggle .chevron {
+      transition: transform var(--transition);
+      margin-left: 2px;
+    }
+
+    .class-filter-toggle.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    .class-filter-toggle:hover,
+    .class-filter-toggle.filter-active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #eef2ff;
+    }
+
+    /* Badge compteur */
+    .filter-count {
+      display: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border-radius: 20px;
+      padding: 1px 7px;
+      min-width: 22px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── Dropdown panel — z-index élevé pour passer DEVANT les cartes ── */
+    .class-filter-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 9999;
+      /* très haut pour passer devant tout */
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+      min-width: 230px;
+      padding: 8px;
+      animation: dropIn 0.18s both;
+    }
+
+    .class-filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+
+    .class-filter-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .class-filter-reset {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      padding: 0;
+      transition: color var(--transition);
+    }
+
+    .class-filter-reset:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+
+    .class-checkboxes {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .class-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background var(--transition);
+      user-select: none;
+    }
+
+    .class-checkbox-item:hover {
+      background: var(--surface-2);
+    }
+
+    .class-checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .class-checkbox-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .class-checkbox-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .class-checkbox-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════
            VUE SEMAINE — GRILLE HORIZONTALE (PC)
         ═══════════════════════════════════════ */
-        .week-view {
-          display: grid;
-          grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 14px;
-          align-items: start;
-          animation: fadeUp 0.3s both;
-        }
+    .week-view {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+      animation: fadeUp 0.3s both;
+    }
 
-        .day-group {
-          display: flex; flex-direction: column; gap: 8px;
-          min-width: 0;
-          transition: opacity var(--transition);
-        }
+    .day-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      transition: opacity var(--transition);
+    }
 
-        .day-label {
-          font-size: 0.78rem; font-weight: 800;
-          text-align: center;
-          padding: 8px 6px;
-          background: var(--surface);
-          border-radius: 10px;
-          border: 1px solid var(--border);
-          display: flex; flex-direction: column; align-items: center; gap: 3px;
-          box-shadow: var(--shadow-card);
-          color: var(--text);
-        }
-        .today-badge {
-          font-size: 0.62rem; font-weight: 700;
-          background: var(--primary); color: #fff;
-          border-radius: 6px; padding: 1px 6px;
-          text-transform: uppercase; letter-spacing: 0.4px;
-        }
+    .day-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-align: center;
+      padding: 8px 6px;
+      background: var(--surface);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      box-shadow: var(--shadow-card);
+      color: var(--text);
+    }
 
-        .courses-col { display: flex; flex-direction: column; gap: 8px; }
+    .today-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 6px;
+      padding: 1px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
 
-        /* ── Course card — compacte en mode grille ── */
-        .course-card {
-          background: var(--surface);
-          border-radius: var(--radius-sm);
-          border: 1px solid var(--border);
-          overflow: hidden; cursor: pointer;
-          transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
-          box-shadow: var(--shadow-card);
-          animation: cardIn 0.28s both;
-        }
-        .course-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(59,85,230,0.13);
-          border-color: rgba(59,85,230,0.2);
-        }
-        .card-color-bar { height: 4px; width: 100%; }
-        .card-body { padding: 10px 12px 8px; }
-        .card-header-row {
-          display: flex; align-items: flex-start;
-          justify-content: space-between; gap: 6px;
-          margin-bottom: 6px;
-        }
-        .card-course-name {
-          font-size: 0.82rem; font-weight: 800; color: var(--text); line-height: 1.2; flex: 1;
-        }
-        .class-chip {
-          font-size: 0.65rem; font-weight: 700;
-          border-radius: 6px; padding: 2px 6px;
-          color: #fff; white-space: nowrap; flex-shrink: 0;
-        }
-        .card-meta { display: flex; flex-direction: column; gap: 3px; }
-        .card-meta-item {
-          display: flex; align-items: center; gap: 5px;
-          font-size: 0.75rem; color: var(--text-muted);
-        }
-        .card-meta-item svg { flex-shrink: 0; }
-        .card-footer {
-          border-top: 1px solid var(--border);
-          padding: 8px 12px;
-        }
-        .open-session-btn {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-size: 0.78rem; font-weight: 700; color: var(--primary);
-          background: none; border: none; cursor: pointer;
-          padding: 0; font-family: var(--font);
-          transition: gap var(--transition), color var(--transition);
-        }
-        .open-session-btn:hover { color: var(--primary-dark); gap: 8px; }
+    .courses-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-        .no-course-day {
-          text-align: center; color: var(--text-muted); font-size: 0.78rem;
-          padding: 14px 6px;
-          background: var(--surface);
-          border-radius: 8px; border: 1.5px dashed var(--border);
-        }
-        .empty-state {
-          text-align: center; color: var(--text-muted); padding: 48px 0; font-size: 0.95rem;
-        }
+    /* ── Course card — compacte en mode grille ── */
+    .course-card {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      box-shadow: var(--shadow-card);
+      animation: cardIn 0.28s both;
+    }
 
-        /* ── Vue jour ── */
-        .day-view-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 14px;
-          animation: fadeUp 0.3s both;
-        }
+    .course-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(59, 85, 230, 0.13);
+      border-color: rgba(59, 85, 230, 0.2);
+    }
 
-        /* ═══════════════════════════════════════
+    .card-color-bar {
+      height: 4px;
+      width: 100%;
+    }
+
+    .card-body {
+      padding: 10px 12px 8px;
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .card-course-name {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+      flex: 1;
+    }
+
+    .class-chip {
+      font-size: 0.65rem;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 2px 6px;
+      color: #fff;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .card-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card-meta-item svg {
+      flex-shrink: 0;
+    }
+
+    .card-footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 12px;
+    }
+
+    .open-session-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: var(--font);
+      transition: gap var(--transition), color var(--transition);
+    }
+
+    .open-session-btn:hover {
+      color: var(--primary-dark);
+      gap: 8px;
+    }
+
+    .no-course-day {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      padding: 14px 6px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1.5px dashed var(--border);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 48px 0;
+      font-size: 0.95rem;
+    }
+
+    /* ── Vue jour ── */
+    .day-view-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      animation: fadeUp 0.3s both;
+    }
+
+    /* ═══════════════════════════════════════
            RESPONSIVE
         ═══════════════════════════════════════ */
 
-        /* Tablette large → 3 colonnes */
-        @media (max-width: 1200px) {
-          .week-view { grid-template-columns: repeat(3, 1fr); }
-        }
+    /* Tablette large → 3 colonnes */
+    @media (max-width: 1200px) {
+      .week-view {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
 
-        /* Tablette → vue verticale (comme sur mobile) */
-        @media (max-width: 768px) {
-          /* Revert to vertical stacking on tablet/phone */
-          .week-view {
-            display: flex !important;
-            flex-direction: column;
-            gap: 20px;
-          }
-          .day-group { gap: 10px; }
-          .day-label {
-            flex-direction: row;
-            justify-content: flex-start;
-            text-align: left;
-            padding: 10px 14px;
-            font-size: 0.9rem;
-          }
-          .courses-col {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 10px;
-          }
-          .card-body      { padding: 14px 16px 10px; }
-          .card-course-name { font-size: 0.9rem; }
-          .card-footer    { padding: 10px 16px; }
-          .open-session-btn { font-size: 0.82rem; }
-          .class-chip     { font-size: 0.72rem; padding: 2px 8px; }
-          /* Day-view grid */
-          .day-view-grid  { grid-template-columns: 1fr; }
-          /* Filter panel right-aligned on small screens */
-          .class-filter-panel { left: auto; right: 0; }
-        }
+    /* Tablette → vue verticale (comme sur mobile) */
+    @media (max-width: 768px) {
 
-        @media (max-width: 480px) {
-          .courses-col { grid-template-columns: 1fr; }
-          .filter-bar  { gap: 8px; }
-          .toggle-btn  { padding: 8px 12px; font-size: 0.82rem; }
-        }
+      /* Revert to vertical stacking on tablet/phone */
+      .week-view {
+        display: flex !important;
+        flex-direction: column;
+        gap: 20px;
+      }
 
-    </style>
+      .day-group {
+        gap: 10px;
+      }
+
+      .day-label {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+      }
+
+      .courses-col {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 10px;
+      }
+
+      .card-body {
+        padding: 14px 16px 10px;
+      }
+
+      .card-course-name {
+        font-size: 0.9rem;
+      }
+
+      .card-footer {
+        padding: 10px 16px;
+      }
+
+      .open-session-btn {
+        font-size: 0.82rem;
+      }
+
+      .class-chip {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+      }
+
+      /* Day-view grid */
+      .day-view-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Filter panel right-aligned on small screens */
+      .class-filter-panel {
+        left: auto;
+        right: 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .courses-col {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-bar {
+        gap: 8px;
+      }
+
+      .toggle-btn {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <img src="../assets/image.png" alt="ADSIS" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-            <span class="logo-txt-fb" style="display:none;">✔</span>
-        </div>
-        <span class="sidebar-brand">ADSIS</span>
-        <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
+      <div class="sidebar-logo">
+        <img src="../assets/image.png" alt="ADSIS"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <span class="logo-txt-fb" style="display:none;">✔</span>
+      </div>
+      <span class="sidebar-brand">ADSIS</span>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Fermer">✕</button>
     </div>
     <div class="sidebar-etab">
-        <span class="etab-label">ÉTABLISSEMENT</span>
-        <span class="etab-name" id="sb-etab"></span>
+      <span class="etab-label">ÉTABLISSEMENT</span>
+      <span class="etab-name" id="sb-etab"></span>
     </div>
     <nav class="sidebar-nav">
-        <a href="dashboardens.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Tableau de bord</span></a>
-        <a href="emploiens.html" class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Emploi de temps</span></a>
-        <a href="appel.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Appel</span></a>
-        <a href="profilens.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Mon profil</span></a>
+      <a href="dashboardens.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg><span>Tableau de bord</span></a>
+      <a href="emploiens.html" class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg><span>Emploi de temps</span></a>
+      <a href="appel.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg><span>Appel</span></a>
+      <a href="../shared/profil.html" class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg><span>Mon profil</span></a>
     </nav>
-    <div class="sidebar-footer">
-        <button class="nav-item nav-logout" id="btn-logout">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span>Déconnexion</span>
-        </button>
-    </div>
-</aside>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<div class="main-wrap">
+
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="main-wrap">
     <header class="topbar">
-        <button class="burger" id="burger" aria-label="Ouvrir le menu">
-            <span></span><span></span><span></span>
-        </button>
+      <button class="burger" id="burger" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
 
-        <div class="topbar-title">
-            <h2>Emploi de temps</h2>
-            <p id="page-date" class="topbar-date"></p>
-        </div>
+      <div class="topbar-title">
+        <h2>Emploi de temps</h2>
+        <p id="page-date" class="topbar-date"></p>
+      </div>
 
-        <div class="topbar-user">
-            <div class="user-info">
-                <span id="user-name-top" class="user-name"></span>
-                <span id="user-email-top" class="user-email"></span>
-            </div>
-            <div class="avatar" id="user-avatar">DM</div>
+      <div class="topbar-user">
+        <div class="user-info">
+          <span id="user-name-top" class="user-name"></span>
+          <span id="user-email-top" class="user-email"></span>
         </div>
+        <div class="avatar" id="user-avatar">DM</div>
+      </div>
     </header>
     <main class="content">
-        <!-- Filters -->
-        <div class="filter-bar">
-            <div class="view-toggle" role="group" aria-label="Vue">
-                <button class="toggle-btn active" id="btn-semaine">Semaine</button>
-                <button class="toggle-btn" id="btn-jour">Par jour</button>
-            </div>
-            <div class="day-select-wrap" id="day-select-wrap" style="display:none;">
-                <select id="day-select" class="day-select" aria-label="Sélectionner un jour">
-                    <option value="Lundi">Lundi</option>
-                    <option value="Mardi">Mardi</option>
-                    <option value="Mercredi">Mercredi</option>
-                    <option value="Jeudi">Jeudi</option>
-                    <option value="Vendredi">Vendredi</option>
-                    <option value="Samedi">Samedi</option>
-                </select>
-            </div>
-            <!-- Filtre par classe -->
-            <div class="class-filter-wrap">
-                <button class="class-filter-toggle" id="class-filter-toggle" aria-expanded="false">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    Filtrer par classe
-                    <span class="filter-count" id="filter-count"></span>
-                    <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="class-filter-panel" id="class-filter-panel" style="display:none;">
-                    <div class="class-filter-header">
-                        <span class="class-filter-title">Classes</span>
-                        <button class="class-filter-reset" id="class-filter-reset">Tout sélectionner</button>
-                    </div>
-                    <div class="class-checkboxes" id="class-checkboxes"></div>
-                </div>
-            </div>
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="view-toggle" role="group" aria-label="Vue">
+          <button class="toggle-btn active" id="btn-semaine">Semaine</button>
+          <button class="toggle-btn" id="btn-jour">Par jour</button>
         </div>
-        <div id="schedule-container"></div>
+        <div class="day-select-wrap" id="day-select-wrap" style="display:none;">
+          <select id="day-select" class="day-select" aria-label="Sélectionner un jour">
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+            <option value="Samedi">Samedi</option>
+          </select>
+        </div>
+        <!-- Filtre par classe -->
+        <div class="class-filter-wrap">
+          <button class="class-filter-toggle" id="class-filter-toggle" aria-expanded="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            Filtrer par classe
+            <span class="filter-count" id="filter-count"></span>
+            <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div class="class-filter-panel" id="class-filter-panel" style="display:none;">
+            <div class="class-filter-header">
+              <span class="class-filter-title">Classes</span>
+              <button class="class-filter-reset" id="class-filter-reset">Tout sélectionner</button>
+            </div>
+            <div class="class-checkboxes" id="class-checkboxes"></div>
+          </div>
+        </div>
+      </div>
+      <div id="schedule-container"></div>
     </main>
-</div>
-<script>
-    /* ===== ADSIS – shared.js ===== */
-
-    // ── Auth guard ────────────────────────────────────────────────────────────────
-    function getUser() {
-      try { return JSON.parse(localStorage.getItem('adsis_user') || 'null'); }
-      catch { return null; }
-    }
-
-    (function authGuard() {
-      const user = getUser();
-      if (!user) { window.location.href = 'login.html'; return; }
-
-      ['user-name-top','user-name-prof'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = user.name || 'Utilisateur';
-      });
-      ['user-email-top','user-email-prof'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = user.email || '';
-      });
-
-      const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-      document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
-      document.querySelectorAll('#sb-etab, .sb-etab').forEach(el => {
-        el.textContent = user.etablissement || '';
-      });
-    })();
-
-    // ── Sidebar toggle ─────────────────────────────────────────────────────────────
-    (function initSidebar() {
-      const sidebar      = document.getElementById('sidebar');
-      const overlay      = document.getElementById('sidebar-overlay');
-      const burger       = document.getElementById('burger');
-      const sidebarClose = document.getElementById('sidebar-close');
-
-      if (!sidebar) return;
-
-      function openSidebar() {
-        sidebar.classList.add('open');
-        if (overlay) overlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeSidebar() {
-        sidebar.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        document.body.style.overflow = '';
-      }
-
-      // Burger click
-      if (burger) {
-        burger.addEventListener('click', function(e) {
-          e.stopPropagation();
-          if (sidebar.classList.contains('open')) closeSidebar();
-          else openSidebar();
-        });
-      }
-
-      // Close ✕ button inside sidebar
-      if (sidebarClose) {
-        sidebarClose.addEventListener('click', closeSidebar);
-      }
-
-      // Overlay click
-      if (overlay) {
-        overlay.addEventListener('click', closeSidebar);
-      }
-
-      // Close on Escape
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeSidebar();
-      });
-
-      // Close sidebar when navigating (click on nav-item)
-      sidebar.querySelectorAll('.nav-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-          // Only close on mobile
-          if (window.innerWidth <= 768) closeSidebar();
-        });
-      });
-    })();
-
-    // ── Logout ────────────────────────────────────────────────────────────────────
-    document.getElementById('btn-logout')?.addEventListener('click', function() {
-      localStorage.removeItem('adsis_user');
-      localStorage.removeItem('adsis_token');
-      window.location.href = 'login.html';
-    });
-
-    // ── Date helper ───────────────────────────────────────────────────────────────
-    function formatDate(d) {
-      d = d || new Date();
-      return d.toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-      });
-    }
-
-    const dateEl = document.getElementById('page-date');
-    if (dateEl) dateEl.textContent = formatDate();
-
-    // ── Day name helper ───────────────────────────────────────────────────────────
-    const DAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    function todayName() { return DAYS[new Date().getDay()]; }
-
-    // ── Demo timetable data (shared across pages) ─────────────────────────────────
-    window.ADSIS_SCHEDULE = [
-      { id:1, course:'Mathématiques',      class:'L1 Info A', room:'Salle A101', day:'Lundi',    start:'08:00', end:'10:00', color:'#3B55E6' },
-      { id:2, course:'Algorithmes',        class:'L2 Info B', room:'Salle B203', day:'Lundi',    start:'10:30', end:'12:30', color:'#10b981' },
-      { id:3, course:'Base de données',    class:'L1 Info A', room:'Salle C105', day:'Mardi',    start:'14:00', end:'16:00', color:'#7C3AED' },
-      { id:4, course:'Réseaux',            class:'L3 Info C', room:'Salle D210', day:'Mercredi', start:'08:00', end:'10:00', color:'#f59e0b' },
-      { id:5, course:'Syst. exploitation', class:'L2 Info B', room:'Salle B101', day:'Mercredi', start:'13:00', end:'15:00', color:'#ef4444' },
-      { id:6, course:'Programmation Web',  class:'L1 Info A', room:'Salle C105', day:'Jeudi',    start:'09:00', end:'11:00', color:'#0d9488' },
-      { id:7, course:'Intelligence Artif.',class:'L3 Info C', room:'Salle A210', day:'Vendredi', start:'14:00', end:'16:00', color:'#e11d48' },
-    ];
-
-    // Demo students
-    window.ADSIS_STUDENTS = [
-      { id:1,  name:'Amara Diallo',     matricule:'2024001' },
-      { id:2,  name:'Fatou Ndiaye',     matricule:'2024002' },
-      { id:3,  name:'Moussa Traoré',    matricule:'2024003' },
-      { id:4,  name:'Aïcha Koné',       matricule:'2024004' },
-      { id:5,  name:'Seydou Coulibaly', matricule:'2024005' },
-      { id:6,  name:'Mariam Sissoko',   matricule:'2024006' },
-      { id:7,  name:'Ibrahim Touré',    matricule:'2024007' },
-      { id:8,  name:'Kadiatou Bah',     matricule:'2024008' },
-      { id:9,  name:'Oumar Sow',        matricule:'2024009' },
-      { id:10, name:'Hawa Camara',      matricule:'2024010' },
-      { id:11, name:'Souleymane Diop',  matricule:'2024011' },
-      { id:12, name:'Mariama Barry',    matricule:'2024012' },
-      { id:13, name:'Aliou Baldé',      matricule:'2024013' },
-      { id:14, name:'Fatoumata Sy',     matricule:'2024014' },
-      { id:15, name:'Mamadou Keïta',    matricule:'2024015' },
-    ];
-
-</script>
-<script>
-    /* ===== ADSIS – emploiens.js ===== */
-
-    const schedule  = window.ADSIS_SCHEDULE || [];
-    const WEEK_DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    const TODAY     = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date().getDay()];
-
-    const container     = document.getElementById('schedule-container');
-    const btnSemaine    = document.getElementById('btn-semaine');
-    const btnJour       = document.getElementById('btn-jour');
-    const daySelectWrap = document.getElementById('day-select-wrap');
-    const daySelect     = document.getElementById('day-select');
-
-    let currentView   = 'semaine';
-    let currentDay    = WEEK_DAYS.includes(TODAY) ? TODAY : 'Lundi';
-    daySelect.value   = currentDay;
-
-    // ── Collect unique classes ─────────────────────────────────────────────────────
-    const CLASS_COLORS = {};
-    schedule.forEach(function(s) { CLASS_COLORS[s.class] = s.color; });
-    const allClasses = Object.keys(CLASS_COLORS).sort();
-    const activeClasses = new Set(allClasses); // all active by default
-
-    // ── Checkbox filter UI ────────────────────────────────────────────────────────
-    const filterToggleBtn = document.getElementById('class-filter-toggle');
-    const filterPanel     = document.getElementById('class-filter-panel');
-    const filterCount     = document.getElementById('filter-count');
-    const filterResetBtn  = document.getElementById('class-filter-reset');
-    const checkboxContainer = document.getElementById('class-checkboxes');
-
-    function buildCheckboxes() {
-      checkboxContainer.innerHTML = '';
-      allClasses.forEach(function(cls) {
-        var count = schedule.filter(function(s) { return s.class === cls; }).length;
-        var item  = document.createElement('label');
-        item.className = 'class-checkbox-item';
-
-        var cb = document.createElement('input');
-        cb.type    = 'checkbox';
-        cb.value   = cls;
-        cb.checked = activeClasses.has(cls);
-        cb.addEventListener('change', function() {
-          if (cb.checked) activeClasses.add(cls);
-          else             activeClasses.delete(cls);
-          updateFilterBadge();
-          applyFilter();
-        });
-
-        var dot = document.createElement('span');
-        dot.className = 'class-checkbox-dot';
-        dot.style.background = CLASS_COLORS[cls] || '#3B55E6';
-
-        var lbl = document.createElement('span');
-        lbl.className = 'class-checkbox-label';
-        lbl.textContent = cls;
-
-        var cnt = document.createElement('span');
-        cnt.className = 'class-checkbox-count';
-        cnt.textContent = count + ' cours';
-
-        item.appendChild(cb);
-        item.appendChild(dot);
-        item.appendChild(lbl);
-        item.appendChild(cnt);
-        checkboxContainer.appendChild(item);
-      });
-    }
-
-    function updateFilterBadge() {
-      var hidden = allClasses.length - activeClasses.size;
-      if (hidden === 0) {
-        filterCount.style.display = 'none';
-        filterToggleBtn.classList.remove('filter-active');
-        filterResetBtn.textContent = 'Tout sélectionner';
-      } else {
-        filterCount.style.display = 'inline-flex';
-        filterCount.textContent   = activeClasses.size + '/' + allClasses.length;
-        filterToggleBtn.classList.add('filter-active');
-        filterResetBtn.textContent = 'Tout sélectionner';
-      }
-    }
-
-    function applyFilter() {
-      container.querySelectorAll('.course-card').forEach(function(card) {
-        var cls = card.getAttribute('data-class');
-        card.style.display = (!cls || activeClasses.has(cls)) ? '' : 'none';
-      });
-      // Dim day columns where every card is hidden
-      container.querySelectorAll('.day-group').forEach(function(group) {
-        var cards = group.querySelectorAll('.course-card');
-        if (!cards.length) return;
-        var allHidden = Array.from(cards).every(function(c) { return c.style.display === 'none'; });
-        group.style.opacity = allHidden ? '0.4' : '1';
-      });
-    }
-
-    // Toggle dropdown
-    filterToggleBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var open = filterPanel.style.display !== 'none';
-      filterPanel.style.display = open ? 'none' : 'block';
-      filterToggleBtn.setAttribute('aria-expanded', String(!open));
-      filterToggleBtn.classList.toggle('open', !open);
-    });
-
-    // Close on outside click
-    document.addEventListener('click', function(e) {
-      if (!filterToggleBtn.contains(e.target) && !filterPanel.contains(e.target)) {
-        filterPanel.style.display = 'none';
-        filterToggleBtn.setAttribute('aria-expanded', 'false');
-        filterToggleBtn.classList.remove('open');
-      }
-    });
-
-    // Reset button
-    filterResetBtn.addEventListener('click', function() {
-      allClasses.forEach(function(c) { activeClasses.add(c); });
-      buildCheckboxes();
-      updateFilterBadge();
-      applyFilter();
-    });
-
-    buildCheckboxes();
-
-    // ── Build course card ─────────────────────────────────────────────────────────
-    function buildCard(c, showDay) {
-      var card = document.createElement('div');
-      card.className = 'course-card';
-      card.setAttribute('data-class', c.class);
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', 'Ouvrir la séance de ' + c.course);
-
-      var dayMeta = showDay
-        ? '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + c.day + '</div>'
-        : '';
-
-      card.innerHTML =
-        '<div class="card-color-bar" style="background:' + c.color + ';"></div>' +
-        '<div class="card-body">' +
-          '<div class="card-header-row">' +
-            '<span class="card-course-name">' + c.course + '</span>' +
-            '<span class="class-chip" style="background:' + c.color + ';">' + c.class + '</span>' +
-          '</div>' +
-          '<div class="card-meta">' +
-            '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + c.start + ' – ' + c.end + '</div>' +
-            '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + c.room + '</div>' +
-            dayMeta +
-          '</div>' +
-        '</div>' +
-        '<div class="card-footer">' +
-          '<button class="open-session-btn">Ouvrir la séance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
-        '</div>';
-
-      function openSession() { window.location.href = 'appel.html?id=' + c.id; }
-      card.addEventListener('click', openSession);
-      card.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') openSession(); });
-
-      if (!activeClasses.has(c.class)) card.style.display = 'none';
-      return card;
-    }
-
-    // ── Render week (horizontal grid) ────────────────────────────────────────────
-    function renderWeek() {
-      container.innerHTML = '';
-      var wrap = document.createElement('div');
-      wrap.className = 'week-view';
-
-      WEEK_DAYS.forEach(function(day) {
-        var dayCourses = schedule.filter(function(s) { return s.day === day; })
-          .sort(function(a,b) { return a.start.localeCompare(b.start); });
-
-        var group = document.createElement('div');
-        group.className = 'day-group';
-
-        var isToday = day === TODAY;
-        var labelEl = document.createElement('div');
-        labelEl.className = 'day-label';
-        labelEl.innerHTML = day + (isToday ? ' <span class="today-badge">Auj.</span>' : '');
-        group.appendChild(labelEl);
-
-        var col = document.createElement('div');
-        col.className = 'courses-col';
-
-        if (dayCourses.length === 0) {
-          col.innerHTML = '<p class="no-course-day">—</p>';
-        } else {
-          dayCourses.forEach(function(c, i) {
-            var card = buildCard(c, false);
-            card.style.animationDelay = (i * 0.06) + 's';
-            col.appendChild(card);
-          });
-        }
-
-        group.appendChild(col);
-        wrap.appendChild(group);
-      });
-
-      container.appendChild(wrap);
-      applyFilter();
-    }
-
-    // ── Render day ────────────────────────────────────────────────────────────────
-    function renderDay(day) {
-      container.innerHTML = '';
-      var dayCourses = schedule.filter(function(s) { return s.day === day; })
-        .sort(function(a,b) { return a.start.localeCompare(b.start); });
-
-      if (dayCourses.length === 0) {
-        container.innerHTML = '<div class="empty-state">Aucun cours ce jour.</div>';
-        return;
-      }
-      var grid = document.createElement('div');
-      grid.className = 'day-view-grid';
-      dayCourses.forEach(function(c, i) {
-        var card = buildCard(c, true);
-        card.style.animationDelay = (i * 0.07) + 's';
-        grid.appendChild(card);
-      });
-      container.appendChild(grid);
-      applyFilter();
-    }
-
-    // ── Render dispatch ───────────────────────────────────────────────────────────
-    function render() {
-      if (currentView === 'semaine') renderWeek();
-      else                           renderDay(currentDay);
-    }
-
-    // ── Events ───────────────────────────────────────────────────────────────────
-    btnSemaine.addEventListener('click', function() {
-      currentView = 'semaine';
-      btnSemaine.classList.add('active');
-      btnJour.classList.remove('active');
-      daySelectWrap.style.display = 'none';
-      render();
-    });
-    btnJour.addEventListener('click', function() {
-      currentView = 'jour';
-      btnJour.classList.add('active');
-      btnSemaine.classList.remove('active');
-      daySelectWrap.style.display = 'flex';
-      render();
-    });
-    daySelect.addEventListener('change', function() {
-      currentDay = daySelect.value;
-      render();
-    });
-
-    render();
-
-</script>
+  </div>
+  <script type="module" src="../script/shared.js"></script>
+  <script type="module" src="../script/emploiens.js"></script>
 </body>
+
 </html>

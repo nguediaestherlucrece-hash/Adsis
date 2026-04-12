@@ -1,4 +1,8 @@
+import { requireRole, authFetch } from './auth.js';
 import { Api } from './api.js';
+
+// Guard : réservé aux administrateurs
+if (!requireRole(['ADMIN'])) { throw new Error('Unauthorized'); }
 
 const API_BASE = 'http://localhost:8081/api';
 
@@ -155,7 +159,7 @@ async function loadRoles() {
 
 async function loadMatieres() {
     try {
-        const res = await fetch(`${API_BASE}/cours`, { headers: { 'Content-Type': 'application/json' } });
+        const res = await fetch(`${API_BASE}/cours-ue`, { headers: { 'Content-Type': 'application/json' } });
         if (res.ok) allMatieres = await res.json();
     } catch (e) { console.warn('Matières non chargées:', e.message); }
 }
@@ -550,7 +554,10 @@ window.doAssignStaffFiliere = async function (userId, role, filiereId, isCurrent
     const filiere = allFilieres.find(f => f.id === filiereId);
     try {
         if (!isCurrentlyAssigned) {
-            const res = await fetch(`${endpoint}/${userId}/filiere/${filiereId}`, { method: 'POST' });
+            const res = await fetch(`${endpoint}/${userId}/filiere/${filiereId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
             if (!res.ok) throw new Error(await res.text());
             if (filiere && !user.filieres.some(f => f.id === filiereId))
                 user.filieres.push({ id: filiereId, nomFiliere: filiere.nomFiliere });

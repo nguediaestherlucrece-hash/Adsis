@@ -1,4 +1,8 @@
+import { requireRole } from './auth.js';
 import { Api } from './api.js';
+
+// Guard : seuls les ADMINs peuvent gérer les droits d'accès
+if (!requireRole(['ADMIN'])) { throw new Error('Unauthorized'); }
 
 // ============ TOAST NOTIFICATIONS ============
 function showToast(message, type = 'info') {

@@ -1,18 +1,86 @@
 /* ===== ADSIS – appel.js ===== */
+import { requireRole, requirePermission, getLoginPath } from './auth.js';
+
+// Guard : enseignants uniquement avec permission ATTENDANCE_MANAGE
+if (!requireRole(['ENSEIGNANT'])) { throw new Error('Unauthorized'); }
+if (!requirePermission('ATTENDANCE_MANAGE')) {
+    window.location.href = getLoginPath();
+    throw new Error('Permission refusée');
+}
 
 const schedule = window.ADSIS_SCHEDULE || [];
 const students = window.ADSIS_STUDENTS || [];
 
+// ── Session selector: populate options ────────────────────────────────────────
+const sessionSelectEl = document.getElementById('session-select');
+const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+// Sort schedule by day then start time
+const sortedSchedule = [...schedule].sort((a, b) => {
+  const di = DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day);
+  if (di !== 0) return di;
+  return a.start.localeCompare(b.start);
+});
+
+sortedSchedule.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s.id;
+  opt.textContent = `${s.day} · ${s.start} – ${s.course} (${s.class})`;
+  sessionSelectEl.appendChild(opt);
+});
+
 // ── Read session id from URL ───────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
-const sessionId = parseInt(urlParams.get('id')) || (schedule[0] && schedule[0].id);
-const session   = schedule.find(s => s.id === sessionId) || schedule[0] || {
+let sessionId = parseInt(urlParams.get('id')) || (schedule[0] && schedule[0].id);
+let session = schedule.find(s => s.id === sessionId) || schedule[0] || {
   id: 0, course: 'Séance', class: '', room: '', start: '', end: '', day: '', color: '#3B55E6'
 };
 
-// ── Populate session info ─────────────────────────────────────────────────────
+// Sync select to current session
+sessionSelectEl.value = session.id;
+
+// ── Session change handler ─────────────────────────────────────────────────────
+function loadSession(newId) {
+  const newSession = schedule.find(s => s.id === newId);
+  if (!newSession) return;
+  session = newSession;
+  sessionId = newSession.id;
+
+  // Update banner
+  document.getElementById('session-course').textContent = session.course;
+  document.getElementById('session-meta').textContent =
+    [session.class, session.room, `${session.start} – ${session.end}`].filter(Boolean).join(' • ');
+
+  // Reset attendance for new session
+  students.forEach(s => { attendance[s.id] = 'absent'; });
+  updateCounters();
+  renderList();
+
+  // Reset QR gen state if it was inited
+  qrGenInited = false;
+  const qrCanvas = document.getElementById('qr-canvas-session');
+  if (qrCanvas) qrCanvas.innerHTML = '';
+  const fsCanvas = document.getElementById('qr-fullscreen-canvas');
+  if (fsCanvas) fsCanvas.innerHTML = '';
+  clearInterval(qrTimerInterval);
+
+  // Update QR labels if visible
+  const labelCourse = document.getElementById('qr-label-course');
+  if (labelCourse) labelCourse.textContent = session.course;
+  const labelMeta = document.getElementById('qr-label-meta');
+  if (labelMeta) labelMeta.textContent =
+    [session.class, session.room, `${session.start}–${session.end}`].filter(Boolean).join(' • ');
+
+  showToast(`Séance changée : ${session.course} — ${session.day} ${session.start}`, 'info', 3000);
+}
+
+sessionSelectEl.addEventListener('change', () => {
+  loadSession(parseInt(sessionSelectEl.value));
+});
+
+// ── Populate session info (initial) ──────────────────────────────────────────
 document.getElementById('session-course').textContent = session.course;
-document.getElementById('session-meta').textContent   =
+document.getElementById('session-meta').textContent =
   [session.class, session.room, `${session.start} – ${session.end}`].filter(Boolean).join(' • ');
 document.getElementById('page-title').textContent = 'Séance d\'appel';
 
@@ -24,8 +92,8 @@ students.forEach(s => { attendance[s.id] = 'absent'; }); // default: absent
 function updateCounters() {
   const vals = Object.values(attendance);
   document.getElementById('cnt-present').textContent = vals.filter(v => v === 'present').length;
-  document.getElementById('cnt-retard').textContent  = vals.filter(v => v === 'retard').length;
-  document.getElementById('cnt-absent').textContent  = vals.filter(v => v === 'absent').length;
+  document.getElementById('cnt-retard').textContent = vals.filter(v => v === 'retard').length;
+  document.getElementById('cnt-absent').textContent = vals.filter(v => v === 'absent').length;
 }
 updateCounters();
 
@@ -40,47 +108,47 @@ function showToast(msg, type = 'info', duration = 3000) {
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
-const tabScan    = document.getElementById('tab-scan');
-const tabQrgen   = document.getElementById('tab-qrgen');
-const tabList    = document.getElementById('tab-list');
-const panelScan  = document.getElementById('panel-scan');
+const tabScan = document.getElementById('tab-scan');
+const tabQrgen = document.getElementById('tab-qrgen');
+const tabList = document.getElementById('tab-list');
+const panelScan = document.getElementById('panel-scan');
 const panelQrgen = document.getElementById('panel-qrgen');
-const panelList  = document.getElementById('panel-list');
+const panelList = document.getElementById('panel-list');
 
 function activateTab(tab) {
   // Reset all
-  [tabScan, tabQrgen, tabList].forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  [tabScan, tabQrgen, tabList].forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
   [panelScan, panelQrgen, panelList].forEach(p => p.classList.add('hidden'));
 
   if (tab === 'scan') {
-    tabScan.classList.add('active');  tabScan.setAttribute('aria-selected','true');
+    tabScan.classList.add('active'); tabScan.setAttribute('aria-selected', 'true');
     panelScan.classList.remove('hidden');
   } else if (tab === 'qrgen') {
-    tabQrgen.classList.add('active'); tabQrgen.setAttribute('aria-selected','true');
+    tabQrgen.classList.add('active'); tabQrgen.setAttribute('aria-selected', 'true');
     panelQrgen.classList.remove('hidden');
     stopScan();
     initQRGen();
   } else {
-    tabList.classList.add('active');  tabList.setAttribute('aria-selected','true');
+    tabList.classList.add('active'); tabList.setAttribute('aria-selected', 'true');
     panelList.classList.remove('hidden');
     stopScan();
   }
 }
 
-tabScan.addEventListener('click',   () => activateTab('scan'));
-tabQrgen.addEventListener('click',  () => activateTab('qrgen'));
-tabList.addEventListener('click',   () => activateTab('list'));
+tabScan.addEventListener('click', () => activateTab('scan'));
+tabQrgen.addEventListener('click', () => activateTab('qrgen'));
+tabList.addEventListener('click', () => activateTab('list'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QR SCAN
 // ═══════════════════════════════════════════════════════════════════════════════
 let html5QrCode = null;
-let scanning    = false;
+let scanning = false;
 
-const btnStart  = document.getElementById('btn-start-scan');
-const btnStop   = document.getElementById('btn-stop-scan');
-const camError  = document.getElementById('camera-error');
-const scanResult= document.getElementById('scan-result');
+const btnStart = document.getElementById('btn-start-scan');
+const btnStop = document.getElementById('btn-stop-scan');
+const camError = document.getElementById('camera-error');
+const scanResult = document.getElementById('scan-result');
 const scanResultText = document.getElementById('scan-result-text');
 let resultTimer = null;
 
@@ -120,11 +188,11 @@ async function startScan() {
       { facingMode: 'environment' },
       config,
       onQrSuccess,
-      () => {} // suppress errors
+      () => { } // suppress errors
     );
     scanning = true;
     btnStart.style.display = 'none';
-    btnStop.style.display  = 'inline-flex';
+    btnStop.style.display = 'inline-flex';
   } catch (err) {
     // Try front camera
     try {
@@ -132,11 +200,11 @@ async function startScan() {
         { facingMode: 'user' },
         config,
         onQrSuccess,
-        () => {}
+        () => { }
       );
       scanning = true;
       btnStart.style.display = 'none';
-      btnStop.style.display  = 'inline-flex';
+      btnStop.style.display = 'inline-flex';
     } catch (e2) {
       camError.style.display = 'flex';
     }
@@ -145,10 +213,10 @@ async function startScan() {
 
 async function stopScan() {
   if (!scanning || !html5QrCode) return;
-  try { await html5QrCode.stop(); } catch {}
+  try { await html5QrCode.stop(); } catch { }
   scanning = false;
   btnStart.style.display = 'inline-flex';
-  btnStop.style.display  = 'none';
+  btnStop.style.display = 'none';
 }
 
 // QR code format: ADSIS:<studentId>:<matricule>
@@ -182,7 +250,7 @@ function onQrSuccess(decodedText) {
 }
 
 btnStart.addEventListener('click', startScan);
-btnStop.addEventListener('click',  stopScan);
+btnStop.addEventListener('click', stopScan);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STUDENT LIST
@@ -191,7 +259,7 @@ const studentList = document.getElementById('student-list');
 const searchInput = document.getElementById('student-search');
 
 function getInitials(name) {
-  return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
 function buildStudentRow(student) {
@@ -201,24 +269,24 @@ function buildStudentRow(student) {
   row.dataset.name = student.name.toLowerCase();
 
   row.innerHTML = `
-    <div class="student-avatar">${getInitials(student.name)}</div>
-    <div class="student-info">
-      <div class="student-name">${student.name}</div>
-      <div class="student-mat">${student.matricule}</div>
-    </div>
-    <div class="status-group" role="group" aria-label="Statut de ${student.name}">
-      <button class="status-btn ${attendance[student.id]==='present'?'selected':''}"
-        data-id="${student.id}" data-status="present" title="Présent">P</button>
-      <button class="status-btn ${attendance[student.id]==='retard'?'selected':''}"
-        data-id="${student.id}" data-status="retard" title="Retard">R</button>
-      <button class="status-btn ${attendance[student.id]==='absent'?'selected':''}"
-        data-id="${student.id}" data-status="absent" title="Absent">A</button>
-    </div>
-  `;
+        <div class="student-avatar">${getInitials(student.name)}</div>
+        <div class="student-info">
+          <div class="student-name">${student.name}</div>
+          <div class="student-mat">${student.matricule}</div>
+        </div>
+        <div class="status-group" role="group" aria-label="Statut de ${student.name}">
+          <button class="status-btn ${attendance[student.id] === 'present' ? 'selected' : ''}"
+            data-id="${student.id}" data-status="present" title="Présent">P</button>
+          <button class="status-btn ${attendance[student.id] === 'retard' ? 'selected' : ''}"
+            data-id="${student.id}" data-status="retard" title="Retard">R</button>
+          <button class="status-btn ${attendance[student.id] === 'absent' ? 'selected' : ''}"
+            data-id="${student.id}" data-status="absent" title="Absent">A</button>
+        </div>
+      `;
 
   row.querySelectorAll('.status-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id     = parseInt(btn.dataset.id);
+      const id = parseInt(btn.dataset.id);
       const status = btn.dataset.status;
       attendance[id] = status;
       updateStudentRow(id);
@@ -269,20 +337,20 @@ document.getElementById('btn-mark-all-present').addEventListener('click', () => 
 // QR PRÉSENCE – GÉNÉRATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let qrGenInited      = false;
-let sessionQRCode    = null;   // QRCode instance – séance
-let fsQRCode         = null;   // QRCode instance – fullscreen
-let studentQRCode    = null;   // QRCode instance – étudiant sélectionné
-let qrTimerInterval  = null;
-let qrTimeLeft       = 120;    // 2 minutes in seconds
-let currentToken     = '';
+let qrGenInited = false;
+let sessionQRCode = null;   // QRCode instance – séance
+let fsQRCode = null;   // QRCode instance – fullscreen
+let studentQRCode = null;   // QRCode instance – étudiant sélectionné
+let qrTimerInterval = null;
+let qrTimeLeft = 120;    // 2 minutes in seconds
+let currentToken = '';
 let selectedStudentId = null;
 
 // ── Mode toggle ───────────────────────────────────────────────────────────────
 const modeSessionBtn = document.getElementById('qrgen-mode-session');
 const modeStudentBtn = document.getElementById('qrgen-mode-student');
-const sessionPanel   = document.getElementById('qrgen-session-panel');
-const studentPanel   = document.getElementById('qrgen-student-panel');
+const sessionPanel = document.getElementById('qrgen-session-panel');
+const studentPanel = document.getElementById('qrgen-student-panel');
 
 modeSessionBtn?.addEventListener('click', () => {
   modeSessionBtn.classList.add('active');
@@ -301,7 +369,7 @@ modeStudentBtn?.addEventListener('click', () => {
 
 // ── Token generator (pseudo-random, changes each renewal) ─────────────────────
 function genToken() {
-  return `ADSIS-SESSION:${session.id}:${Date.now()}:${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+  return `ADSIS-SESSION:${session.id}:${Date.now()}:${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
 
 // ── Init QR gen (called once when tab is first opened) ────────────────────────
@@ -325,9 +393,9 @@ function generateSessionQR() {
   currentToken = genToken();
 
   // Clear previous
-  const container  = document.getElementById('qr-canvas-session');
+  const container = document.getElementById('qr-canvas-session');
   const containerFS = document.getElementById('qr-fullscreen-canvas');
-  container.innerHTML  = '';
+  container.innerHTML = '';
   containerFS.innerHTML = '';
 
   // Hide expired overlay
@@ -340,18 +408,18 @@ function generateSessionQR() {
   try {
     sessionQRCode = new QRCode(container, {
       text: currentToken,
-      width:  qrSize,
+      width: qrSize,
       height: qrSize,
-      colorDark:  '#1a1f36',
+      colorDark: '#1a1f36',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H,
     });
 
     fsQRCode = new QRCode(containerFS, {
       text: currentToken,
-      width:  Math.min(320, window.innerWidth - 80),
+      width: Math.min(320, window.innerWidth - 80),
       height: Math.min(320, window.innerWidth - 80),
-      colorDark:  '#ffffff',
+      colorDark: '#ffffff',
       colorLight: '#0f172a',
       correctLevel: QRCode.CorrectLevel.H,
     });
@@ -390,12 +458,12 @@ function startQRTimer() {
 }
 
 function updateTimerDisplay() {
-  const mins = String(Math.floor(qrTimeLeft / 60)).padStart(2,'0');
-  const secs = String(qrTimeLeft % 60).padStart(2,'0');
-  const str  = `${mins}:${secs}`;
+  const mins = String(Math.floor(qrTimeLeft / 60)).padStart(2, '0');
+  const secs = String(qrTimeLeft % 60).padStart(2, '0');
+  const str = `${mins}:${secs}`;
   const expiring = qrTimeLeft <= 30;
 
-  ['qr-timer','qr-fs-timer'].forEach(id => {
+  ['qr-timer', 'qr-fs-timer'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = str;
@@ -407,8 +475,8 @@ function updateTimerDisplay() {
 document.getElementById('btn-refresh-qr')?.addEventListener('click', generateSessionQR);
 
 // ── Fullscreen ────────────────────────────────────────────────────────────────
-const fsModal     = document.getElementById('qr-fullscreen-modal');
-const fsCloseBtn  = document.getElementById('qr-fullscreen-close');
+const fsModal = document.getElementById('qr-fullscreen-modal');
+const fsCloseBtn = document.getElementById('qr-fullscreen-close');
 
 document.getElementById('btn-fullscreen-qr')?.addEventListener('click', () => {
   fsModal.style.display = 'flex';
@@ -430,13 +498,13 @@ document.getElementById('btn-download-qr')?.addEventListener('click', () => {
   if (!canvas) return;
 
   // Draw a decorated version with label
-  const label   = session.course || 'Séance';
-  const meta    = [session.class, session.room].filter(Boolean).join(' • ');
+  const label = session.course || 'Séance';
+  const meta = [session.class, session.room].filter(Boolean).join(' • ');
   const padding = 20;
-  const textH   = 52;
+  const textH = 52;
 
   const out = document.createElement('canvas');
-  out.width  = canvas.width + padding * 2;
+  out.width = canvas.width + padding * 2;
   out.height = canvas.height + padding * 2 + textH;
   const ctx = out.getContext('2d');
 
@@ -459,7 +527,7 @@ document.getElementById('btn-download-qr')?.addEventListener('click', () => {
   ctx.fillText(meta, out.width / 2, canvas.height + padding + 44);
 
   const a = document.createElement('a');
-  a.download = `QR_${label.replace(/\s+/g,'-')}_${session.class || 'seance'}.png`;
+  a.download = `QR_${label.replace(/\s+/g, '-')}_${session.class || 'seance'}.png`;
   a.href = out.toDataURL('image/png');
   a.click();
 });
@@ -476,17 +544,17 @@ function renderStudentPicker() {
   students.forEach(s => {
     const item = document.createElement('div');
     item.className = 'qrgen-stu-item';
-    item.dataset.id   = s.id;
+    item.dataset.id = s.id;
     item.dataset.name = s.name.toLowerCase();
 
-    const initials = s.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const initials = s.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     item.innerHTML = `
-      <div class="qrgen-stu-avatar">${initials}</div>
-      <div class="qrgen-stu-info">
-        <div class="qrgen-stu-name">${s.name}</div>
-        <div class="qrgen-stu-mat">${s.matricule}</div>
-      </div>
-    `;
+          <div class="qrgen-stu-avatar">${initials}</div>
+          <div class="qrgen-stu-info">
+            <div class="qrgen-stu-name">${s.name}</div>
+            <div class="qrgen-stu-mat">${s.matricule}</div>
+          </div>
+        `;
 
     item.addEventListener('click', () => {
       listEl.querySelectorAll('.qrgen-stu-item').forEach(i => i.classList.remove('selected'));
@@ -499,7 +567,7 @@ function renderStudentPicker() {
 }
 
 // Student search filter
-document.getElementById('qrgen-student-search')?.addEventListener('input', function() {
+document.getElementById('qrgen-student-search')?.addEventListener('input', function () {
   const q = this.value.toLowerCase();
   document.querySelectorAll('.qrgen-stu-item').forEach(item => {
     item.style.display = item.dataset.name.includes(q) ? '' : 'none';
@@ -522,8 +590,8 @@ function showStudentQR(student) {
   canvasWrap.id = `stu-qr-${student.id}`;
 
   box.innerHTML = `
-    <div class="qrgen-stu-qr-name">${student.name}</div>
-  `;
+        <div class="qrgen-stu-qr-name">${student.name}</div>
+      `;
   box.insertBefore(canvasWrap, box.firstChild);
 
   const matEl = document.createElement('div');
@@ -538,21 +606,21 @@ function showStudentQR(student) {
   const btnDl = document.createElement('button');
   btnDl.className = 'btn-qrgen-action btn-stu-dl btn-download-qr';
   btnDl.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-    Télécharger
-  `;
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Télécharger
+      `;
 
   const btnMark = document.createElement('button');
   btnMark.className = 'btn-qrgen-action btn-stu-mark';
   btnMark.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-    Marquer présent
-  `;
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Marquer présent
+      `;
 
   btnRow.appendChild(btnDl);
   btnRow.appendChild(btnMark);
@@ -563,13 +631,13 @@ function showStudentQR(student) {
   try {
     studentQRCode = new QRCode(canvasWrap, {
       text: qrData,
-      width:  qrSize,
+      width: qrSize,
       height: qrSize,
-      colorDark:  '#1a1f36',
+      colorDark: '#1a1f36',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H,
     });
-  } catch(e) {
+  } catch (e) {
     canvasWrap.textContent = 'Erreur QR';
   }
 
@@ -578,7 +646,7 @@ function showStudentQR(student) {
     const canvas = canvasWrap.querySelector('canvas');
     if (!canvas) return;
     const a = document.createElement('a');
-    a.download = `QR_${student.name.replace(/\s+/g,'-')}.png`;
+    a.download = `QR_${student.name.replace(/\s+/g, '-')}.png`;
     a.href = canvas.toDataURL('image/png');
     a.click();
   });
@@ -597,8 +665,8 @@ function showStudentQR(student) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 const modalOverlay = document.getElementById('modal-overlay');
-const modalText    = document.getElementById('modal-text');
-const modalCancel  = document.getElementById('modal-cancel');
+const modalText = document.getElementById('modal-text');
+const modalCancel = document.getElementById('modal-cancel');
 const modalConfirm = document.getElementById('modal-confirm');
 
 document.getElementById('btn-cloture').addEventListener('click', () => {
@@ -621,20 +689,20 @@ modalConfirm.addEventListener('click', async () => {
 
 async function clotureAppel() {
   stopScan();
-  const user  = JSON.parse(localStorage.getItem('adsis_user') || '{}');
+  const user = JSON.parse(localStorage.getItem('adsis_user') || '{}');
   const token = localStorage.getItem('adsis_token') || '';
 
   const payload = {
     sessionId: session.id,
-    course:    session.course,
-    class:     session.class,
-    date:      new Date().toISOString(),
-    teacher:   user.name || '',
-    records:   students.map(s => ({
-      studentId:  s.id,
-      name:       s.name,
-      matricule:  s.matricule,
-      status:     attendance[s.id] || 'absent',
+    course: session.course,
+    class: session.class,
+    date: new Date().toISOString(),
+    teacher: user.name || '',
+    records: students.map(s => ({
+      studentId: s.id,
+      name: s.name,
+      matricule: s.matricule,
+      status: attendance[s.id] || 'absent',
     })),
   };
 
@@ -674,14 +742,14 @@ function openDB() {
       }
     };
     req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
+    req.onerror = e => reject(e.target.error);
   });
 }
 
 async function saveToIndexedDB(payload) {
   try {
-    const db  = await openDB();
-    const tx  = db.transaction('appels', 'readwrite');
+    const db = await openDB();
+    const tx = db.transaction('appels', 'readwrite');
     const store = tx.objectStore('appels');
     store.add({ ...payload, savedAt: new Date().toISOString(), synced: false });
     await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
@@ -689,6 +757,8 @@ async function saveToIndexedDB(payload) {
   } catch (err) {
     // Fallback to localStorage
     const key = `adsis_appel_${Date.now()}`;
-    try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
+    try { localStorage.setItem(key, JSON.stringify(payload)); } catch { }
   }
 }
+
+

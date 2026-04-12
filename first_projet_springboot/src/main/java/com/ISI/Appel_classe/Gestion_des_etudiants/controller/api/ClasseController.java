@@ -20,14 +20,15 @@ public class ClasseController {
 
     private final ClasseService classeService;
 
+    // Lecture : accessible à tous les rôles staff
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<ClasseDTO>> getAllClasses() {
         return ResponseEntity.ok(classeService.getAllClasses());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<ClasseDTO> getClasseById(@PathVariable Long id) {
         return ResponseEntity.ok(classeService.getClasseById(id));
     }

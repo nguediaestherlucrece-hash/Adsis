@@ -21,14 +21,15 @@ public class FiliereController {
 
     private final FiliereService filiereService;
 
+    // Lecture : accessible à tous les rôles staff
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<FiliereDTO>> getAllFiliere() {
         return ResponseEntity.ok(filiereService.getAllFilieres());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<FiliereDTO> getFiliereById(@PathVariable Long id) {
         return ResponseEntity.ok(filiereService.getFiliereById(id));
     }

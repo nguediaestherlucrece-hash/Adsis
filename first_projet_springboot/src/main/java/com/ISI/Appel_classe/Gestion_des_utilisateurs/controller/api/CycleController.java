@@ -21,14 +21,15 @@ public class CycleController {
 
     private final CycleService cycleService;
 
+    // Lecture : accessible à tous les rôles staff
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<CycleDTO>> getAllCycle() {
         return ResponseEntity.ok(cycleService.getAllCycles());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<CycleDTO> getCycleById(@PathVariable Long id) {
         return ResponseEntity.ok(cycleService.getCycleById(id));
     }

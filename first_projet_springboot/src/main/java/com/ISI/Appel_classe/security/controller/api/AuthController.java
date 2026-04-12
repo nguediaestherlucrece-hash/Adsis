@@ -1,12 +1,15 @@
 package com.ISI.Appel_classe.security.controller.api;
 
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Role;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import com.ISI.Appel_classe.security.dto.AuthRequest;
 import com.ISI.Appel_classe.security.dto.AuthResponse;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.service.serviceInterface.UtilisateurService;
 import com.ISI.Appel_classe.security.dto.RefreshTokenRequest;
+import com.ISI.Appel_classe.security.dto.ChangePasswordRequest;
 import com.ISI.Appel_classe.security.service.JwtService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,6 +39,9 @@ public class AuthController {
 
     @Autowired
     private UtilisateurRepository utilisateurRepository;
+
+    @Autowired
+    private UtilisateurService utilisateurService;
 
     /**
      * Endpoint de login - Authentification avec email et mot de passe
@@ -87,7 +97,17 @@ public class AuthController {
             String refreshToken = jwtService.generateRefreshToken(authRequest.getEmail());
 
             // ÉTAPE 5 : Construire et retourner la réponse
-            // AuthResponse.builder() utilise le builder pattern pour une construction fluide
+            // Collecter les rôles
+            List<String> roles = utilisateur.getRoles().stream()
+                    .map(Role::getName)
+                    .collect(Collectors.toList());
+
+            // Collecter les permissions effectives (exclure les ROLE_ qui ne sont pas des permissions métier)
+            List<String> permissions = utilisateur.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .filter(a -> !a.startsWith("ROLE_")) // Garder seulement les permissions métier
+                    .collect(Collectors.toList());
+
             AuthResponse authResponse = AuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
@@ -96,6 +116,8 @@ public class AuthController {
                     .email(utilisateur.getEmail())
                     .nom(utilisateur.getNom())
                     .prenom(utilisateur.getPrenom())
+                    .roles(roles)
+                    .permissions(permissions)
                     .build();
 
             log.info("Token généré avec succès pour: {}", authRequest.getEmail());
@@ -147,6 +169,15 @@ public class AuthController {
             String newRefreshToken = jwtService.generateRefreshToken(email);
 
             // ÉTAPE 5 : Construire et retourner la réponse
+            // Collecter les rôles et permissions pour le refresh aussi
+            List<String> roles = utilisateur.getRoles().stream()
+                    .map(Role::getName)
+                    .collect(Collectors.toList());
+            List<String> permissions = utilisateur.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .filter(a -> !a.startsWith("ROLE_"))
+                    .collect(Collectors.toList());
+
             AuthResponse authResponse = AuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(newRefreshToken)
@@ -155,6 +186,8 @@ public class AuthController {
                     .email(utilisateur.getEmail())
                     .nom(utilisateur.getNom())
                     .prenom(utilisateur.getPrenom())
+                    .roles(roles)
+                    .permissions(permissions)
                     .build();
 
             log.info("Token rafraîchi avec succès pour: {}", email);
@@ -214,6 +247,38 @@ public class AuthController {
         // Pas d'authentification valide
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Token invalide ou expiré");
+    }
+
+    /**
+     * Endpoint pour changer le mot de passe de l'utilisateur connecté
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Vérifier que l'utilisateur est authentifié
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non authentifié");
+        }
+
+        try {
+            // Dans ce JWT configuré, getName() renvoie l'email
+            String email = authentication.getName();
+            
+            // Appel au service
+            utilisateurService.changePassword(email, request.getAncienMotDePasse(), request.getNouveauMotDePasse());
+            
+            log.info("Mot de passe modifié avec succès pour l'utilisateur: {}", email);
+            return ResponseEntity.ok().body("{\"message\": \"Mot de passe modifié avec succès\"}");
+            
+        } catch (BadRequestException ex) {
+            log.warn("Erreur de changement de mot de passe: {}", ex.getMessage());
+            return ResponseEntity.badRequest().body("{\"error\": \"" + ex.getMessage() + "\"}");
+        } catch (Exception ex) {
+            log.error("Erreur serveur lors du changement de mot de passe", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Erreur lors du changement de mot de passe\"}");
+        }
     }
 }
 

@@ -165,4 +165,21 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return mapper.toDTO(updated);
     }
 
+    @Override
+    @Transactional
+    public void changePassword(String email, String ancienMotDePasse, String nouveauMotDePasse) {
+        Utilisateur utilisateur = repository.findByEmail(email);
+        if (utilisateur == null) {
+            throw new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email);
+        }
+
+        // Vérification de l'ancien mot de passe
+        if (!passwordEncoder.matches(ancienMotDePasse, utilisateur.getPassword())) {
+            throw new BadRequestException("L'ancien mot de passe est incorrect");
+        }
+
+        // Encodage et sauvegarde du nouveau mot de passe
+        utilisateur.setPassword(passwordEncoder.encode(nouveauMotDePasse));
+        repository.save(utilisateur);
+    }
 }

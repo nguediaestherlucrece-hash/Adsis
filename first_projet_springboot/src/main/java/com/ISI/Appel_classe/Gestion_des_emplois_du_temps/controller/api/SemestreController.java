@@ -21,22 +21,23 @@ public class SemestreController {
 
     private final SemestreService semestreService;
 
+    // Lecture : accessible à tous les rôles staff
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<SemestreDTO>> getAllSemestres() {
         List<SemestreDTO> semestres = semestreService.getAllSemestres();
         return ResponseEntity.ok(semestres);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<SemestreDTO> getSemestreById(@PathVariable Long id) {
         SemestreDTO dto = semestreService.getSemestreById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idSemestre}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<SemestreDTO> getSemestreByCode(@PathVariable String idSemestre) {
         SemestreDTO dto = semestreService.getSemestreByCode(idSemestre);
         return ResponseEntity.ok(dto);
@@ -73,7 +74,7 @@ public class SemestreController {
     }
 
     @GetMapping("/annee/{anneeId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<SemestreDTO>> getSemestresByAnnee(@PathVariable Long anneeId) {
         List<SemestreDTO> semestres = semestreService.getSemestresByAnnee(anneeId);
         return ResponseEntity.ok(semestres);
