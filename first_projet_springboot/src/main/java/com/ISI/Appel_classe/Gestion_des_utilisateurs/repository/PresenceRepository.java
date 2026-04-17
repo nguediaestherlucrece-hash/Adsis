@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PresenceRepository extends JpaRepository<Presence, Long> {
@@ -18,4 +19,11 @@ public interface PresenceRepository extends JpaRepository<Presence, Long> {
     long countByEtudiantIdAndSeance_EmploiDuTemps_SemestreId(Long etudiantId, Long semestreId);
 
     long countByEtudiantIdAndSeance_EmploiDuTemps_SemestreIdAndStatut(Long etudiantId, Long semestreId, String statut);
+    
+    // Nouvelles méthodes pour la gestion des appels
+    List<Presence> findByAppelId(Long appelId);
+    
+    Optional<Presence> findByAppelIdAndEtudiantId(Long appelId, Long etudiantId);
+    
+    long countByAppelIdAndStatut(Long appelId, String statut);
 }

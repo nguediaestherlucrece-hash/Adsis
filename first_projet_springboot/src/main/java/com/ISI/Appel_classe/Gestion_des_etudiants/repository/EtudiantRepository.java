@@ -2,6 +2,8 @@ package com.ISI.Appel_classe.Gestion_des_etudiants.repository;
 
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,4 +36,10 @@ public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
      * Récupère tous les étudiants d'une classe
      */
     List<Etudiant> findByClasseId(Long classeId);
+    
+    /**
+     * Récupère tous les étudiants de la classe actuelle
+     */
+    @Query("SELECT e FROM Etudiant e WHERE e.classeActuelle.id = :classeId")
+    List<Etudiant> findByClasseActuelleId(@Param("classeId") Long classeId);
 }

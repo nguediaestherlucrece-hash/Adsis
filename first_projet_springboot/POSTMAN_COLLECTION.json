@@ -1,0 +1,417 @@
+{
+  "info": {
+    "name": "Gestion des Appels - API Enseignant",
+    "description": "Collection Postman pour tester l'API de gestion des appels",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enseignantId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "seanceId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "appelId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "etudiantId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentification",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    pm.collectionVariables.set('enseignantId', jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"enseignant@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Séances",
+      "item": [
+        {
+          "name": "Séances d'aujourd'hui",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/seances/enseignant/{{enseignantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["seances", "enseignant", "{{enseignantId}}"]
+            }
+          }
+        },
+        {
+          "name": "Séances de la semaine",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/seances/enseignant/{{enseignantId}}/semaine",
+              "host": ["{{baseUrl}}"],
+              "path": ["seances", "enseignant", "{{enseignantId}}", "semaine"]
+            }
+          }
+        },
+        {
+          "name": "Séances pour une date",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/seances/enseignant/{{enseignantId}}/date/2026-04-17",
+              "host": ["{{baseUrl}}"],
+              "path": ["seances", "enseignant", "{{enseignantId}}", "date", "2026-04-17"]
+            }
+          }
+        },
+        {
+          "name": "Séances pour une période",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/seances/enseignant/{{enseignantId}}/periode?dateDebut=2026-04-14&dateFin=2026-04-20",
+              "host": ["{{baseUrl}}"],
+              "path": ["seances", "enseignant", "{{enseignantId}}", "periode"],
+              "query": [
+                {
+                  "key": "dateDebut",
+                  "value": "2026-04-14"
+                },
+                {
+                  "key": "dateFin",
+                  "value": "2026-04-20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appels",
+      "item": [
+        {
+          "name": "Démarrer un appel (QR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('appelId', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seanceId\": {{seanceId}},\n  \"modeAppel\": \"QR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appels",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels"]
+            }
+          }
+        },
+        {
+          "name": "Démarrer un appel (PIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('appelId', jsonData.id);",
+                  "    pm.collectionVariables.set('codePIN', jsonData.codePIN);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seanceId\": {{seanceId}},\n  \"modeAppel\": \"PIN\",\n  \"dureeValiditePIN\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appels",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels"]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un appel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appels/{{appelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "{{appelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Appel ouvert d'une séance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appels/seance/{{seanceId}}/ouvert",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "seance", "{{seanceId}}", "ouvert"]
+            }
+          }
+        },
+        {
+          "name": "Clôturer un appel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appels/{{appelId}}/cloturer",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "{{appelId}}", "cloturer"]
+            }
+          }
+        },
+        {
+          "name": "Valider un code PIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codePIN\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appels/{{appelId}}/valider-pin",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "{{appelId}}", "valider-pin"]
+            }
+          }
+        },
+        {
+          "name": "Régénérer QR code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appels/{{appelId}}/regenerer-qr",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "{{appelId}}", "regenerer-qr"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Présences",
+      "item": [
+        {
+          "name": "Étudiants d'une séance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appels/seance/{{seanceId}}/etudiants?appelId={{appelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "seance", "{{seanceId}}", "etudiants"],
+              "query": [
+                {
+                  "key": "appelId",
+                  "value": "{{appelId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enregistrer une présence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etudiantId\": {{etudiantId}},\n  \"statut\": \"présent\",\n  \"modeEnregistrement\": \"manuel\",\n  \"localisation\": \"48.8566,2.3522\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appels/{{appelId}}/presences",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "{{appelId}}", "presences"]
+            }
+          }
+        },
+        {
+          "name": "Enregistrer présences (batch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"appelId\": {{appelId}},\n  \"presences\": [\n    {\n      \"etudiantId\": 1,\n      \"statut\": \"présent\",\n      \"modeEnregistrement\": \"manuel\"\n    },\n    {\n      \"etudiantId\": 2,\n      \"statut\": \"retard\",\n      \"modeEnregistrement\": \"manuel\"\n    },\n    {\n      \"etudiantId\": 3,\n      \"statut\": \"absent\",\n      \"modeEnregistrement\": \"manuel\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appels/presences/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["appels", "presences", "batch"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
