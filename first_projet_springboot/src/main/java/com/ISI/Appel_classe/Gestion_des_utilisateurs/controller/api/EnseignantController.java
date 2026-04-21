@@ -32,14 +32,14 @@ public class EnseignantController {
     }
 
     @GetMapping("/actifs")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<List<EnseignantDTO>> getActiveEnseignants() {
         log.info("📖 [GET /api/enseignants/actifs] Récupération des enseignants actifs");
         return ResponseEntity.ok(enseignantService.getActiveEnseignants());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('ENSEIGNANT')")
     public ResponseEntity<EnseignantDTO> getById(@PathVariable Long id) {
         log.info("📖 [GET /api/enseignants/{}]", id);
         return ResponseEntity.ok(enseignantService.getEnseignantById(id));

@@ -40,6 +40,6 @@ public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
     /**
      * Récupère tous les étudiants de la classe actuelle
      */
-    @Query("SELECT e FROM Etudiant e WHERE e.classeActuelle.id = :classeId")
+    @Query("SELECT e FROM Etudiant e WHERE e.classe.id = :classeId")
     List<Etudiant> findByClasseActuelleId(@Param("classeId") Long classeId);
 }

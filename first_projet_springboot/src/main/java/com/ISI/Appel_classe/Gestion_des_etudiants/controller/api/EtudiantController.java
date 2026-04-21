@@ -128,7 +128,7 @@ public class EtudiantController {
      * Permet de modifier TOUS les attributs modifiables (hérités + spécifiques)
      */
     @PutMapping("/{id}")
-    @PreAuthorize("or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('ETUDIANT')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('ETUDIANT')")
     public ResponseEntity<EtudiantDTO> updateEtudiant(
             @PathVariable Long id,
             @RequestBody EtudiantUpdateDTO dto) {

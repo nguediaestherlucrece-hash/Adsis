@@ -1,0 +1,101 @@
+/* ===== ADSIS – shared-ens.css ===== */
+/* Only CSS variables + topbar + content utilities.
+   Sidebar styles live in sidebar.css (loaded by all layouts). */
+
+:root {
+  --primary:       #3B55E6;
+  --primary-dark:  #2a3fc2;
+  --primary-light: #6478f0;
+  --accent:        #7C3AED;
+  --teal:          #0d9488;
+  --surface:       #ffffff;
+  --surface-2:     #f4f6ff;
+  --bg:            #f0f2ff;
+  --text:          #1a1f36;
+  --text-muted:    #6b7280;
+  --border:        #e2e5f1;
+  --danger:        #ef4444;
+  --warning:       #f59e0b;
+  --success:       #10b981;
+  --topbar-h:      64px;
+  --radius:        16px;
+  --radius-sm:     10px;
+  --shadow:        0 4px 20px rgba(59,85,230,0.10);
+  --shadow-card:   0 2px 12px rgba(0,0,0,0.07);
+  --transition:    0.22s cubic-bezier(0.4,0,0.2,1);
+  --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); }
+
+/* ══ TOPBAR ══ */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  min-height: var(--topbar-h);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+/* BURGER — hidden on desktop */
+.burger {
+  display: none;
+  flex-direction: column; justify-content: center; gap: 5px;
+  background: none; border: none; cursor: pointer;
+  padding: 8px 6px; border-radius: 8px; flex-shrink: 0;
+  transition: background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.burger:hover { background: var(--surface-2); }
+.burger span {
+  display: block; width: 22px; height: 2.5px;
+  background: var(--text); border-radius: 2px;
+  pointer-events: none;
+}
+
+.topbar-title { flex: 1; min-width: 0; }
+.topbar-title h2 {
+  font-size: 1.05rem; font-weight: 700; color: var(--text);
+  line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-date { font-size: 0.78rem; color: var(--text-muted); }
+
+.topbar-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.user-info   { display: flex; flex-direction: column; align-items: flex-end; }
+.user-name   { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.user-email  { font-size: 0.73rem; color: var(--text-muted); }
+
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-weight: 700; font-size: 0.88rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; cursor: pointer; user-select: none;
+}
+
+/* ══ CONTENT ══ */
+.content { flex: 1; padding: 24px 28px; max-width: 1400px; width: 100%; }
+
+/* ══ BACK BTN ══ */
+.back-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text); flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.back-btn:hover { background: var(--surface-2); border-color: var(--primary); color: var(--primary); }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 768px) {
+  .burger { display: flex; }
+  .user-info { display: none; }
+  .topbar { padding: 0 14px; gap: 10px; }
+  .content { padding: 16px 14px; }
+}
+
+@media (max-width: 480px) {
+  .content { padding: 12px 10px; }
+  .topbar-title h2 { font-size: 0.95rem; }
+}

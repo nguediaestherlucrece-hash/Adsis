@@ -139,4 +139,43 @@ public class AppelController {
         AppelDTO appel = appelService.regenererQRCode(id);
         return ResponseEntity.ok(appel);
     }
+
+    /**
+     * Génère un code PIN pour un appel existant
+     * POST /api/appels/{id}/generer-pin
+     */
+    @PostMapping("/{id}/generer-pin")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE')")
+    public ResponseEntity<AppelDTO> genererPIN(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Integer> request) {
+        Integer duree = (request != null) ? request.get("dureeMinutes") : null;
+        AppelDTO appel = appelService.genererPINPourAppel(id, duree);
+        return ResponseEntity.ok(appel);
+    }
+
+    /**
+     * Récupère les présences d'un appel
+     * GET /api/appels/{id}/presences
+     */
+    @GetMapping("/{id}/presences")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE', 'ADMIN')")
+    public ResponseEntity<List<PresenceDTO>> getPresences(@PathVariable Long id) {
+        List<PresenceDTO> presences = appelService.getPresencesByAppelId(id);
+        return ResponseEntity.ok(presences);
+    }
+
+    /**
+     * Valide un token QR code pour un appel
+     * POST /api/appels/{id}/valider-qr
+     */
+    @PostMapping("/{id}/valider-qr")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE')")
+    public ResponseEntity<AppelDTO> validerQR(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        String qrToken = request.get("qrToken");
+        AppelDTO appel = appelService.validerQRCode(id, qrToken);
+        return ResponseEntity.ok(appel);
+    }
 }

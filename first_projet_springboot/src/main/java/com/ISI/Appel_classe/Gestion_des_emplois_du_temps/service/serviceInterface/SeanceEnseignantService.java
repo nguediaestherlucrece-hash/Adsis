@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterface;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.DashboardEnseignantDTO;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.SeanceEnseignantDTO;
 
 import java.time.LocalDate;
@@ -21,4 +22,9 @@ public interface SeanceEnseignantService {
      * Récupère les séances d'un enseignant entre deux dates
      */
     List<SeanceEnseignantDTO> getSeancesEnseignantPeriode(Long enseignantId, LocalDate dateDebut, LocalDate dateFin);
+
+    /**
+     * Récupère les données du tableau de bord de l'enseignant
+     */
+    DashboardEnseignantDTO getDashboardData(Long enseignantId);
 }

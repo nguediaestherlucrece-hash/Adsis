@@ -1,0 +1,426 @@
+/* ===== ADSIS – emploiens.css ===== */
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  animation: fadeUp 0.35s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.toggle-btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+  font-family: var(--font);
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(59,85,230,0.3);
+}
+
+.toggle-btn:not(.active):hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.day-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 36px 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  font-family: var(--font);
+}
+
+.day-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
+}
+
+/* ── Week view ── */
+.week-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeUp 0.35s both;
+}
+
+.day-group { }
+
+.day-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.day-label .today-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.day-label .today-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.courses-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* ── Course card ── */
+.course-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  animation: cardIn 0.3s both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(59,85,230,0.14);
+  border-color: rgba(59,85,230,0.2);
+}
+
+.course-card:active { transform: translateY(-1px); }
+
+.card-color-bar {
+  height: 5px;
+  width: 100%;
+}
+
+.card-body {
+  padding: 18px 20px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-course-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.class-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 3px 9px;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.card-meta-item svg {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.card-footer {
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.open-session-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font);
+  transition: gap var(--transition), color var(--transition);
+}
+.open-session-btn:hover { color: var(--primary-dark); gap: 10px; }
+.open-session-btn svg { width: 16px; height: 16px; }
+
+.no-course-day {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 12px 4px;
+}
+
+/* ── Day view ── */
+.day-view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  animation: fadeUp 0.35s both;
+}
+
+/* ── Class filter dropdown ── */
+.class-filter-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.class-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+  font-family: var(--font);
+  white-space: nowrap;
+}
+
+.class-filter-toggle:hover {
+  border-color: var(--primary);
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.class-filter-toggle.filter-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(59,85,230,0.06);
+}
+
+.class-filter-toggle.open {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,85,230,0.1);
+}
+
+.class-filter-toggle .chevron {
+  transition: transform 0.2s;
+}
+
+.class-filter-toggle.open .chevron {
+  transform: rotate(180deg);
+}
+
+.filter-count {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 8px;
+  min-width: 20px;
+  height: 20px;
+}
+
+.class-filter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+  min-width: 240px;
+  z-index: 100;
+  padding: 12px;
+  animation: fadeUp 0.2s both;
+}
+
+.class-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.class-filter-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.class-filter-reset {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font);
+}
+
+.class-filter-reset:hover {
+  text-decoration: underline;
+}
+
+.class-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.class-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: 0.88rem;
+}
+
+.class-checkbox-item:hover {
+  background: var(--surface-2);
+}
+
+.class-checkbox-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.class-checkbox-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.class-checkbox-label {
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.class-checkbox-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  animation: fadeUp 0.3s both;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .courses-row { grid-template-columns: 1fr; }
+  .day-view-grid { grid-template-columns: 1fr; }
+  .filter-bar  { gap: 10px; }
+  .toggle-btn  { padding: 8px 14px; }
+  .class-filter-wrap { margin-left: 0; width: 100%; }
+  .class-filter-toggle { width: 100%; justify-content: center; }
+  .class-filter-panel { left: 0; right: 0; }
+}
+
+@media (max-width: 400px) {
+  .card-body { padding: 14px 14px 12px; }
+  .card-footer { padding: 10px 14px; }
+}

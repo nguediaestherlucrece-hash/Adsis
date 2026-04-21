@@ -1,0 +1,239 @@
+body {
+  background: #f8f9fc;
+  font-family: "Segoe UI", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Arial", sans-serif;
+  color: #333;
+}
+
+
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.search-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 360px;
+  border: 1px solid #e5e7eb;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+
+/* DASHBOARD CARDS */
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+  /* Softer shadow */
+  border-left: 4px solid #4e73df;
+  /* Default blue accent */
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.stat-card h3 {
+  font-weight: 700;
+  margin-top: 5px;
+  color: #2c3e50;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #858796;
+  font-weight: 600;
+}
+
+.stat-card.green {
+  border-left-color: #1cc88a;
+}
+
+.stat-card.purple {
+  border-left-color: #6f42c1;
+}
+
+.stat-card.orange {
+  border-left-color: #fd7e14;
+}
+
+/* ACTIVITIES */
+.activity {
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f9;
+}
+
+.activity:last-child {
+  border-bottom: none;
+}
+
+/* ═══ STAT CARD NEW (Dashboard KPIs) ═══ */
+.stat-card-new {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card-new:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.blue   { background: #eff6ff; color: #3b82f6; }
+.stat-icon.green  { background: #ecfdf5; color: #10b981; }
+.stat-icon.orange { background: #fff7ed; color: #f97316; }
+.stat-icon.purple { background: #faf5ff; color: #a855f7; }
+.stat-icon.teal   { background: #f0fdfa; color: #14b8a6; }
+.stat-icon.pink   { background: #fdf2f8; color: #ec4899; }
+.stat-icon.indigo { background: #eef2ff; color: #6366f1; }
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ═══ ENTITY CARDS (Staff + Classes lists) ═══ */
+.entity-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.entity-card:last-child {
+  border-bottom: none;
+}
+
+.entity-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.entity-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #1e293b;
+}
+
+.entity-sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* ═══ FILIERE ROW (Cycles list on dashboard) ═══ */
+.filiere-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.filiere-row:last-child {
+  border-bottom: none;
+}
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.empty-state i {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+}
+
+/* ═══ FILTER TABS (Cycles page) ═══ */
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.filter-tab:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.filter-tab.active {
+  background: #4e73df;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+}
+
+/* ═══ TAB PANE TOGGLE (Cycles page) ═══ */
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.show.active {
+  display: block;
+}

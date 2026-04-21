@@ -1,0 +1,399 @@
+/* Style général */
+body {
+    background-color: #f4f7fb;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+
+
+/* Contenu principal */
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.main-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    margin-bottom: 1.5rem;
+    border: 1px solid #f0f0f0;
+}
+
+@media (max-width: 576px) {
+    .main-header {
+        padding: 1rem;
+    }
+}
+
+.header-title {
+    color: #0d3b66;
+    font-size: 1.1rem;
+}
+
+.select-custom {
+    width: auto;
+    border-radius: 30px;
+    background: #f0f5fa;
+    border: none;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Période */
+.periode-container {
+    display: flex;
+    align-items: center;
+    background: #f0f5fa;
+    border-radius: 30px;
+    padding: 0.2rem 0.8rem;
+}
+
+.periode-container input[type="week"] {
+    border: none;
+    background: transparent;
+    width: 120px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 576px) {
+    .periode-container input[type="week"] {
+        width: 100px;
+    }
+}
+
+.periode-display {
+    font-size: 0.9rem;
+    padding: 0.3rem 1rem;
+    background: #f8fafd;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Boutons */
+.btn-export-pdf, .btn-save {
+    border: 1px solid #ced8e6;
+    background: white;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-weight: 500;
+    color: #5f48f7;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-export-pdf:hover {
+    background: #e2eaf3;
+}
+
+.btn-save {
+    background: #2953ef;
+    color: white;
+    border: none;
+}
+
+.btn-save:hover {
+    background: #8979ff;
+}
+
+/* Cartes d'éléments */
+.elements-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.2rem;
+    box-shadow: 0 6px 14px rgba(0,20,40,0.05);
+}
+
+@media (max-width: 768px) {
+    .elements-card {
+        padding: 1rem;
+    }
+}
+
+.elements-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.elements-list.horizontal-scroll {
+    max-height: none;
+}
+
+@media (max-width: 768px) {
+    .elements-list.mobile-horizontal {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding-bottom: 5px;
+    }
+}
+
+.elements-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.elements-list::-webkit-scrollbar-thumb {
+    background: #ced8e6;
+    border-radius: 10px;
+}
+
+/* Badges */
+.element-pill {
+    border-radius: 40px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: white;
+    border: none;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    cursor: grab;
+    transition: 0.1s;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .element-pill {
+        width: auto;
+        flex-shrink: 0;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+}
+
+.element-pill i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+    width: 20px;
+}
+
+.element-pill.matiere {
+    background: #aa2aff;
+}
+
+.element-pill.enseignant {
+    background: #b15e5e;
+}
+
+.element-pill.evenement {
+    background: #d97706;
+}
+
+.element-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+}
+
+/* Carte emploi du temps */
+.card-timetable {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 1.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #f0f0f0;
+}
+
+@media (max-width: 768px) {
+    .card-timetable {
+        padding: 1rem;
+    }
+}
+
+.timetable-icon {
+    color: #0d3b66;
+}
+
+/* Tableau */
+.table-timetable {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.table-timetable th {
+    background-color: #f8fafd;
+    color: #1e2f4a;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.9rem 0.2rem;
+}
+
+.table-timetable td {
+    text-align: center;
+    vertical-align: middle;
+    min-height: 80px;
+    background-color: white;
+    border: 1px solid #eaeef2;
+    padding: 0.25rem;
+    position: relative;
+}
+
+.table-timetable td.dropzone {
+    cursor: copy;
+}
+
+.table-timetable td.droppable-hover {
+    background-color: #e9f2fa !important;
+    border: 2px dashed #0d6efd;
+}
+
+.table-timetable td.resize-active {
+    background-color: #fff3cd !important;
+    border: 2px solid #ffc107;
+}
+
+/* Cellule de cours */
+.course-slot {
+    border-radius: 8px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(162, 43, 209, 0.1);
+    word-break: break-word;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px rgba(196, 100, 251, 0.1);
+    height: 100%;
+    width: 100%;
+    position: relative;
+    cursor: default;
+}
+
+.course-slot .matiere-nom {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.course-slot .enseignants {
+    font-size: 0.65rem;
+    opacity: 0.9;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+}
+
+/* Poignées d'étirement */
+.resize-handle {
+    position: absolute;
+    background-color: rgba(255,255,255,0.3);
+    transition: background-color 0.2s;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background-color: rgba(255,255,255,0.8);
+}
+
+.resize-handle.vertical {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    cursor: s-resize;
+    border-radius: 0 0 8px 8px;
+}
+
+.resize-handle.horizontal {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: e-resize;
+    border-radius: 0 8px 8px 0;
+}
+
+/* Couleurs des matières */
+.bg-matiere-1 { background: #0f22f1; }
+.bg-matiere-2 { background: #2d6a4f; }
+.bg-matiere-3 { background: #eb1919; }
+.bg-matiere-4 { background: #ab1be4; }
+.bg-matiere-5 { background: #f6940a; }
+.bg-matiere-6 { background: #1093fe; }
+.bg-matiere-7 { background: #f318aa; }
+.bg-evenement { background: #d97706; }
+
+/* Styles spécifiques au tableau de bord */
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #f0f0f0;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+}
+.bg-primary-soft { background-color: #e6f0fa; color: #0d3b66; }
+.bg-success-soft { background-color: #e3f6e9; color: #1e7e34; }
+.bg-warning-soft { background-color: #fff3cd; color: #856404; }
+.bg-info-soft { background-color: #d1ecf1; color: #0c5460; }
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #eaeef2;
+    transition: background 0.1s;
+}
+.activity-item:hover {
+    background-color: #f8fafd;
+}
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+/* Annonces */
+.alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* ── Modal improvements ── */
+.modal-content {
+    border-radius: 16px !important;
+}
+
+.modal-header.bg-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #6366f1 100%) !important;
+    border-radius: 16px 16px 0 0;
+}
+
+/* ── Activity items ── */
+.activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s;
+    border-radius: 8px;
+    margin-bottom: 2px;
+}
+.activity-item:hover {
+    background-color: #f8fafc;
+}
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+/* ── Progress bars ── */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+}

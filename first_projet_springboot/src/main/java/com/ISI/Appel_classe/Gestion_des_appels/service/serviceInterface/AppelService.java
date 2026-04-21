@@ -55,4 +55,19 @@ public interface AppelService {
      * Régénère un QR code pour un appel
      */
     AppelDTO regenererQRCode(Long appelId);
+
+    /**
+     * Génère un code PIN pour un appel existant
+     */
+    AppelDTO genererPINPourAppel(Long appelId, Integer dureeMinutes);
+
+    /**
+     * Valide un token QR code et enregistre la présence
+     */
+    AppelDTO validerQRCode(Long appelId, String qrToken);
+
+    /**
+     * Récupère les présences d'un appel avec les créneaux horaires
+     */
+    List<PresenceDTO> getPresencesByAppelId(Long appelId);
 }

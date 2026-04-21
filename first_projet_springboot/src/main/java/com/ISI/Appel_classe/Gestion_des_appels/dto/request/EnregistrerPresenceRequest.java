@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,4 +21,8 @@ public class EnregistrerPresenceRequest {
     private String modeEnregistrement; // "QR", "PIN", "manuel"
     
     private String localisation;
+
+    private boolean retard; // Flag retard global
+
+    private List<CreneauPresenceDTO> creneaux; // Présence par heure
 }

@@ -69,6 +69,16 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/auth/validate").permitAll()
+                        // Pages Thymeleaf (l'auth est gérée côté JS/JWT)
+                        .requestMatchers(
+                                "/enseignant/**",
+                                "/admin/**",
+                                "/assistant/**",
+                                "/shared/**",
+                                "/css/**", "/js/**", "/assets/**",
+                                "/manifest.json", "/sw.js", "/icons/**",
+                                "/favicon.ico", "/login"
+                        ).permitAll()
 
                         // Routes protégées par rôle/permission - authentification JWT requise
                         // Ces routes ne peuvent être appelées que si l'utilisateur a un token JWT valide
@@ -87,7 +97,8 @@ public class SecurityConfig {
                                 "/api/cours-ue/**",
                                 "/api/semestres/**",
                                 "/api/emplois-du-temps/**",
-                                "/api/seances/**").authenticated()
+                                "/api/seances/**",
+                                "/api/appels/**").authenticated()
 
                         // Autres requêtes
                         // Par défaut : authentification requise

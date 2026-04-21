@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/bootstrap-layout :: head('emploidutemps', 'emploidutemps.css')}"></head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR -->
+            <div th:replace="~{fragments/sidebar :: sidebar(activePage='emploi', role='ASSISTANT')}"></div>
+
+            <!-- CONTENU PRINCIPAL -->
+            <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
+                
+                <!-- VUE 1 : LISTING DES EMPLOIS DU TEMPS -->
+                <div id="listingView" class="view-section active">
+                    <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <h5 class="mb-0 fw-semibold header-title">Emplois du temps</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEdtModal">
+                            <i class="fas fa-plus me-2"></i>Nouvel emploi du temps
+                        </button>
+                    </div>
+
+                    <div class="row mt-3" id="edtListContainer">
+                        <div class="col-12 text-center text-muted p-5">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p>Chargement des emplois du temps...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VUE 2 : EDITEUR D'EMPLOI DU TEMPS -->
+                <div id="editorView" class="view-section">
+                    <!-- Entête Éditeur -->
+                    <div class="main-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-outline-secondary me-2" id="backToListBtn" title="Retour à la liste">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h5 class="mb-0 fw-semibold header-title" id="editorTitle">Édition Emploi du Temps</h5>
+                            <span class="badge bg-primary ms-2" id="editorClasseBadge">...</span>
+                            <span class="badge bg-info text-dark ms-1" id="editorAnneeBadge" style="display:none;"></span>
+                            <span class="badge bg-warning text-dark ms-1" id="editorSemestreBadge" style="display:none;"></span>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <span class="text-muted small me-2" id="headerDebutSemaine"></span>
+                            <span class="text-muted small me-2">→</span>
+                            <span class="text-muted small me-2" id="headerFinSemaine"></span>
+                            <button class="btn-save" id="saveBtn">
+                                <i class="fas fa-save"></i> <span class="d-none d-sm-inline">Enregistrer</span>
+                            </button>
+                            <button class="btn-export-pdf" id="exportPdfBtn">
+                                <i class="fas fa-file-pdf"></i> <span class="d-none d-sm-inline">PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Colonne gauche : Éléments draggables directement -->
+                        <div class="col-md-3 col-12">
+                            <!-- Matières (badges draggables directement) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-book me-2" style="color: #6932eb;"></i>Matières</h6>
+                                <div id="matieresContainer" class="d-flex flex-wrap">
+                                    <p class="text-muted small">Chargement...</p>
+                                </div>
+                            </div>
+
+                            <!-- Enseignants (badges draggables directement, groupés par matière) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-chalkboard-teacher me-2" style="color: #b15e5e;"></i>Enseignants</h6>
+                                <div id="enseignantsContainer" class="d-flex flex-wrap">
+                                    <p class="text-muted small">Sélectionnez une matière sur la grille pour voir les enseignants.</p>
+                                </div>
+                            </div>
+
+                            <!-- Événements (Bientôt) -->
+                            <div class="elements-panel mb-3">
+                                <h6 class="fw-semibold mb-3"><i class="fas fa-calendar-alt me-2" style="color: #d97706;"></i>Événements spéciaux</h6>
+                                <p class="text-muted small mb-0">Bientôt disponible.</p>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite : Grille -->
+                        <div class="col-md-9 col-12">
+                            <div class="card-timetable" id="timetableCard">
+                                <div class="periode-display mb-3 text-muted">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Du <span id="debutSemaine">...</span> au <span id="finSemaine">...</span>
+                                </div>
+
+                                <div class="table-responsive" style="overflow-x: auto;">
+                                    <table class="table table-bordered table-timetable align-middle" id="timetable">
+                                        <thead>
+                                            <tr id="timetableHeaders">
+                                                <th style="min-width: 100px;">Horaires</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="timetableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Création / Modification d'Emploi du temps -->
+    <div class="modal fade" id="createEdtModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edtModalTitle">Créer un emploi du temps</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createEdtForm">
+                        <input type="hidden" id="modalEdtId" value="">
+                        <div class="mb-3">
+                            <label class="form-label">Classe</label>
+                            <select class="form-select" id="modalClasse" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="modalDateDebut" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Semestre</label>
+                            <select class="form-select" id="modalSemestre">
+                                <option value="">-- Sélectionnez un semestre --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="modalDateFin" required>
+                            <small class="text-muted">Max 6 jours après la date de début (Lundi → Samedi)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="modalSubmitBtn">Créer et Éditer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configuration de Séance -->
+    <div class="modal fade" id="seanceConfigModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold" id="seanceConfigTitle">
+                        <i class="bi bi-gear me-2"></i>Configuration de la séance
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="seanceEditId" value="">
+                    <input type="hidden" id="seanceEditGroupId" value="">
+                    <input type="hidden" id="seanceCellJour" value="">
+                    <input type="hidden" id="seanceCellHoraire" value="">
+                    <!-- Matière (modifiable) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Matière</label>
+                        <select class="form-select" id="seanceMatiereSelect"></select>
+                    </div>
+                    <!-- Enseignants (checkboxes dynamiques) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Enseignants de cette matière</label>
+                        <div id="seanceEnseignantsList" class="border rounded-3 p-2"
+                             style="max-height:200px;overflow-y:auto;">
+                            <p class="text-muted small mb-0">Sélectionnez une matière</p>
+                        </div>
+                    </div>
+                    <!-- Couleur -->
+                    <div class="mb-3 d-flex align-items-center gap-3">
+                        <label class="form-label fw-semibold mb-0">Couleur</label>
+                        <input type="color" class="form-control form-control-color" id="seanceCouleurInput" value="#0f22f1">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" id="seanceDeleteBtn" style="display:none;">
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="seanceSaveBtn">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold" id="confirmModalTitle">Confirmer</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="mb-0 text-muted" id="confirmModalMessage">Êtes-vous sûr ?</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" id="confirmCancelBtn">Annuler</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmOkBtn">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script type="module" th:src="@{/js/emploi.js}"></script>
+</body>
+</html>

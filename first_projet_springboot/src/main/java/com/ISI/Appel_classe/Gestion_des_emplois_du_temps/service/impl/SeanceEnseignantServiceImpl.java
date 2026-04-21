@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.impl;
 
+import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.DashboardEnseignantDTO;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response.SeanceEnseignantDTO;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.EmploiDuTemps;
 import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Seance;
@@ -15,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.List;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +53,75 @@ public class SeanceEnseignantServiceImpl implements SeanceEnseignantService {
         return seances.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public DashboardEnseignantDTO getDashboardData(Long enseignantId) {
+        DashboardEnseignantDTO dashboard = new DashboardEnseignantDTO();
+        
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+        // 1. Récupérer les séances de la semaine
+        List<SeanceEnseignantDTO> seancesSemaine = getSeancesEnseignantPeriode(enseignantId, startOfWeek, endOfWeek);
+
+        // 2. Calculer les heures de la semaine
+        int heuresSemaine = 0;
+        for (SeanceEnseignantDTO s : seancesSemaine) {
+            if (s.getHeureDebut() != null && s.getHeureFin() != null) {
+                heuresSemaine += (int) ChronoUnit.HOURS.between(s.getHeureDebut(), s.getHeureFin());
+            }
+        }
+        dashboard.setHeuresSemaine(heuresSemaine);
+
+        // 3. Cours du jour
+        List<SeanceEnseignantDTO> coursJour = seancesSemaine.stream()
+            .filter(s -> s.getDate() != null && s.getDate().equals(today))
+            .sorted(Comparator.comparing(SeanceEnseignantDTO::getHeureDebut, Comparator.nullsLast(Comparator.naturalOrder())))
+            .collect(Collectors.toList());
+        dashboard.setCoursAujourdhui(coursJour.size());
+        dashboard.setCoursJour(coursJour);
+
+        // 4. Prochain cours : la première séance du jour dont l'heure de fin est dans le futur
+        LocalTime now = LocalTime.now();
+        SeanceEnseignantDTO prochainCours = coursJour.stream()
+            .filter(s -> s.getHeureFin() != null && s.getHeureFin().isAfter(now))
+            .findFirst()
+            .orElse(null);
+        dashboard.setProchainCours(prochainCours);
+
+        // 5. Étudiants total (distinct par classe)
+        Set<Long> classeIds = new HashSet<>();
+        for (SeanceEnseignantDTO s : seancesSemaine) {
+            if (s.getClasseId() != null) {
+                classeIds.add(s.getClasseId());
+            }
+        }
+        int etudiantsTotal = 0;
+        for (Long classeId : classeIds) {
+            etudiantsTotal += etudiantRepository.findByClasseActuelleId(classeId).size();
+        }
+        dashboard.setEtudiantsTotal(etudiantsTotal);
+
+        // 6. Taux de présence moyen (sur les séances avec appels clôturés)
+        long totalPresents = 0;
+        long totalEnregistres = 0;
+        for (SeanceEnseignantDTO s : seancesSemaine) {
+            if (s.getAppelId() != null && "clôturé".equals(s.getAppelStatut())) {
+                int presents = (s.getNombrePresents() != null ? s.getNombrePresents() : 0);
+                int retards = (s.getNombreRetards() != null ? s.getNombreRetards() : 0);
+                int absents = (s.getNombreAbsents() != null ? s.getNombreAbsents() : 0);
+                totalPresents += presents + retards; // retards comptent comme présents partiels
+                totalEnregistres += presents + retards + absents;
+            }
+        }
+        double tauxPresence = totalEnregistres > 0 
+            ? Math.round((double) totalPresents / totalEnregistres * 1000.0) / 10.0 
+            : 0.0;
+        dashboard.setTauxPresence(tauxPresence);
+
+        return dashboard;
     }
     
     private SeanceEnseignantDTO convertToDTO(Seance seance) {

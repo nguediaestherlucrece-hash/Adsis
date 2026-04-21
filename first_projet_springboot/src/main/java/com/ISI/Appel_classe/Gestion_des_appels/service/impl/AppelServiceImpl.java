@@ -1,5 +1,6 @@
 package com.ISI.Appel_classe.Gestion_des_appels.service.impl;
 
+import com.ISI.Appel_classe.Gestion_des_appels.dto.request.CreneauPresenceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels.dto.request.DemarrerAppelRequest;
 import com.ISI.Appel_classe.Gestion_des_appels.dto.request.EnregistrerPresenceRequest;
 import com.ISI.Appel_classe.Gestion_des_appels.dto.request.EnregistrerPresencesBatchRequest;
@@ -19,12 +20,15 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.BadRequestExcepti
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Appel;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.PresenceHoraire;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceHoraireRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,11 +40,12 @@ public class AppelServiceImpl implements AppelService {
     private final AppelRepository appelRepository;
     private final SeanceRepository seanceRepository;
     private final PresenceRepository presenceRepository;
+    private final PresenceHoraireRepository presenceHoraireRepository;
     private final EtudiantRepository etudiantRepository;
     private final QRCodeService qrCodeService;
     
     // Cache temporaire pour les codes PIN (en production, utiliser Redis)
-    private final Map<Long, PINData> pinCache = new HashMap<>();
+    private Map<Long, PINData> pinCache = new HashMap<>();
     
     @Override
     public AppelDTO demarrerAppel(DemarrerAppelRequest request) {
@@ -133,6 +138,27 @@ public class AppelServiceImpl implements AppelService {
             presence.setHorodatage(LocalDateTime.now());
             presence.setModeEnregistrement(request.getModeEnregistrement());
             presence.setLocalisation(request.getLocalisation());
+            presence.setRetard(request.isRetard());
+            
+            // Mettre à jour les créneaux horaires si fournis
+            if (request.getCreneaux() != null && !request.getCreneaux().isEmpty()) {
+                // Supprimer les anciens créneaux
+                presenceHoraireRepository.deleteAll(presence.getPresencesHoraires());
+                presence.getPresencesHoraires().clear();
+                
+                // Créer les nouveaux créneaux
+                for (CreneauPresenceDTO creneauDTO : request.getCreneaux()) {
+                    PresenceHoraire ph = new PresenceHoraire();
+                    ph.setHeureDebut(creneauDTO.getHeureDebut());
+                    ph.setHeureFin(creneauDTO.getHeureFin());
+                    ph.setPresent(creneauDTO.isPresent());
+                    ph.setPresence(presence);
+                    presence.getPresencesHoraires().add(ph);
+                }
+                
+                // Recalculer le statut
+                presence.recalculerStatut();
+            }
             
             presence = presenceRepository.save(presence);
             return convertPresenceToDTO(presence);
@@ -148,6 +174,21 @@ public class AppelServiceImpl implements AppelService {
         presence.setHorodatage(LocalDateTime.now());
         presence.setModeEnregistrement(request.getModeEnregistrement());
         presence.setLocalisation(request.getLocalisation());
+        presence.setRetard(request.isRetard());
+        
+        // Créer les créneaux horaires si fournis
+        if (request.getCreneaux() != null && !request.getCreneaux().isEmpty()) {
+            for (CreneauPresenceDTO creneauDTO : request.getCreneaux()) {
+                PresenceHoraire ph = new PresenceHoraire();
+                ph.setHeureDebut(creneauDTO.getHeureDebut());
+                ph.setHeureFin(creneauDTO.getHeureFin());
+                ph.setPresent(creneauDTO.isPresent());
+                ph.setPresence(presence);
+                presence.getPresencesHoraires().add(ph);
+            }
+            // Recalculer le statut basé sur les créneaux
+            presence.recalculerStatut();
+        }
         
         presence = presenceRepository.save(presence);
         
@@ -211,6 +252,9 @@ public class AppelServiceImpl implements AppelService {
                 .collect(Collectors.toMap(p -> p.getEtudiant().getId(), p -> p));
         }
         
+        // Générer les créneaux par défaut pour la séance
+        List<CreneauPresenceDTO> creneauxDefaut = genererCreneauxSeance(seance);
+        
         // Construire la liste des étudiants avec leur statut
         List<EtudiantSeanceDTO> result = new ArrayList<>();
         for (Etudiant etudiant : etudiants) {
@@ -225,8 +269,25 @@ public class AppelServiceImpl implements AppelService {
             if (presence != null) {
                 dto.setStatut(presence.getStatut());
                 dto.setPresenceId(presence.getId());
+                dto.setRetard(presence.isRetard());
+                
+                // Convertir les créneaux horaires existants
+                if (presence.getPresencesHoraires() != null && !presence.getPresencesHoraires().isEmpty()) {
+                    dto.setCreneaux(presence.getPresencesHoraires().stream()
+                        .map(ph -> {
+                            CreneauPresenceDTO c = new CreneauPresenceDTO();
+                            c.setHeureDebut(ph.getHeureDebut());
+                            c.setHeureFin(ph.getHeureFin());
+                            c.setPresent(ph.isPresent());
+                            return c;
+                        })
+                        .collect(Collectors.toList()));
+                } else {
+                    dto.setCreneaux(creneauxDefaut);
+                }
             } else {
                 dto.setStatut("non_enregistré");
+                dto.setCreneaux(creneauxDefaut);
             }
             
             result.add(dto);
@@ -268,8 +329,88 @@ public class AppelServiceImpl implements AppelService {
         
         return appelDTO;
     }
+
+    @Override
+    public AppelDTO genererPINPourAppel(Long appelId, Integer dureeMinutes) {
+        Appel appel = appelRepository.findById(appelId)
+            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        
+        if (!"ouvert".equals(appel.getStatut())) {
+            throw new BadRequestException("Impossible de générer un PIN pour un appel clôturé");
+        }
+
+        String codePIN = qrCodeService.generatePINCode();
+        int duree = (dureeMinutes != null && dureeMinutes > 0) ? dureeMinutes : 5;
+        LocalDateTime expiration = LocalDateTime.now().plusMinutes(duree);
+
+        pinCache.put(appelId, new PINData(codePIN, expiration));
+
+        AppelDTO dto = convertToDTO(appel);
+        dto.setCodePIN(codePIN);
+        dto.setExpirationPIN(expiration);
+
+        return dto;
+    }
+
+    @Override
+    public AppelDTO validerQRCode(Long appelId, String qrToken) {
+        Appel appel = appelRepository.findById(appelId)
+            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+
+        if (!"ouvert".equals(appel.getStatut())) {
+            throw new BadRequestException("Cet appel est clôturé");
+        }
+
+        // Le QR token contient le format: APPEL:{appelId}:{timestamp}
+        // On vérifie que le token correspond bien à cet appel
+        if (qrToken == null || !qrToken.startsWith("APPEL:" + appelId + ":")) {
+            throw new BadRequestException("QR code invalide pour cet appel");
+        }
+
+        return convertToDTO(appel);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PresenceDTO> getPresencesByAppelId(Long appelId) {
+        Appel appel = appelRepository.findById(appelId)
+            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+
+        List<Presence> presences = presenceRepository.findByAppelId(appelId);
+        return presences.stream()
+            .map(this::convertPresenceToDTO)
+            .collect(Collectors.toList());
+    }
     
     // Méthodes utilitaires privées
+    
+    /**
+     * Génère les créneaux d'1 heure à partir des horaires de la séance
+     */
+    private List<CreneauPresenceDTO> genererCreneauxSeance(Seance seance) {
+        List<CreneauPresenceDTO> creneaux = new ArrayList<>();
+        
+        if (seance.getHeureDebut() == null || seance.getHeureFin() == null) {
+            return creneaux;
+        }
+
+        LocalTime current = seance.getHeureDebut();
+        while (current.isBefore(seance.getHeureFin())) {
+            CreneauPresenceDTO creneau = new CreneauPresenceDTO();
+            creneau.setHeureDebut(current);
+            LocalTime next = current.plusHours(1);
+            // Ne pas dépasser l'heure de fin
+            if (next.isAfter(seance.getHeureFin())) {
+                next = seance.getHeureFin();
+            }
+            creneau.setHeureFin(next);
+            creneau.setPresent(false); // Non enregistré par défaut
+            creneaux.add(creneau);
+            current = next;
+        }
+        
+        return creneaux;
+    }
     
     private void marquerAbsentsNonEnregistres(Appel appel) {
         EmploiDuTemps emploiDuTemps = appel.getSeance().getEmploiDuTemps();
@@ -285,6 +426,9 @@ public class AppelServiceImpl implements AppelService {
         Set<Long> etudiantsEnregistres = presencesExistantes.stream()
             .map(p -> p.getEtudiant().getId())
             .collect(Collectors.toSet());
+
+        // Générer les créneaux pour la séance
+        List<CreneauPresenceDTO> creneauxSeance = genererCreneauxSeance(appel.getSeance());
         
         // Marquer les absents
         for (Etudiant etudiant : etudiants) {
@@ -297,6 +441,17 @@ public class AppelServiceImpl implements AppelService {
                 absence.setStatut("absent");
                 absence.setHorodatage(LocalDateTime.now());
                 absence.setModeEnregistrement("automatique");
+                absence.setRetard(false);
+                
+                // Créer les PresenceHoraire en absent pour chaque créneau
+                for (CreneauPresenceDTO creneau : creneauxSeance) {
+                    PresenceHoraire ph = new PresenceHoraire();
+                    ph.setHeureDebut(creneau.getHeureDebut());
+                    ph.setHeureFin(creneau.getHeureFin());
+                    ph.setPresent(false);
+                    ph.setPresence(absence);
+                    absence.getPresencesHoraires().add(ph);
+                }
                 
                 presenceRepository.save(absence);
             }
@@ -335,6 +490,7 @@ public class AppelServiceImpl implements AppelService {
         dto.setStatut(presence.getStatut());
         dto.setModeEnregistrement(presence.getModeEnregistrement());
         dto.setLocalisation(presence.getLocalisation());
+        dto.setRetard(presence.isRetard());
         
         if (presence.getEtudiant() != null) {
             dto.setEtudiantId(presence.getEtudiant().getId());
@@ -349,6 +505,21 @@ public class AppelServiceImpl implements AppelService {
         
         if (presence.getAppel() != null) {
             dto.setAppelId(presence.getAppel().getId());
+        }
+
+        // Convertir les créneaux horaires
+        if (presence.getPresencesHoraires() != null && !presence.getPresencesHoraires().isEmpty()) {
+            dto.setCreneaux(presence.getPresencesHoraires().stream()
+                .map(ph -> {
+                    CreneauPresenceDTO c = new CreneauPresenceDTO();
+                    c.setHeureDebut(ph.getHeureDebut());
+                    c.setHeureFin(ph.getHeureFin());
+                    c.setPresent(ph.isPresent());
+                    return c;
+                })
+                .collect(Collectors.toList()));
+            dto.setHeuresPresentes(presence.getHeuresPresentes());
+            dto.setHeuresAbsentes(presence.getHeuresAbsentes());
         }
         
         return dto;
