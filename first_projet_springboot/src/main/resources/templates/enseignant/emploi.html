@@ -8,57 +8,59 @@
     <div class="row min-vh-100">
       <aside th:replace="~{fragments/sidebar :: sidebar(activePage='emploi', role='ENSEIGNANT')}"></aside>
 
-      <div class="col-md-9 col-lg-10 p-4">
+      <div class="col-md-9 col-lg-10 p-0 d-flex flex-column">
         <header th:replace="~{fragments/enseignant-layout :: topbar('Emploi de temps')}"></header>
 
-        <!-- Filters -->
-        <div class="filter-bar">
-          <div class="view-toggle" role="group" aria-label="Vue">
-            <button class="toggle-btn active" id="btn-semaine">Semaine</button>
-            <button class="toggle-btn" id="btn-jour">Par jour</button>
-          </div>
-          <div class="week-nav" style="display:flex;align-items:center;gap:6px;">
-            <button class="toggle-btn" id="btn-prev-week" title="Semaine précédente" style="padding:8px 10px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <span id="week-label" style="font-size:0.85rem;font-weight:700;color:var(--text);min-width:180px;text-align:center;">—</span>
-            <button class="toggle-btn" id="btn-next-week" title="Semaine suivante" style="padding:8px 10px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-            <button class="toggle-btn" id="btn-today-week" title="Revenir à cette semaine" style="padding:8px 12px;font-size:0.78rem;">Auj.</button>
-          </div>
-          <div class="day-select-wrap" id="day-select-wrap" style="display:none;">
-            <select id="day-select" class="day-select" aria-label="Sélectionner un jour">
-              <option value="Lundi">Lundi</option>
-              <option value="Mardi">Mardi</option>
-              <option value="Mercredi">Mercredi</option>
-              <option value="Jeudi">Jeudi</option>
-              <option value="Vendredi">Vendredi</option>
-              <option value="Samedi">Samedi</option>
-            </select>
-          </div>
-          <!-- Filtre par classe -->
-          <div class="class-filter-wrap">
-            <button class="class-filter-toggle" id="class-filter-toggle" aria-expanded="false">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-              </svg>
-              Filtrer par classe
-              <span class="filter-count" id="filter-count"></span>
-              <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="class-filter-panel" id="class-filter-panel" style="display:none;">
-              <div class="class-filter-header">
-                <span class="class-filter-title">Classes</span>
-                <button class="class-filter-reset" id="class-filter-reset">Tout sélectionner</button>
+        <div class="content">
+          <!-- Filters -->
+          <div class="filter-bar">
+            <div class="view-toggle" role="group" aria-label="Vue">
+              <button class="toggle-btn active" id="btn-semaine">Semaine</button>
+              <button class="toggle-btn" id="btn-jour">Par jour</button>
+            </div>
+            <div class="week-nav" style="display:flex;align-items:center;gap:6px;">
+              <button class="toggle-btn" id="btn-prev-week" title="Semaine précédente" style="padding:8px 10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span id="week-label" style="font-size:0.85rem;font-weight:700;color:var(--text);min-width:180px;text-align:center;">—</span>
+              <button class="toggle-btn" id="btn-next-week" title="Semaine suivante" style="padding:8px 10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="toggle-btn" id="btn-today-week" title="Revenir à cette semaine" style="padding:8px 12px;font-size:0.78rem;">Auj.</button>
+            </div>
+            <div class="day-select-wrap" id="day-select-wrap" style="display:none;">
+              <select id="day-select" class="day-select" aria-label="Sélectionner un jour">
+                <option value="Lundi">Lundi</option>
+                <option value="Mardi">Mardi</option>
+                <option value="Mercredi">Mercredi</option>
+                <option value="Jeudi">Jeudi</option>
+                <option value="Vendredi">Vendredi</option>
+                <option value="Samedi">Samedi</option>
+              </select>
+            </div>
+            <!-- Filtre par classe -->
+            <div class="class-filter-wrap">
+              <button class="class-filter-toggle" id="class-filter-toggle" aria-expanded="false">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                Filtrer par classe
+                <span class="filter-count" id="filter-count"></span>
+                <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="class-filter-panel" id="class-filter-panel" style="display:none;">
+                <div class="class-filter-header">
+                  <span class="class-filter-title">Classes</span>
+                  <button class="class-filter-reset" id="class-filter-reset">Tout sélectionner</button>
+                </div>
+                <div class="class-checkboxes" id="class-checkboxes"></div>
               </div>
-              <div class="class-checkboxes" id="class-checkboxes"></div>
             </div>
           </div>
+          <div id="schedule-container"></div>
         </div>
-        <div id="schedule-container"></div>
       </div>
     </div>
   </div>

@@ -8,6 +8,8 @@
   flex-wrap: wrap;
   margin-bottom: 24px;
   animation: fadeUp 0.35s both;
+  position: relative;
+  z-index: 10;
 }
 
 @keyframes fadeUp {
@@ -312,9 +314,8 @@
   border-radius: 14px;
   box-shadow: 0 12px 36px rgba(0,0,0,0.12);
   min-width: 240px;
-  z-index: 100;
+  z-index: 200;
   padding: 12px;
-  animation: fadeUp 0.2s both;
 }
 
 .class-filter-header {

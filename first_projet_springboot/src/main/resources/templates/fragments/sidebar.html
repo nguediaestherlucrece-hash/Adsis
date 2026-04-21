@@ -3,12 +3,14 @@
 
 <!-- ═══ FRAGMENT SIDEBAR ═══ -->
 <aside th:fragment="sidebar(activePage, role)"
+       id="sidebar"
        class="col-md-3 col-lg-2 sidebar d-flex flex-column p-4">
   
   <div class="logo-box">
     <img src="/assets/image.png" alt="Logo ADSIS" class="logo"
          onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%234e73df%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E'"/>
     <h5 class="brand-name m-0 ms-2 fw-bold text-primary">ADSIS</h5>
+    <button class="sidebar-close-btn ms-auto d-md-none" id="sidebar-close" aria-label="Fermer le menu">&times;</button>
   </div>
   
   <div class="mb-4">
@@ -90,6 +92,34 @@
                if(roleDisplay) roleDisplay.textContent = 'ENSEIGNANT';
            }
        }
+    });
+  </script>
+
+  <!-- Mobile sidebar toggle (runs on ALL pages) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.getElementById('sidebar');
+      const burger  = document.getElementById('burger');
+      const closeBtn = document.getElementById('sidebar-close');
+      if (!sidebar) return;
+
+      // Dynamically create overlay (since it must be outside the aside)
+      let overlay = document.getElementById('sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.id = 'sidebar-overlay';
+        sidebar.parentElement.insertBefore(overlay, sidebar);
+      }
+
+      function open()  { sidebar.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow='hidden'; }
+      function close() { sidebar.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow=''; }
+
+      if(burger)   burger.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.contains('open') ? close() : open(); });
+      if(closeBtn) closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if(e.key==='Escape') close(); });
+      sidebar.querySelectorAll('.nav-link').forEach(a => a.addEventListener('click', () => { if(window.innerWidth<=768) close(); }));
     });
   </script>
 </aside>

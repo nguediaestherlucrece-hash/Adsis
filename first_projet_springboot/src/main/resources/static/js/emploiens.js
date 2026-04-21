@@ -162,8 +162,13 @@ filterToggleBtn.addEventListener('click', function (e) {
     filterToggleBtn.classList.toggle('open', !open);
 });
 
+// Prevent clicks inside the panel from closing it
+filterPanel.addEventListener('click', function (e) {
+    e.stopPropagation();
+});
+
 document.addEventListener('click', function (e) {
-    if (!filterToggleBtn.contains(e.target) && !filterPanel.contains(e.target)) {
+    if (!filterToggleBtn.contains(e.target)) {
         filterPanel.style.display = 'none';
         filterToggleBtn.setAttribute('aria-expanded', 'false');
         filterToggleBtn.classList.remove('open');
@@ -325,7 +330,7 @@ function renderWeek() {
         group.appendChild(labelEl);
 
         var col = document.createElement('div');
-        col.className = 'courses-col';
+        col.className = 'courses-row';
 
         if (dayCourses.length === 0) {
             col.innerHTML = '<p class="no-course-day">—</p>';

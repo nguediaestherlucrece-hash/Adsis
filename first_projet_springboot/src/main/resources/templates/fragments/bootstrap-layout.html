@@ -17,6 +17,7 @@
 
 <!-- ═══ TOPBAR ADMIN ═══ -->
 <div th:fragment="topbar-admin(pageTitle)" class="topbar mb-4">
+  <button class="burger" id="burger" aria-label="Ouvrir le menu"><span></span><span></span><span></span></button>
   <div>
     <h4 class="fw-bold mb-0" th:text="${pageTitle}">Page</h4>
     <p class="text-muted small m-0" id="dashboardDate"></p>

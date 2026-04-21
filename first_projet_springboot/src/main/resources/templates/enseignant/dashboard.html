@@ -8,37 +8,39 @@
     <div class="row min-vh-100">
       <aside th:replace="~{fragments/sidebar :: sidebar(activePage='dashboard', role='ENSEIGNANT')}"></aside>
 
-      <div class="col-md-9 col-lg-10 p-4">
+      <div class="col-md-9 col-lg-10 p-0 d-flex flex-column">
         <header th:replace="~{fragments/enseignant-layout :: topbar('Tableau de bord')}"></header>
 
-        <section class="stats-grid">
-          <div class="stat-card stat-presence">
-            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-            <div class="stat-info"><span class="stat-label">Taux de présence</span><span class="stat-value" id="stat-presence">—</span></div>
-          </div>
-          <div class="stat-card stat-heures">
-            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-            <div class="stat-info"><span class="stat-label">Heures cette semaine</span><span class="stat-value" id="stat-heures">—</span></div>
-          </div>
-          <div class="stat-card stat-cours">
-            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-            <div class="stat-info"><span class="stat-label">Cours du jour</span><span class="stat-value" id="stat-cours">—</span></div>
-          </div>
-          <div class="stat-card stat-etudiants">
-            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-            <div class="stat-info"><span class="stat-label">Étudiants total</span><span class="stat-value" id="stat-etudiants">—</span></div>
-          </div>
-        </section>
-        <section class="next-course-section" id="next-course-section"></section>
-        <section class="today-section">
-          <div class="section-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <h3>Cours du jour</h3>
-          </div>
-          <div class="today-list" id="today-list"></div>
-        </section>
+        <div class="content">
+          <section class="stats-grid">
+            <div class="stat-card stat-presence">
+              <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <div class="stat-info"><span class="stat-label">Taux de présence</span><span class="stat-value" id="stat-presence">—</span></div>
+            </div>
+            <div class="stat-card stat-heures">
+              <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="stat-info"><span class="stat-label">Heures cette semaine</span><span class="stat-value" id="stat-heures">—</span></div>
+            </div>
+            <div class="stat-card stat-cours">
+              <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+              <div class="stat-info"><span class="stat-label">Cours du jour</span><span class="stat-value" id="stat-cours">—</span></div>
+            </div>
+            <div class="stat-card stat-etudiants">
+              <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <div class="stat-info"><span class="stat-label">Étudiants total</span><span class="stat-value" id="stat-etudiants">—</span></div>
+            </div>
+          </section>
+          <section class="next-course-section" id="next-course-section"></section>
+          <section class="today-section">
+            <div class="section-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <h3>Cours du jour</h3>
+            </div>
+            <div class="today-list" id="today-list"></div>
+          </section>
+        </div>
       </div>
     </div>
   </div>

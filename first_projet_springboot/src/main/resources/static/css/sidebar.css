@@ -97,3 +97,83 @@
   background-color: #fff2f1;
   color: #c0392b;
 }
+
+/* ── Close button (mobile only) ── */
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar-close-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+/* ── Mobile overlay ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+.sidebar-overlay.open {
+  display: block;
+}
+
+/* ── Burger button (hidden on desktop, shown on mobile) ── */
+.burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.burger:hover { background: #f4f6ff; }
+.burger span {
+  display: block;
+  width: 22px;
+  height: 2.5px;
+  background: #1a1f36;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── RESPONSIVE: mobile drawer ── */
+@media (max-width: 767.98px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: min(300px, 85vw);
+    height: 100vh !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    z-index: 200;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 6px 0 40px rgba(0,0,0,0.22);
+  }
+
+  /* Show burger in topbar */
+  .burger {
+    display: flex !important;
+  }
+}

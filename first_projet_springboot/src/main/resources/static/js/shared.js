@@ -35,37 +35,7 @@ import { getUser, logout, applyPermissionVisibility, getLoginPath } from './auth
 
 // Logout est géré spécifiquement dans profile-unified.js (avec modale)
 
-// ── Sidebar toggle ────────────────────────────────────────────────────────────
-(function initSidebar() {
-    const sidebar     = document.getElementById('sidebar');
-    const overlay     = document.getElementById('sidebar-overlay');
-    const burger      = document.getElementById('burger');
-    const sidebarClose = document.getElementById('sidebar-close');
-
-    if (!sidebar) return;
-
-    function openSidebar()  {
-        sidebar.classList.add('open');
-        if (overlay) overlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    burger?.addEventListener('click', e => {
-        e.stopPropagation();
-        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-    });
-    sidebarClose?.addEventListener('click', closeSidebar);
-    overlay?.addEventListener('click', closeSidebar);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
-    sidebar.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
-    });
-})();
+// ── Sidebar toggle is now handled by sidebar.html fragment (works on all pages) ──
 
 // ── Date helper ───────────────────────────────────────────────────────────────
 function formatDate(d) {
