@@ -1,5 +1,8 @@
-package com.ISI.Appel_classe.Gestion_des_utilisateurs.model;
+package com.ISI.Appel_classe.Gestion_des_justificatifs.model;
 
+import com.ISI.Appel_classe.Gestion_des_justificatifs.enums.StatutValidation;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,9 +25,19 @@ public class Justificatif {
     private String idJustificatif;
 
     private String motif;
+    private String commentaire;
     private String documentUrl;
-    private String statutValidation;
+
+    @Enumerated(EnumType.STRING)
+    private StatutValidation statutValidation;
+
+    private String motifRejet;
     private LocalDate dateSoumission;
+    private LocalDate dateValidation;
+
+    private String complementDocumentUrl;
+    private String complementCommentaire;
+    private LocalDate dateComplement;
 
     // 🔹 Relations JPA
     @OneToOne
@@ -34,12 +47,4 @@ public class Justificatif {
     @ManyToOne
     @JoinColumn(name = "validateur_id")
     private AssistantPedagogique validateur;
-
-    public void validerJustificatif() {
-        this.statutValidation = "validé";
-    }
-
-    public void rejeterJustificatif() {
-        this.statutValidation = "rejeté";
-    }
 }
