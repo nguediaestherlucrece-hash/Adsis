@@ -1,0 +1,41 @@
+/* static/css/etudiant-emploi.css */
+.main-content {
+    background-color: #f8f9fc;
+}
+
+#edt-table {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+#edt-table th {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#edt-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 12px;
+}
+
+.cours-item {
+    font-size: 0.9rem;
+}
+
+.bg-opacity-10 {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+    .cours-item {
+        font-size: 0.75rem;
+    }
+    #edt-table td, #edt-table th {
+        padding: 6px;
+    }
+}

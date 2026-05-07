@@ -1,7 +1,7 @@
 // ═══ ADSIS – Service Worker ═══
 // Stratégie : Cache-first pour les assets statiques, Network-first pour les API
 
-const CACHE_NAME = 'adsis-v8';
+const CACHE_NAME = 'adsis-v9';
 const STATIC_ASSETS = [
   '/css/shared-ens.css',
   '/css/dashboardens.css',

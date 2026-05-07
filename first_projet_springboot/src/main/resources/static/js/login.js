@@ -56,6 +56,8 @@ function routeByRole(roles = []) {
     window.location.href = '/enseignant/dashboard';
   else if (roles.includes('ASSISTANT_PEDAGOGIQUE') || roles.includes('SURVEILLANT'))
     window.location.href = '/assistant/tableaudebord';
+  else if (roles.includes('ETUDIANT'))
+    window.location.href = '/etudiant/dashboard';
   else
     window.location.href = '/enseignant/dashboard';
 }

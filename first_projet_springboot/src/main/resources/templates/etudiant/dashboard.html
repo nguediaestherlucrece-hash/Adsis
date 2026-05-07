@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/bootstrap-layout :: head('Dashboard étudiant', 'dashboardetu.css')}"></head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div th:replace="~{fragments/bootstrap-layout :: sidebar-etudiant('dashboard')}"></div>
+
+            <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
+                <h5>Tableau de bord étudiant</h5>
+                <div id="prochains-cours" class="mt-4">
+                    <h6>Prochains cours</h6>
+                    <ul class="list-group" id="cours-list"></ul>
+                </div>
+                <div id="absences-recentes" class="mt-4">
+                    <h6>Absences récentes</h6>
+                    <ul class="list-group" id="absences-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" th:src="@{../js/dashboardetu.js}"></script>
+</body>
+</html>
