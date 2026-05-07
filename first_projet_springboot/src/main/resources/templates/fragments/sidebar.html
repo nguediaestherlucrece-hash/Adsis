@@ -59,6 +59,21 @@
            href="/enseignant/appel"><i class="bi bi-clipboard-check"></i>Appel</a>
       </div>
     </th:block>
+    <!--ETUDIANTS LINK-->
+    <th:block th:if="${role == 'ETUDIANT'}">
+    <div class="nav-etudiant sidebar-role-group">
+        <a class="nav-link" th:classappend="${activePage == 'dashboard' ? ' active' : ''}"
+           href="/etudiant/dashboard"><i class="bi bi-speedometer2"></i>Tableau de bord</a>
+        <a class="nav-link" th:classappend="${activePage == 'emploi' ? ' active' : ''}"
+           href="/etudiant/emploi"><i class="bi bi-calendar-week"></i>Emploi du temps</a>
+        <a class="nav-link" th:classappend="${activePage == 'absences' ? ' active' : ''}"
+           href="/etudiant/absences"><i class="bi bi-exclamation-triangle"></i>Mes absences</a>
+        <a class="nav-link" th:classappend="${activePage == 'justifications' ? ' active' : ''}"
+           href="/etudiant/justifications"><i class="bi bi-file-earmark-text"></i>Justifier une absence</a>
+        <a class="nav-link" th:classappend="${activePage == 'profil' ? ' active' : ''}"
+           href="/etudiant/profil"><i class="bi bi-person-circle"></i>Mon profil</a>
+    </div>
+</th:block>
 
     <!-- COMMON LINKS -->
     <a class="nav-link mt-2 border-top pt-3" th:classappend="${activePage == 'profil'} ? ' active'" href="/shared/profil">

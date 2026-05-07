@@ -1,8 +1,10 @@
 package com.ISI.Appel_classe.config;
 
+import com.ISI.Appel_classe.Gestion_des_etudiants.model.Etudiant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.enums.Statut;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.*;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.*;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,6 +41,7 @@ public class SeedUsersInitializer {
     private final AssistantPedagogiqueRepository assistantRepository;
     private final SurveillantRepository       surveillantRepository;
     private final RoleRepository              roleRepository;
+    private final EtudiantRepository           etudiantRepository;
 
     // ─── Encodeur de mots de passe (BCrypt injecté par Spring Security) ─────────
     private final PasswordEncoder passwordEncoder;
@@ -75,12 +78,19 @@ public class SeedUsersInitializer {
     private static final String SUR_NOM           = "Ndiaye";
     private static final String SUR_PRENOM        = "Omar";
     private static final String SUR_MATRICULE     = "SUR-000";
+    // ── Compte Étudiant ─────────────────────────────────────────────────────────
+    private static final String ETU_EMAIL         = "etudiant@adsis.sn";
+    private static final String ETU_PASSWORD      = "Etudiant@2025!";
+    private static final String ETU_NOM           = "Diop";
+    private static final String ETU_PRENOM        = "Aminata";
+    private static final String ETU_MATRICULE     = "ETU-000";
 
     // ─── Noms des rôles (doivent correspondre à ce qu'initializeDefaultRoles crée) ──
     private static final String ROLE_ADMIN        = "ADMIN";
     private static final String ROLE_ENSEIGNANT   = "ENSEIGNANT";
     private static final String ROLE_ASSISTANT    = "ASSISTANT_PEDAGOGIQUE";
     private static final String ROLE_SURVEILLANT  = "SURVEILLANT";
+    private static final String ROLE_ETUDIANT     = "ETUDIANT";
 
     // ════════════════════════════════════════════════════════════════════════════
     //  MÉTHODE PRINCIPALE — appelée par DataInitializer après les rôles/permissions
@@ -94,6 +104,7 @@ public class SeedUsersInitializer {
         seedEnseignant();
         seedAssistant();
         seedSurveillant();
+        seedEtudiant();
 
         log.info("✅ Comptes maîtres vérifiés et prêts.");
     }
@@ -235,4 +246,36 @@ public class SeedUsersInitializer {
         surveillantRepository.save(surveillant);
         log.info("   ✔ Compte Surveillant créé  → email: {}  mot de passe: {}", SUR_EMAIL, SUR_PASSWORD);
     }
+    //etudiant  
+    private void seedEtudiant() {
+    if (utilisateurRepository.existsByEmail(ETU_EMAIL)) {
+        log.debug("   ↪ Étudiant '{}' déjà présent en base, skip.", ETU_EMAIL);
+        return;
+    }
+
+    Role roleEtu = roleRepository.findByName(ROLE_ETUDIANT).orElseGet(() -> {
+        log.warn("   ⚠ Rôle '{}' introuvable, création à la volée.", ROLE_ETUDIANT);
+        Role r = new Role();
+        r.setName(ROLE_ETUDIANT);
+        r.setDescription("Étudiant");
+        return roleRepository.save(r);
+    });
+
+    Etudiant etudiant = new Etudiant();
+    etudiant.setNom(ETU_NOM);
+    etudiant.setPrenom(ETU_PRENOM);
+    etudiant.setEmail(ETU_EMAIL);
+    etudiant.setPassword(passwordEncoder.encode(ETU_PASSWORD));
+    etudiant.setMatricule(ETU_MATRICULE);
+    etudiant.setStatut(Statut.ACTIF);
+    etudiant.setEnabled(true);
+    etudiant.setAccountNonLocked(true);
+    etudiant.setPremiereConnexion(false);
+    etudiant.setRoles(Set.of(roleEtu));
+    // Optionnel : affecter une filière, une classe, etc.
+    // etudiant.setFiliere(...);
+
+    etudiantRepository.save(etudiant);
+    log.info("   ✔ Compte Étudiant créé  → email: {}  mot de passe: {}", ETU_EMAIL, ETU_PASSWORD);
+}
 }

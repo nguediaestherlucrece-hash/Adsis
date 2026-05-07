@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/auth/validate").permitAll()
                         // Pages Thymeleaf (l'auth est gérée côté JS/JWT)
                         .requestMatchers(
+                                "/etudiant/**",
                                 "/enseignant/**",
                                 "/admin/**",
                                 "/assistant/**",

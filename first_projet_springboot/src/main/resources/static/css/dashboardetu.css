@@ -1,0 +1,28 @@
+/* static/css/etudiant-dashboard.css */
+.main-content {
+    background-color: #f8f9fc;
+    min-height: 100vh;
+}
+
+h5 {
+    color: #2c3e50;
+    border-left: 4px solid #0d6efd;
+    padding-left: 15px;
+    margin-bottom: 1.5rem;
+}
+
+#cours-list .list-group-item,
+#absences-list .list-group-item {
+    transition: transform 0.2s;
+}
+
+#cours-list .list-group-item:hover,
+#absences-list .list-group-item:hover {
+    transform: translateX(5px);
+    background-color: #e9ecef;
+}
+
+.badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+}
