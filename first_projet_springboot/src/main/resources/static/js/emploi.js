@@ -717,25 +717,44 @@ async function fetchSeancesForEdt(edtId) {
                 const colspan = group.length;
                 const linkedIds = group.map(s => s.id);
 
-                const data = {
-                    dbId: first.id,
-                    type: 'matiere',
-                    matiere: matiere ? matiere.intitule : 'Séance',
-                    matiereId: first.coursId,
-                    enseignants: [],
-                    enseignantIds: first.enseignantIds || [],
-                    couleur: first.couleur || (matiereColors[first.coursId]) || colors[colorIdx],
-                    linkedIds: linkedIds
-                };
+                // Détecter si le groupe est un événement spécial (coursId null ou idSeance EVT-)
+                const isEvent = !first.coursId || (first.idSeance && first.idSeance.startsWith('EVT-'));
+                
+                if (isEvent) {
+                    let eventName = 'Événement';
+                    if (first.idSeance && first.idSeance.startsWith('EVT-')) {
+                        const parts = first.idSeance.split('-');
+                        eventName = parts.slice(1, -1).join(' ').replace(/_/g, ' ') || 'Événement';
+                    }
+                    const iconMap = { 'Pause': 'coffee', 'TPE': 'user-clock' };
+                    createEventElement(cell, {
+                        nom: eventName,
+                        couleur: first.couleur || '#d97706',
+                        icon: iconMap[eventName] || 'calendar-alt',
+                        dbId: first.id,
+                        linkedIds: linkedIds
+                    }, duration, colspan);
+                } else {
+                    const data = {
+                        dbId: first.id,
+                        type: 'matiere',
+                        matiere: matiere ? matiere.intitule : 'Séance',
+                        matiereId: first.coursId,
+                        enseignants: [],
+                        enseignantIds: first.enseignantIds || [],
+                        couleur: first.couleur || (matiereColors[first.coursId]) || colors[colorIdx],
+                        linkedIds: linkedIds
+                    };
 
-                if (first.enseignantIds && first.enseignantIds.length > 0 && matiere && matiere.enseignants) {
-                    data.enseignants = first.enseignantIds.map(eid => {
-                        const ens = matiere.enseignants.find(e => e.id == eid);
-                        return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
-                    }).filter(Boolean);
+                    if (first.enseignantIds && first.enseignantIds.length > 0 && matiere && matiere.enseignants) {
+                        data.enseignants = first.enseignantIds.map(eid => {
+                            const ens = matiere.enseignants.find(e => e.id == eid);
+                            return ens ? `${ens.nom} ${ens.prenom || ''}`.trim() : null;
+                        }).filter(Boolean);
+                    }
+
+                    createCourseElement(cell, data, duration, colspan);
                 }
-
-                createCourseElement(cell, data, duration, colspan);
             });
         }
     } catch (e) { console.error("Erreur fetch seances:", e); }
@@ -748,9 +767,29 @@ function renderSingleSeance(s) {
     const cell = document.querySelector(`td[data-jour="${jourIdx}"][data-horaire="${horaireIdx}"]`);
     if (!cell) return;
 
+    const duration = calculateDuration(s.heureDebut, s.heureFin);
+
+    // Détecter les événements spéciaux (coursId null ou idSeance commence par EVT-)
+    const isEvent = !s.coursId || (s.idSeance && s.idSeance.startsWith('EVT-'));
+    if (isEvent) {
+        // Extraire le nom de l'événement depuis idSeance (EVT-Pause-1234567890)
+        let eventName = 'Événement';
+        if (s.idSeance && s.idSeance.startsWith('EVT-')) {
+            const parts = s.idSeance.split('-');
+            eventName = parts.slice(1, -1).join(' ').replace(/_/g, ' ') || 'Événement';
+        }
+        const iconMap = { 'Pause': 'coffee', 'TPE': 'user-clock' };
+        createEventElement(cell, {
+            nom: eventName,
+            couleur: s.couleur || '#d97706',
+            icon: iconMap[eventName] || 'calendar-alt',
+            dbId: s.id
+        }, duration, 1);
+        return;
+    }
+
     const matiere = matieres.find(m => m.id == s.coursId);
     const colorIdx = matiere ? matieres.indexOf(matiere) % colors.length : 0;
-    const duration = calculateDuration(s.heureDebut, s.heureFin);
 
     const data = {
         dbId: s.id,
@@ -807,6 +846,52 @@ function isCellFree(cell) {
 }
 
 async function handleDropOnCell(cell, element) {
+    if (element.type === 'event') {
+        if (!isCellFree(cell)) {
+            showToast("Cette case est déjà occupée.", "warning");
+            return;
+        }
+
+        // Sauvegarder l'événement en BD comme une séance spéciale (coursId = null)
+        const jourIdx = parseInt(cell.dataset.jour);
+        const horaireIdx = parseInt(cell.dataset.horaire);
+        const dateSeance = getDateForJour(jourIdx);
+        if (!dateSeance) { showToast('Impossible de déterminer la date.', 'warning'); return; }
+
+        const dto = {
+            idSeance: `EVT-${element.nom.replace(/\s+/g, '_')}-${Date.now()}`,
+            date: dateSeance,
+            heureDebut: horaires[horaireIdx].debut,
+            heureFin: horaires[horaireIdx].fin,
+            statut: false,
+            coursId: null,
+            enseignantIds: [],
+            emploiDuTempsId: currentEdt.id,
+            couleur: element.couleur || '#d97706',
+            groupId: null
+        };
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/seances`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+            if (res.ok) {
+                const saved = await res.json();
+                element.dbId = saved.id;
+                createEventElement(cell, element);
+                showToast(`Événement "${element.nom}" enregistré.`, 'success');
+            } else {
+                const errText = await res.text();
+                showToast('Erreur : ' + errText, 'danger');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Erreur réseau.', 'danger');
+        }
+        return;
+    }
     if (element.type === 'matiere') {
         if (!isCellFree(cell)) {
             showToast("Cette case est déjà occupée.", "warning");
@@ -1241,7 +1326,9 @@ async function handleResizeEnd() {
         for (const day of addedDays) {
             const dateForDay = getDateForJour(day);
             const createDto = {
-                idSeance: `S-${Date.now()}-${day}`,
+                idSeance: dataSlot.type === 'event' 
+                            ? `EVT-${element.dataset.eventName.replace(/\s+/g, '_')}-${Date.now()}-${day}` 
+                            : `S-${Date.now()}-${day}`,
                 date: dateForDay,
                 heureDebut: newHeureDebut,
                 heureFin: newHeureFin,
@@ -1618,5 +1705,119 @@ document.getElementById('seanceDeleteBtn')?.addEventListener('click', async () =
     }
 });
 
+
+// ── Événement spécial : création d'un block visuel dans la grille ──
+function createEventElement(cell, eventData, rowspan = 1, colspan = 1) {
+    cell.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'course-slot';
+    div.style.backgroundColor = eventData.couleur || '#d97706';
+    div.dataset.type = 'event';
+    div.dataset.eventName = eventData.nom || 'Événement';
+    div.dataset.couleur = eventData.couleur || '#d97706';
+    div.dataset.rowspan = rowspan;
+    div.dataset.colspan = colspan;
+    if (eventData.dbId) {
+        div.dataset.dbId = eventData.dbId;
+        div.dataset.linkedIds = eventData.linkedIds ? JSON.stringify(eventData.linkedIds) : JSON.stringify([eventData.dbId]);
+    }
+
+    const iconClass = eventData.icon || 'calendar-alt';
+    div.innerHTML = `
+        <div class="matiere-nom"><i class="fas fa-${iconClass} me-1"></i>${eventData.nom}</div>
+        <div class="resize-handle rh-top" title="Étirer vers le haut"></div>
+        <div class="resize-handle rh-bottom" title="Étirer vers le bas"></div>
+        <div class="resize-handle rh-left" title="Étirer vers la gauche"></div>
+        <div class="resize-handle rh-right" title="Étirer vers la droite"></div>
+    `;
+
+    cell.appendChild(div);
+
+    // Clic pour supprimer (avec suppression en BD si dbId existe)
+    div.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm(`Retirer "${eventData.nom}" de cette case ?`)) return;
+
+        const ids = JSON.parse(div.dataset.linkedIds || '[]');
+        if (ids.length > 0) {
+            try {
+                for (const id of ids) {
+                    await fetch(`${API_BASE_URL}/seances/${id}`, { method: 'DELETE' });
+                }
+            } catch (err) { console.error('Erreur suppression événement:', err); }
+        } else if (div.dataset.dbId) {
+            try {
+                await fetch(`${API_BASE_URL}/seances/${div.dataset.dbId}`, { method: 'DELETE' });
+            } catch (err) { console.error('Erreur suppression événement:', err); }
+        }
+        cell.innerHTML = '';
+        showToast(`"${eventData.nom}" supprimé.`, 'info');
+    });
+
+    // Clic droit pour changer la couleur
+    div.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.value = eventData.couleur || '#d97706';
+        picker.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+        document.body.appendChild(picker);
+        picker.click();
+        picker.addEventListener('input', async (ev) => {
+            const newColor = ev.target.value;
+            div.style.backgroundColor = newColor;
+            div.dataset.couleur = newColor;
+            // Mettre à jour en base toutes les séances liées
+            const ids = JSON.parse(div.dataset.linkedIds || '[]');
+            for (const id of ids) {
+                try {
+                    const r = await fetch(`${API_BASE_URL}/seances/${id}`);
+                    if (!r.ok) continue;
+                    const seance = await r.json();
+                    seance.couleur = newColor;
+                    await fetch(`${API_BASE_URL}/seances/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(seance)
+                    });
+                } catch (err) { console.error(err); }
+            }
+            showToast('Couleur mise à jour.', 'success');
+        });
+        picker.addEventListener('change', () => picker.remove());
+    });
+
+    if (rowspan > 1 || colspan > 1) {
+        mergeCells(cell, rowspan, colspan);
+    }
+    attachResizeHandlers(div, cell);
+}
+
+// ── Bouton ajout événement custom ──
+document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('addCustomEventBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            const nameInput = document.getElementById('customEventName');
+            const colorInput = document.getElementById('customEventColor');
+            const name = nameInput.value.trim();
+            if (!name) { showToast('Veuillez saisir un nom pour l\'événement.', 'warning'); return; }
+            const color = colorInput.value || '#6366f1';
+
+            const container = document.getElementById('evenementsContainer');
+            const badge = document.createElement('span');
+            badge.className = 'element-pill';
+            badge.style.cssText = `background:${color};cursor:grab;`;
+            badge.setAttribute('draggable', 'true');
+            badge.dataset.json = JSON.stringify({type:'event', nom:name, couleur:color, icon:'calendar-alt'});
+            badge.innerHTML = `<i class="fas fa-calendar-alt me-1"></i>${name}`;
+            container.appendChild(badge);
+
+            nameInput.value = '';
+            showToast(`Événement "${name}" ajouté.`, 'success');
+        });
+    }
+});
 
 document.addEventListener('DOMContentLoaded', init);

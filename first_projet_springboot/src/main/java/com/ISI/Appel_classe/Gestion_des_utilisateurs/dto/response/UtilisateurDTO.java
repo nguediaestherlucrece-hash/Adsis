@@ -12,6 +12,7 @@ public class UtilisateurDTO {
     private String nom;
     private String prenom;
     private String email;
+    private String matricule;
     private Statut statut;
     private Set<String> roleNames;
     private Boolean premiereConnexion;

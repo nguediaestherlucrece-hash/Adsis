@@ -895,7 +895,7 @@ async function saveClasse() {
             classes = classes.map(cl => cl.id == id ? updated : cl);
             showToast('Classe modifiée.', 'success');
         } else {
-            const created = await apiFetch('/api/classes', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiFetch('/classes', { method: 'POST', body: JSON.stringify(payload) });
             const spIdFinal = created.specialiteId || created.speciliteId || payload.specialiteId;
             created.specialiteId = spIdFinal;
             classes.push(created);
@@ -1108,7 +1108,7 @@ async function saveAnnee() {
             await apiFetch(`/annees-academiques/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
             showToast('Année mise à jour.', 'success');
         } else {
-            await apiFetch('/api/annees-academiques', { method: 'POST', body: JSON.stringify(dto) });
+            await apiFetch('/annees-academiques', { method: 'POST', body: JSON.stringify(dto) });
             showToast('Année créée.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('anneeModal'))?.hide();
@@ -1218,7 +1218,7 @@ async function saveSemestre() {
             await apiFetch(`/semestres/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
             showToast('Semestre mis à jour.', 'success');
         } else {
-            await apiFetch('/api/semestres', { method: 'POST', body: JSON.stringify(dto) });
+            await apiFetch('/semestres', { method: 'POST', body: JSON.stringify(dto) });
             showToast('Semestre créé.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('semestreModal'))?.hide();
@@ -1310,7 +1310,7 @@ async function executeMigration() {
     if (!ok) return;
 
     try {
-        await apiFetch('/api/etudiants/migrer', {
+        await apiFetch('/etudiants/migrer', {
             method: 'POST',
             body: JSON.stringify({
                 etudiantIds: selected,

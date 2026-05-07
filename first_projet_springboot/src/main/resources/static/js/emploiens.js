@@ -141,10 +141,13 @@ function updateFilterBadge() {
 }
 
 function applyFilter() {
-    container.querySelectorAll('.course-card').forEach(function (card) {
-        var cls = card.getAttribute('data-class');
-        card.style.display = (!cls || activeClasses.has(cls)) ? '' : 'none';
+    // Filter all filterable elements across all view types
+    var selectors = '.course-card, .week-grid-course, .timeline-event';
+    container.querySelectorAll(selectors).forEach(function (el) {
+        var cls = el.getAttribute('data-class');
+        el.style.display = (!cls || activeClasses.has(cls)) ? '' : 'none';
     });
+    // Dim day groups if all cards hidden (legacy week view)
     container.querySelectorAll('.day-group').forEach(function (group) {
         var cards = group.querySelectorAll('.course-card');
         if (!cards.length) return;
@@ -262,6 +265,55 @@ async function loadSchedule() {
     }
 }
 
+// ── Vérifie si une séance est dans la fenêtre d'appel (±15 min) ──────────────
+function isSeanceActive(c) {
+    var now = new Date();
+    var todayStr = now.toISOString().split('T')[0];
+
+    // Calculer la date de la séance à partir du jour de la semaine + weekOffset
+    var range = getWeekRange(weekOffset);
+    var dayIdx = WEEK_DAYS.indexOf(c.day);
+    if (dayIdx < 0) return false;
+    var seanceDate = new Date(range.start);
+    seanceDate.setDate(range.start.getDate() + dayIdx);
+    var seanceDateStr = formatDate(seanceDate);
+
+    if (seanceDateStr !== todayStr) return false;
+
+    var parts = c.start.split(':');
+    var sh = parseInt(parts[0]), sm = parseInt(parts[1]);
+    var partsE = c.end.split(':');
+    var eh = parseInt(partsE[0]), em = parseInt(partsE[1]);
+
+    var startMin = sh * 60 + sm - 15;
+    var endMin = eh * 60 + em + 15;
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+
+    return nowMin >= startMin && nowMin <= endMin;
+}
+
+function getSeanceStatus(c) {
+    var now = new Date();
+    var todayStr = now.toISOString().split('T')[0];
+    var range = getWeekRange(weekOffset);
+    var dayIdx = WEEK_DAYS.indexOf(c.day);
+    if (dayIdx < 0) return 'future';
+    var seanceDate = new Date(range.start);
+    seanceDate.setDate(range.start.getDate() + dayIdx);
+    var seanceDateStr = formatDate(seanceDate);
+
+    if (seanceDateStr < todayStr) return 'past';
+    if (seanceDateStr > todayStr) return 'future';
+
+    var partsE = c.end.split(':');
+    var eh = parseInt(partsE[0]), em = parseInt(partsE[1]);
+    var endMin = eh * 60 + em + 15;
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+
+    if (nowMin > endMin) return 'past';
+    return 'future';
+}
+
 // ── Build course card ─────────────────────────────────────────────────────────
 function buildCard(c, showDay) {
     var card = document.createElement('div');
@@ -274,6 +326,20 @@ function buildCard(c, showDay) {
     var dayMeta = showDay
         ? '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + c.day + '</div>'
         : '';
+
+    var canOpen = isSeanceActive(c);
+    var status = canOpen ? '' : getSeanceStatus(c);
+    var footerHtml;
+    if (canOpen) {
+        footerHtml = '<div class="card-footer">' +
+            '<button class="open-session-btn">Lancer l\'appel <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+            '</div>';
+    } else {
+        var label = status === 'past' ? 'Séance passée' : 'Séance à venir';
+        footerHtml = '<div class="card-footer card-footer-locked">' +
+            '<span class="locked-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ' + label + '</span>' +
+            '</div>';
+    }
 
     card.innerHTML =
         '<div class="card-color-bar" style="background:' + c.color + ';"></div>' +
@@ -288,86 +354,290 @@ function buildCard(c, showDay) {
         dayMeta +
         '</div>' +
         '</div>' +
-        '<div class="card-footer">' +
-        '<button class="open-session-btn">Ouvrir la séance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
-        '</div>';
+        footerHtml;
 
-    function openSession() { window.location.href = '/enseignant/appel?seanceId=' + c.seanceId; }
-    card.addEventListener('click', openSession);
-    card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') openSession(); });
+    if (canOpen) {
+        function openSession() { window.location.href = '/enseignant/appel?seanceId=' + c.seanceId; }
+        card.addEventListener('click', openSession);
+        card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') openSession(); });
+    }
 
     if (!activeClasses.has(c.class)) card.style.display = 'none';
     return card;
 }
 
-// ── Render week ──────────────────────────────────────────────────────────────
+// ── Render week — Grille emploi du temps (style assistant) ──────────────────
 function renderWeek() {
     container.innerHTML = '';
-    var wrap = document.createElement('div');
-    wrap.className = 'week-view';
 
-    // Calculer les dates de la semaine pour le badge "Auj."
-    const range = getWeekRange(weekOffset);
-    const todayStr = formatDate(new Date());
+    var range = getWeekRange(weekOffset);
+    var todayStr = formatDate(new Date());
+
+    // Déterminer la plage horaire utilisée
+    var allTimes = schedule.map(function (s) { return s.start; }).concat(schedule.map(function (s) { return s.end; }));
+    var START_HOUR = 7, END_HOUR = 18;
+    if (allTimes.length > 0) {
+        var minH = Math.min.apply(null, allTimes.map(function (t) { return parseInt(t.split(':')[0]); }));
+        var maxH = Math.max.apply(null, allTimes.map(function (t) { return parseInt(t.split(':')[0]); }));
+        START_HOUR = Math.min(START_HOUR, minH);
+        END_HOUR = Math.max(END_HOUR, maxH + 1);
+    }
+
+    // Générer les créneaux horaires
+    var timeSlots = [];
+    for (var h = START_HOUR; h < END_HOUR; h++) {
+        timeSlots.push((h < 10 ? '0' : '') + h + ':00');
+    }
+
+    // Table wrapper
+    var card = document.createElement('div');
+    card.className = 'week-grid-card';
+
+    var tableWrap = document.createElement('div');
+    tableWrap.style.cssText = 'overflow-x:auto;';
+
+    var table = document.createElement('table');
+    table.className = 'week-grid-table';
+
+    // Header : Horaires | Lundi | Mardi | ...
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+    var thTime = document.createElement('th');
+    thTime.className = 'week-grid-th-time';
+    thTime.textContent = 'Horaires';
+    headerRow.appendChild(thTime);
 
     WEEK_DAYS.forEach(function (day, idx) {
-        var dayCourses = schedule.filter(function (s) { return s.day === day; })
-            .sort(function (a, b) { return a.start.localeCompare(b.start); });
-
-        var group = document.createElement('div');
-        group.className = 'day-group';
-
-        // Calculer la date de ce jour
-        const dayDate = new Date(range.start);
+        var dayDate = new Date(range.start);
         dayDate.setDate(range.start.getDate() + idx);
-        const isToday = formatDate(dayDate) === todayStr;
+        var isToday = formatDate(dayDate) === todayStr;
+        var dayNum = dayDate.getDate();
 
-        var labelEl = document.createElement('div');
-        labelEl.className = 'day-label';
+        var th = document.createElement('th');
+        th.className = 'week-grid-th-day' + (isToday ? ' week-grid-today' : '');
+        th.innerHTML = '<div class="week-grid-day-name">' + day.substring(0, 3) + '</div>' +
+            '<div class="week-grid-day-num' + (isToday ? ' today-circle' : '') + '">' + dayNum + '</div>';
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
 
-        const dayNum = dayDate.getDate();
-        labelEl.innerHTML = day + ' <span style="font-size:0.68rem;color:var(--text-muted);">' + dayNum + '</span>' + (isToday ? ' <span class="today-badge">Auj.</span>' : '');
-        group.appendChild(labelEl);
-
-        var col = document.createElement('div');
-        col.className = 'courses-row';
-
-        if (dayCourses.length === 0) {
-            col.innerHTML = '<p class="no-course-day">—</p>';
-        } else {
-            dayCourses.forEach(function (c, i) {
-                var card = buildCard(c, false);
-                card.style.animationDelay = (i * 0.06) + 's';
-                col.appendChild(card);
-            });
-        }
-
-        group.appendChild(col);
-        wrap.appendChild(group);
+    // Pré-calculer les occupations pour le rowspan
+    // occupied[dayIdx][hour] = { course, rowspan } si un cours occupe cette cellule
+    var occupied = {};
+    WEEK_DAYS.forEach(function (day, dayIdx) {
+        occupied[dayIdx] = {};
     });
 
-    container.appendChild(wrap);
+    // Placer les cours avec leur durée
+    schedule.forEach(function (c) {
+        var dayIdx = WEEK_DAYS.indexOf(c.day);
+        if (dayIdx < 0) return;
+        var sh = parseInt(c.start.split(':')[0]);
+        var sm = parseInt(c.start.split(':')[1]) || 0;
+        var eh = parseInt(c.end.split(':')[0]);
+        var em = parseInt(c.end.split(':')[1]) || 0;
+        var durationHours = Math.max(1, Math.ceil((eh * 60 + em - sh * 60 - sm) / 60));
+
+        // Marquer la cellule de départ
+        if (!occupied[dayIdx][sh]) {
+            occupied[dayIdx][sh] = { course: c, rowspan: durationHours };
+        }
+        // Marquer les cellules couvertes
+        for (var h = 1; h < durationHours; h++) {
+            occupied[dayIdx][sh + h] = { covered: true };
+        }
+    });
+
+    // Body : une ligne par créneau horaire
+    var tbody = document.createElement('tbody');
+    timeSlots.forEach(function (slot) {
+        var slotHour = parseInt(slot.split(':')[0]);
+        var tr = document.createElement('tr');
+
+        // Cellule horaire
+        var tdTime = document.createElement('td');
+        tdTime.className = 'week-grid-time';
+        tdTime.textContent = slot;
+        tr.appendChild(tdTime);
+
+        // Cellule par jour
+        WEEK_DAYS.forEach(function (day, idx) {
+            var occ = occupied[idx][slotHour];
+
+            // Cellule couverte par un rowspan au-dessus → ne pas ajouter de <td>
+            if (occ && occ.covered) return;
+
+            var dayDate = new Date(range.start);
+            dayDate.setDate(range.start.getDate() + idx);
+            var isToday = formatDate(dayDate) === todayStr;
+
+            var td = document.createElement('td');
+            td.className = 'week-grid-cell' + (isToday ? ' week-grid-cell-today' : '');
+
+            if (occ && occ.course) {
+                var c = occ.course;
+                var rowspan = occ.rowspan;
+                if (rowspan > 1) {
+                    td.rowSpan = rowspan;
+                    td.style.height = (60 * rowspan) + 'px';
+                }
+
+                var canOpen = isSeanceActive(c);
+                var block = document.createElement('div');
+                block.className = 'week-grid-course' + (canOpen ? ' week-grid-course-active' : '');
+                block.style.background = c.color;
+                block.setAttribute('data-class', c.class);
+                if (rowspan > 1) {
+                    block.style.minHeight = ((60 * rowspan) - 6) + 'px';
+                }
+
+                block.innerHTML = '<div class="week-grid-course-name">' + c.course + '</div>' +
+                    '<div class="week-grid-course-info">' + c.class + '</div>' +
+                    '<div class="week-grid-course-time">' + c.start + ' – ' + c.end + '</div>';
+
+                if (canOpen) {
+                    block.addEventListener('click', function () {
+                        window.location.href = '/enseignant/appel?seanceId=' + c.seanceId;
+                    });
+                }
+
+                td.appendChild(block);
+            }
+
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    tableWrap.appendChild(table);
+    card.appendChild(tableWrap);
+    container.appendChild(card);
     applyFilter();
 }
 
-// ── Render day ──────────────────────────────────────────────────────────────
+// ── Render day — iPhone Calendar Timeline ───────────────────────────────────
 function renderDay(day) {
     container.innerHTML = '';
+
     var dayCourses = schedule.filter(function (s) { return s.day === day; })
         .sort(function (a, b) { return a.start.localeCompare(b.start); });
 
+    // Calculer la date du jour sélectionné
+    var range = getWeekRange(weekOffset);
+    var dayIdx = WEEK_DAYS.indexOf(day);
+    var dayDate = new Date(range.start);
+    dayDate.setDate(range.start.getDate() + (dayIdx >= 0 ? dayIdx : 0));
+    var todayStr = formatDate(new Date());
+    var isToday = formatDate(dayDate) === todayStr;
+
+    // Header du jour
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:14px;animation:fadeUp 0.3s both;';
+    var dayNum = dayDate.getDate();
+    var monthFr = MONTHS_FR[dayDate.getMonth()];
+    header.innerHTML = '<div style="text-align:center;min-width:48px;">' +
+        '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:' + (isToday ? 'var(--primary,#3B55E6)' : '#94a3b8') + ';">' + day.substring(0, 3) + '</div>' +
+        '<div style="font-size:1.5rem;font-weight:800;line-height:1;' + (isToday ? 'background:var(--primary,#3B55E6);color:#fff;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin:2px auto 0;' : 'color:#1e293b;margin-top:2px;') + '">' + dayNum + '</div>' +
+        '</div>' +
+        '<div style="font-size:0.88rem;font-weight:600;color:#64748b;">' + monthFr + ' ' + dayDate.getFullYear() +
+        (dayCourses.length > 0 ? ' · <span style="color:#1e293b;">' + dayCourses.length + ' cours</span>' : '') + '</div>';
+    container.appendChild(header);
+
     if (dayCourses.length === 0) {
-        container.innerHTML = '<div class="empty-state">Aucun cours ce jour.</div>';
+        container.innerHTML += '<div class="empty-state" style="background:#fff;border-radius:14px;border:1px solid #f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,0.04);">Aucun cours ce jour.</div>';
         return;
     }
-    var grid = document.createElement('div');
-    grid.className = 'day-view-grid';
-    dayCourses.forEach(function (c, i) {
-        var card = buildCard(c, true);
-        card.style.animationDelay = (i * 0.07) + 's';
-        grid.appendChild(card);
+
+    // Timeline heures (07h - 20h)
+    var START_HOUR = 7;
+    var END_HOUR = 20;
+    var HOUR_HEIGHT = 60; // px par heure
+
+    var timeline = document.createElement('div');
+    timeline.className = 'day-timeline';
+
+    // Container relatif pour les events
+    var wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+
+    // Générer les lignes horaires
+    for (var h = START_HOUR; h <= END_HOUR; h++) {
+        var hourRow = document.createElement('div');
+        hourRow.className = 'timeline-hour-row';
+        hourRow.style.height = HOUR_HEIGHT + 'px';
+
+        var label = document.createElement('div');
+        label.className = 'timeline-hour-label';
+        label.textContent = (h < 10 ? '0' : '') + h + ':00';
+
+        var slotArea = document.createElement('div');
+        slotArea.className = 'timeline-slot-area';
+
+        hourRow.appendChild(label);
+        hourRow.appendChild(slotArea);
+        wrapper.appendChild(hourRow);
+    }
+
+    // Placer les événements absolument
+    dayCourses.forEach(function (c) {
+        var parts = c.start.split(':');
+        var sh = parseInt(parts[0]), sm = parseInt(parts[1]);
+        var partsE = c.end.split(':');
+        var eh = parseInt(partsE[0]), em = parseInt(partsE[1]);
+
+        var topMin = (sh - START_HOUR) * 60 + sm;
+        var durationMin = (eh - START_HOUR) * 60 + em - topMin;
+        if (durationMin < 15) durationMin = 15;
+
+        var topPx = (topMin / 60) * HOUR_HEIGHT;
+        var heightPx = (durationMin / 60) * HOUR_HEIGHT;
+
+        var canOpen = isSeanceActive(c);
+        var status = canOpen ? '' : getSeanceStatus(c);
+
+        var ev = document.createElement('div');
+        ev.className = 'timeline-event' + (canOpen ? '' : ' timeline-event-locked');
+        ev.setAttribute('data-class', c.class);
+        ev.style.cssText = 'top:' + topPx + 'px;height:' + heightPx + 'px;background:' + c.color + ';left:64px;right:6px;';
+
+        var innerHtml = '<div class="timeline-event-title">' + c.course + '</div>';
+        if (heightPx >= 48) {
+            innerHtml += '<div class="timeline-event-subtitle">' + c.class + (c.room ? ' · ' + c.room : '') + '</div>';
+        }
+        innerHtml += '<div class="timeline-event-time">' + c.start + ' – ' + c.end;
+        if (!canOpen) {
+            var statusLabel = status === 'past' ? ' · Passé' : ' · À venir';
+            innerHtml += '<span style="opacity:0.7;">' + statusLabel + '</span>';
+        }
+        innerHtml += '</div>';
+        ev.innerHTML = innerHtml;
+
+        if (canOpen) {
+            ev.addEventListener('click', function () {
+                window.location.href = '/enseignant/appel?seanceId=' + c.seanceId;
+            });
+        }
+
+        wrapper.appendChild(ev);
     });
-    container.appendChild(grid);
+
+    // Ligne "maintenant"
+    if (isToday) {
+        var now = new Date();
+        var nowMin = (now.getHours() - START_HOUR) * 60 + now.getMinutes();
+        if (nowMin >= 0 && nowMin <= (END_HOUR - START_HOUR) * 60) {
+            var nowLine = document.createElement('div');
+            nowLine.className = 'timeline-now-line';
+            nowLine.style.top = ((nowMin / 60) * HOUR_HEIGHT) + 'px';
+            wrapper.appendChild(nowLine);
+        }
+    }
+
+    timeline.appendChild(wrapper);
+    container.appendChild(timeline);
     applyFilter();
 }
 

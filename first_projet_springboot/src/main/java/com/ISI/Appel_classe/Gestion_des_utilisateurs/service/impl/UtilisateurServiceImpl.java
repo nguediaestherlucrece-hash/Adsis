@@ -42,8 +42,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
 
     @Override
-    public Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Long filiere, Pageable pageable) {
-        Page<Utilisateur> utilisateurs = repository.searchWithFilters(recherche, type, filiere, pageable);
+    public Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Pageable pageable) {
+        Page<Utilisateur> utilisateurs = repository.searchWithFilters(recherche, type, pageable);
         return utilisateurs.map(mapper::toDTO);
     }
 

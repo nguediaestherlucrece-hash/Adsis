@@ -20,6 +20,7 @@ public class UtilisateurMapper {
         dto.setNom(utilisateur.getNom());
         dto.setPrenom(utilisateur.getPrenom());
         dto.setEmail(utilisateur.getEmail());
+        dto.setMatricule(utilisateur.getMatricule());
         dto.setStatut(utilisateur.getStatut());
         dto.setPremiereConnexion(utilisateur.getPremiereConnexion());
         dto.setCreatedAt(utilisateur.getCreatedAt());

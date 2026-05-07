@@ -8,10 +8,12 @@ const ROLE_ENDPOINTS = {
     "ENSEIGNANT":            "/api/enseignants",
     "SURVEILLANT":           "/api/surveillants",
     "ASSISTANT_PEDAGOGIQUE": "/api/assistants-pedagogiques",
+    "ADMIN":                 "/api/administrateurs",
     "Étudiant":              "/api/etudiants",
     "Enseignant":            "/api/enseignants",
     "Surveillant":           "/api/surveillants",
     "Assistant pédagogique": "/api/assistants-pedagogiques",
+    "Administrateur":        "/api/administrateurs",
 };
 
 const ROLE_MAPPING = {
@@ -19,6 +21,7 @@ const ROLE_MAPPING = {
     "Enseignant":            "ENSEIGNANT",
     "Surveillant":           "SURVEILLANT",
     "Assistant pédagogique": "ASSISTANT_PEDAGOGIQUE",
+    "Administrateur":        "ADMIN",
 };
 
 function getEndpoint(role) {

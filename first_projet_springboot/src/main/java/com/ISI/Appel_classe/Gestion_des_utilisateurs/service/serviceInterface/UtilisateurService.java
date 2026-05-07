@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface UtilisateurService {
 
-    Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Long filiere, Pageable pageable);
+    Page<UtilisateurDTO> searchWithFilters(String recherche, String type, Pageable pageable);
 
     List<UtilisateurDTO> getAllUtilisateurs();
 

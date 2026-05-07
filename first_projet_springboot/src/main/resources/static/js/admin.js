@@ -79,6 +79,12 @@ let userFiliereMap = {};
 let userMatiereMap = {};
 let currentStaffUser = null;
 
+// ─── Pagination ──────────────────────────────────────────────────────────────
+let currentPage = 0;
+let pageSize = 10;
+let totalPages = 0;
+let totalElements = 0;
+
 const COLORS = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#6610f2', '#fd7e14'];
 
 // Descriptions lisibles pour chaque permission
@@ -134,9 +140,24 @@ function setupEventListeners() {
 
     const searchInput = document.querySelector('.search-box input');
     if (searchInput) {
+        let debounceTimer;
         searchInput.addEventListener('input', (e) => {
-            searchTerm = e.target.value.toLowerCase();
-            renderTable(currentFilter);
+            searchTerm = e.target.value.trim();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentPage = 0;
+                loadUsers();
+            }, 400);
+        });
+    }
+
+    // Pagination – sélecteur de taille
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', (e) => {
+            pageSize = parseInt(e.target.value);
+            currentPage = 0;
+            loadUsers();
         });
     }
 }
@@ -164,12 +185,49 @@ async function loadMatieres() {
     } catch (e) { console.warn('Matières non chargées:', e.message); }
 }
 
-// Charge et normalise tous les utilisateurs, puis construit les cartes de filières/matières
+// Charge les utilisateurs avec pagination depuis l'endpoint /api/utilisateurs/search
 async function loadUsers() {
     try {
         userTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chargement...</td></tr>';
-        const users = await Api.getStaff();
-        currentUserList = users.map(u => normalizeUser(u));
+
+        // Mapper le filtre frontend vers le type backend
+        const typeMap = {
+            'Tous':             '',
+            'Enseignants':      'ENSEIGNANT',
+            'Assistants':       'ASSISTANT_PEDAGOGIQUE',
+            'Surveillants':     'SURVEILLANT',
+            'Administrateurs':  'ADMIN',
+        };
+        const type = typeMap[currentFilter] || '';
+
+        const params = new URLSearchParams({
+            type: type,
+            page: currentPage,
+            size: pageSize,
+        });
+        if (searchTerm) params.append('recherche', searchTerm);
+
+        const res = await authFetch(`/api/utilisateurs/search?${params}`);
+        if (!res || !res.ok) {
+            // Fallback: essayer l'ancien endpoint si le search ne fonctionne pas
+            console.warn('Endpoint paginé échoué, fallback sur getStaff()');
+            const users = await Api.getStaff();
+            currentUserList = users
+                .map(u => normalizeUser(u))
+                .filter(u => u !== null);   // exclure non-staff
+            totalPages = 1;
+            totalElements = currentUserList.length;
+            currentPage = 0;
+        } else {
+            const page = await res.json();
+            totalPages = page.totalPages || 1;
+            totalElements = page.totalElements || 0;
+            // Filtrer null (étudiants / admins non-staff)
+            currentUserList = (page.content || [])
+                .map(u => normalizeUser(u))
+                .filter(u => u !== null);
+        }
+
         await buildUserFiliereMap();
         await buildUserMatiereMap();
         // Enrichit les objets avec les collections chargées
@@ -177,12 +235,19 @@ async function loadUsers() {
             u.filieres = userFiliereMap[u.id] || [];
             u.matieres = userMatiereMap[u.id] || [];
             if (u.role === 'Enseignant') {
-                u.details = u.matieres.length > 0 ? u.matieres.map(m => m.nomCours).join(', ') : '— Aucune matière';
+                u.details = u.matieres.length > 0
+                    ? u.matieres.map(m => m.nomCours).join(', ')
+                    : '— Aucune matière';
+            } else if (u.role === 'Administrateur') {
+                u.details = '—';   // Pas de filière ni matière pour un admin
             } else {
-                u.details = u.filieres.length > 0 ? u.filieres.map(f => f.nomFiliere).join(', ') : '— Aucune filière';
+                u.details = u.filieres.length > 0
+                    ? u.filieres.map(f => f.nomFiliere).join(', ')
+                    : '— Aucune filière';
             }
         });
         renderTable(currentFilter);
+        renderPagination();
         updateCounts();
     } catch (error) {
         console.error('Erreur chargement utilisateurs', error);
@@ -209,53 +274,77 @@ async function buildUserFiliereMap() {
     }));
 }
 
-// Construit la map userId→matieres pour les enseignants depuis leurs coursEnseignes
+// Construit la map userId→matieres pour les enseignants via appel API /enseignants/{id}
 async function buildUserMatiereMap() {
     userMatiereMap = {};
-    currentUserList.filter(u => u.role === 'Enseignant').forEach(u => {
-        const cours = u.raw.coursEnseignes || [];
-        userMatiereMap[u.id] = cours.map(c => ({ id: c.id, nomCours: c.nomCours || c.nom || '?', code: c.code || '' }));
-    });
+    const enseignants = currentUserList.filter(u => u.role === 'Enseignant');
+    await Promise.all(enseignants.map(async (u) => {
+        try {
+            const r = await authFetch(`/api/enseignants/${u.id}`);
+            if (r && r.ok) {
+                const ens = await r.json();
+                const cours = ens.coursEnseignes || [];
+                userMatiereMap[u.id] = cours.map(c => ({
+                    id: c.id,
+                    nomCours: c.nomCours || c.nom || '?',
+                    code: c.code || ''
+                }));
+            }
+        } catch (_) {}
+    }));
 }
 
 // Normalise le format de l'utilisateur pour l'affichage interne
+// Retourne null si l'utilisateur n'est pas un membre du staff (ex: étudiant, admin)
 function normalizeUser(u) {
+    // Roles backend reconnus comme staff
+    const STAFF_ROLE_MAP = {
+        'ENSEIGNANT':            'Enseignant',
+        'SURVEILLANT':           'Surveillant',
+        'ASSISTANT_PEDAGOGIQUE': 'Assistant pédagogique',
+        'ADMIN':                 'Administrateur',
+    };
+    // Endpoint de suppression/modification par rôle backend
+    const STAFF_BACKEND_ROLE = ['ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE'];
+
     let role = 'Inconnu';
+    let roleBackend = null;
+
     if (u.roleNames && u.roleNames.length > 0) {
-        const r = u.roleNames[0];
-        if (r === 'ENSEIGNANT') role = 'Enseignant';
-        else if (r === 'SURVEILLANT') role = 'Surveillant';
-        else if (r === 'ASSISTANT_PEDAGOGIQUE') role = 'Assistant pédagogique';
-    } else {
-        if (u.specialite || u.grade) role = 'Enseignant';
-        else if (u.affectation) role = 'Surveillant';
-        else if (u.departement) role = 'Assistant pédagogique';
+        // Chercher le premier rôle reconnu comme staff
+        for (const r of u.roleNames) {
+            if (STAFF_ROLE_MAP[r]) {
+                role = STAFF_ROLE_MAP[r];
+                roleBackend = r;
+                break;
+            }
+        }
     }
+
+    // Fallback sur les champs métier si roleNames vide ou non reconnu
+    if (role === 'Inconnu') {
+        if (u.specialite || u.grade)  { role = 'Enseignant';           roleBackend = 'ENSEIGNANT'; }
+        else if (u.affectation)       { role = 'Surveillant';           roleBackend = 'SURVEILLANT'; }
+        else if (u.departement)       { role = 'Assistant pédagogique'; roleBackend = 'ASSISTANT_PEDAGOGIQUE'; }
+    }
+
+    // Exclure les non-staff (étudiants, admins sans rôle staff)
+    if (!roleBackend) return null;
+
     return {
-        id: u.id, name: `${u.nom} ${u.prenom}`, email: u.email, role,
+        id: u.id, name: `${u.nom} ${u.prenom}`, email: u.email,
+        role, roleBackend,
         status: u.statut === 'ACTIF' ? 'Actif' : 'Bloqué',
         details: '', filieres: [], matieres: [],
         raw: u, color: COLORS[u.id % COLORS.length]
     };
 }
 
-// Rafraîchit le tableau avec le filtre actif et le terme de recherche
+// Rafraîchit le tableau (les données sont déjà filtrées/paginées par le backend)
 function renderTable(roleFilter) {
     userTableBody.innerHTML = '';
-    let filtered = currentUserList;
+    const filtered = currentUserList;
 
-    if (roleFilter !== 'Tous') {
-        const singularMap = { 'Enseignants': 'Enseignant', 'Assistants': 'Assistant pédagogique', 'Surveillants': 'Surveillant' };
-        const singular = singularMap[roleFilter] || roleFilter;
-        filtered = filtered.filter(u => u.role === singular);
-    }
-    if (searchTerm) {
-        filtered = filtered.filter(u =>
-            u.name.toLowerCase().includes(searchTerm) ||
-            u.email.toLowerCase().includes(searchTerm) ||
-            u.details.toLowerCase().includes(searchTerm)
-        );
-    }
     currentFilter = roleFilter;
 
     if (filtered.length === 0) {
@@ -289,14 +378,14 @@ function renderTable(roleFilter) {
           <td class="text-center pe-4 action-buttons"></td>`;
 
         const cell = row.querySelector('.action-buttons');
-        cell.appendChild(createBtn('bi-eye', 'btn-outline-secondary', () => openViewModal(u)));
-        cell.appendChild(createBtn('bi-pencil', 'btn-outline-primary', () => openEditModal(u.id)));
+        cell.appendChild(createBtn('bi-eye',    'btn-outline-secondary', () => openViewModal(u)));
+        cell.appendChild(createBtn('bi-pencil', 'btn-outline-primary',   () => openEditModal(u.id)));
         cell.appendChild(createBtn(
             isBlocked ? 'bi-lock-fill' : 'bi-unlock-fill',
             isBlocked ? 'text-warning' : 'text-success',
-            () => toggleBlock(u.id, u.raw.roleNames[0])
+            () => toggleBlock(u.id, u.roleBackend)
         ));
-        cell.appendChild(createBtn('bi-trash', 'text-danger', () => deleteUser(u.id, u.raw.roleNames[0])));
+        cell.appendChild(createBtn('bi-trash', 'text-danger', () => deleteUser(u.id, u.roleBackend)));
         userTableBody.appendChild(row);
     });
 }
@@ -313,14 +402,67 @@ function createBtn(iconClass, btnClass, onClick) {
 // Met à jour le compteur total dans l'onglet "Tous"
 function updateCounts() {
     const s = document.getElementById('count-Tous');
-    if (s) s.innerText = currentUserList.length;
+    if (s) s.innerText = totalElements;
 }
 
-// Applique le filtre par rôle
+// Applique le filtre par rôle (déclenche un rechargement paginé)
 function filterByRole(role) {
     if (role.startsWith('Tous')) role = 'Tous';
-    renderTable(role);
+    currentFilter = role;
+    currentPage = 0;
+    loadUsers();
 }
+
+// ─── Pagination ──────────────────────────────────────────────────────────────
+function renderPagination() {
+    const info = document.getElementById('paginationInfo');
+    const controls = document.getElementById('paginationControls');
+    if (!info || !controls) return;
+
+    const start = totalElements > 0 ? currentPage * pageSize + 1 : 0;
+    const end = Math.min(start + pageSize - 1, totalElements);
+    info.textContent = totalElements > 0
+        ? `${start}–${end} de ${totalElements} utilisateurs`
+        : 'Aucun utilisateur';
+
+    controls.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    // Bouton Précédent
+    controls.innerHTML += `<li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();window._goToPage(${currentPage - 1})">‹</a></li>`;
+
+    // Numéros de pages (max 7 affichées)
+    const maxVisible = 7;
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible);
+    if (endPage - startPage < maxVisible) startPage = Math.max(0, endPage - maxVisible);
+
+    if (startPage > 0) {
+        controls.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault();window._goToPage(0)">1</a></li>`;
+        if (startPage > 1) controls.innerHTML += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+    }
+
+    for (let i = startPage; i < endPage; i++) {
+        controls.innerHTML += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="event.preventDefault();window._goToPage(${i})">${i + 1}</a></li>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) controls.innerHTML += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+        controls.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault();window._goToPage(${totalPages - 1})">${totalPages}</a></li>`;
+    }
+
+    // Bouton Suivant
+    controls.innerHTML += `<li class="page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();window._goToPage(${currentPage + 1})">›</a></li>`;
+}
+
+window._goToPage = function(page) {
+    if (page < 0 || page >= totalPages) return;
+    currentPage = page;
+    loadUsers();
+};
 
 // Bascule le statut Actif/Bloqué d'un utilisateur
 async function toggleBlock(id, roleName) {
@@ -355,9 +497,10 @@ function toggleRoleFields(role) {
     document.getElementById('enseignantFields')?.classList.add('d-none');
     document.getElementById('surveillantFields')?.classList.add('d-none');
     document.getElementById('assistantFields')?.classList.add('d-none');
-    if (role === 'Enseignant') document.getElementById('enseignantFields')?.classList.remove('d-none');
-    else if (role === 'Surveillant') document.getElementById('surveillantFields')?.classList.remove('d-none');
+    if (role === 'Enseignant')           document.getElementById('enseignantFields')?.classList.remove('d-none');
+    else if (role === 'Surveillant')      document.getElementById('surveillantFields')?.classList.remove('d-none');
     else if (role === 'Assistant pédagogique') document.getElementById('assistantFields')?.classList.remove('d-none');
+    // 'Administrateur' n'a pas de champs spécifiques
 }
 
 // Ouvre la modale vide pour la création d'un utilisateur
@@ -644,9 +787,10 @@ function renderPermissionToggles(roleName, removedPermissions = []) {
 
     // Mapper le nom frontend vers le nom backend du rôle
     const roleMap = {
-        'Enseignant': 'ENSEIGNANT',
-        'Surveillant': 'SURVEILLANT',
-        'Assistant pédagogique': 'ASSISTANT_PEDAGOGIQUE'
+        'Enseignant':            'ENSEIGNANT',
+        'Surveillant':           'SURVEILLANT',
+        'Assistant pédagogique': 'ASSISTANT_PEDAGOGIQUE',
+        'Administrateur':        'ADMIN',
     };
     const backendRoleName = roleMap[roleName] || roleName;
     const role = allRoles.find(r => r.name === backendRoleName);
@@ -712,18 +856,24 @@ async function handleSaveUser() {
     } else if (roleStr === 'Assistant pédagogique') {
         baseData.departement = document.getElementById('userDepartement')?.value || '';
         baseData.roleNames = ['ASSISTANT_PEDAGOGIQUE'];
+    } else if (roleStr === 'Administrateur') {
+        baseData.roleNames = ['ADMIN'];
     }
 
     try {
         if (id) {
             const original = currentUserList.find(u => u.id == id);
             if (!original) throw new Error('Utilisateur original non trouvé');
-            await Api.updateUser(id, baseData, original.raw.roleNames[0]);
+            // Utiliser roleBackend (déjà résolu de façon fiable) plutôt que raw.roleNames
+            await Api.updateUser(id, baseData, original.roleBackend);
         } else {
             const created = await Api.createUser(baseData);
-            currentStaffUser = normalizeUser(created);
-            currentStaffUser.filieres = []; currentStaffUser.matieres = [];
-            document.getElementById('userId').value = created.id;
+            const normalized = normalizeUser(created);
+            if (normalized) {
+                currentStaffUser = normalized;
+                currentStaffUser.filieres = []; currentStaffUser.matieres = [];
+                document.getElementById('userId').value = created.id;
+            }
         }
         userModal.hide();
         await loadUsers();

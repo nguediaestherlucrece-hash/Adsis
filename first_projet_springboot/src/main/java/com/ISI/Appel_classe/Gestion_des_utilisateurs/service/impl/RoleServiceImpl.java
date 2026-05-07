@@ -135,16 +135,22 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void createRoleIfNotExists(String name, String description, Set<String> permissionNames) {
-        if (roleRepository.findByName(name).isEmpty()) {
-            Role role = new Role();
-            role.setName(name);
-            role.setDescription(description);
+        Role role = roleRepository.findByName(name).orElseGet(() -> {
+            Role r = new Role();
+            r.setName(name);
+            r.setDescription(description);
+            return r;
+        });
 
+        // Toujours s'assurer que les permissions sont bien assignées
+        // (cas où le rôle a été créé en urgence sans permissions par SeedUsersInitializer)
+        if (role.getPermissions() == null || role.getPermissions().isEmpty()) {
             Set<Permission> permissions = permissionRepository.findByNameIn(permissionNames);
             role.setPermissions(permissions);
-
             roleRepository.save(role);
-            log.debug("Rôle créé: {} avec {} permissions", name, permissions.size());
+            log.debug("Rôle '{}' : {} permissions assignées/mises à jour", name, permissions.size());
+        } else {
+            log.debug("Rôle '{}' déjà configuré avec {} permissions — skip", name, role.getPermissions().size());
         }
     }
 

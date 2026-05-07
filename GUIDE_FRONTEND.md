@@ -59,7 +59,7 @@ L'application est accessible sur : **http://localhost:8081**
 
 | Module | URL |
 |--------|-----|
-| Login | http://localhost:8081/enseignant/login |
+| Login | http://localhost:8081/login |
 | Dashboard Enseignant | http://localhost:8081/enseignant/dashboard |
 | Emploi Enseignant | http://localhost:8081/enseignant/emploi |
 | Appel | http://localhost:8081/enseignant/appel |

@@ -79,7 +79,7 @@ public class EnseignantController {
     }
 
     @PatchMapping("/{id}/cours")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ASSISTANT_PEDAGOGIQUE')")
     public ResponseEntity<EnseignantDTO> assignerCours(
             @PathVariable Long id,
             @RequestBody List<Long> coursIds) {

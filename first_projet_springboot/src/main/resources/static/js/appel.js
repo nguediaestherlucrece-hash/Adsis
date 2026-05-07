@@ -116,12 +116,85 @@ sessionSelectEl.addEventListener('change', async () => {
     showToast('Séance changée', 'info', 2000);
 });
 
+// Vérifie si la séance est dans la fenêtre temporelle autorisée (±15 min)
+function isSeanceInTimeWindow(info) {
+    if (!info || !info.heureDebut || !info.heureFin || !info.date) return true; // permissif si données manquantes
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const seanceDateStr = info.date;
+
+    // Seule la séance du jour est vérifiable
+    if (seanceDateStr !== todayStr) {
+        // Séance passée ou future → bloquer
+        return false;
+    }
+
+    const [sh, sm] = info.heureDebut.split(':').map(Number);
+    const [eh, em] = info.heureFin.split(':').map(Number);
+    const startMin = sh * 60 + sm - 15;  // 15 min avant le début
+    const endMin = eh * 60 + em + 15;     // 15 min après la fin
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    return nowMin >= startMin && nowMin <= endMin;
+}
+
+// Affiche un message de blocage quand la séance n'est pas dans la fenêtre autorisée
+function showTimeBlockedMessage(info) {
+    const contentEl = document.querySelector('.content');
+    if (!contentEl) return;
+
+    const hd = info?.heureDebut ? info.heureDebut.substring(0, 5) : '??:??';
+    const hf = info?.heureFin ? info.heureFin.substring(0, 5) : '??:??';
+    const dateLabel = info?.date || '';
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const isPast = info?.date && info.date < todayStr;
+    const isFuture = info?.date && info.date > todayStr;
+
+    let reasonText = '';
+    if (isPast) {
+        reasonText = 'Cette séance est déjà passée.';
+    } else if (isFuture) {
+        reasonText = 'Cette séance n\'a pas encore eu lieu.';
+    } else {
+        reasonText = `L'appel est autorisé uniquement entre <strong>${hd}</strong> (−15 min) et <strong>${hf}</strong> (+15 min).`;
+    }
+
+    contentEl.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:2rem;">
+            <div style="width:80px;height:80px;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="40" height="40">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+            <h3 style="font-size:1.3rem;font-weight:800;color:#1C1C1E;margin-bottom:0.5rem;">Appel non disponible</h3>
+            <p style="color:#8E8E93;font-size:0.9rem;max-width:380px;line-height:1.5;margin-bottom:0.5rem;">
+                ${reasonText}
+            </p>
+            <p style="color:#8E8E93;font-size:0.8rem;margin-bottom:1.5rem;">
+                Séance : <strong>${info?.coursIntitule || 'Cours'}</strong> — ${dateLabel} de ${hd} à ${hf}
+            </p>
+            <button onclick="history.back()" style="background:#007AFF;color:white;border:none;padding:12px 32px;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 0.15s;">
+                ← Retour à l'emploi du temps
+            </button>
+        </div>`;
+}
+
 // Initialiser la session sélectionnée
 async function initSession() {
     if (!seanceId) return;
 
     // Mettre à jour la bannière
     updateBanner();
+
+    // Vérifier la fenêtre temporelle ±15 min
+    if (seanceInfo && !isSeanceInTimeWindow(seanceInfo)) {
+        showTimeBlockedMessage(seanceInfo);
+        return; // Bloquer toute opération d'appel
+    }
 
     // Vérifier s'il y a un appel ouvert
     await checkAppelOuvert();

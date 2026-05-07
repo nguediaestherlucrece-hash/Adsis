@@ -31,11 +31,10 @@ public class UtilisateurController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UtilisateurDTO>> searchWithFilters(
             @RequestParam(required = false) String recherche,
-            @RequestParam String type,
-            @RequestParam(required = false) Long filiere,
+            @RequestParam(defaultValue = "") String type,
             @PageableDefault(size = 10) Pageable pageable) {
-        log.info("Recherche d'utilisateurs avec filtres: recherche={}, type={}, filiere={}", recherche, type, filiere);
-        return ResponseEntity.ok(utilisateurService.searchWithFilters(recherche, type, filiere, pageable));
+        log.info("Recherche d'utilisateurs avec filtres: recherche={}, type={}", recherche, type);
+        return ResponseEntity.ok(utilisateurService.searchWithFilters(recherche, type, pageable));
     }
     /**
      * Récupérer la liste de tous les utilisateurs
