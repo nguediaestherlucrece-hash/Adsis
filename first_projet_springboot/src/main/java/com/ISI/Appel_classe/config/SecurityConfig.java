@@ -98,7 +98,8 @@ public class SecurityConfig {
                                 "/api/semestres/**",
                                 "/api/emplois-du-temps/**",
                                 "/api/seances/**",
-                                "/api/appels/**").authenticated()
+                                "/api/appels/**",
+                                "/api/justificatifs/**").authenticated()
 
                         // Autres requêtes
                         // Par défaut : authentification requise

@@ -50,6 +50,7 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AnneeAcademiqueDTO createAnnee(AnneeAcademiqueCreateDTO dto) {
         AnneeAcademique annee = new AnneeAcademique();
         annee.setIdAnneeAcademique(dto.getIdAnneeAcademique());
@@ -64,6 +65,7 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AnneeAcademiqueDTO updateAnnee(Long id, AnneeAcademiqueUpdateDTO dto) {
         AnneeAcademique annee = anneeAcademiqueRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Année académique non trouvée avec l'id: " + id));
@@ -80,6 +82,7 @@ public class AnneeAcademiqueServiceImpl implements AnneeAcademiqueService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void deleteAnnee(Long id) {
         if (!anneeAcademiqueRepository.existsById(id)) {
             throw new RuntimeException("Année académique non trouvée avec l'id: " + id);
