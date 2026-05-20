@@ -85,6 +85,7 @@ public class SecurityConfig {
                         // Ces routes ne peuvent être appelées que si l'utilisateur a un token JWT valide
                         .requestMatchers("/api/utilisateurs/**",
                                 "/api/etudiants/**",
+                                "/api/etudiant/**",
                                 "/api/enseignants/**",
                                 "/api/assistants-pedagogiques/**",
                                 "/api/surveillants/**",
@@ -100,6 +101,7 @@ public class SecurityConfig {
                                 "/api/emplois-du-temps/**",
                                 "/api/seances/**",
                                 "/api/appels/**",
+                                "/api/appels-etudiant/**",
                                 "/api/justificatifs/**").authenticated()
 
                         // Autres requêtes

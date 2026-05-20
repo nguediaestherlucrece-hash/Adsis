@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- ═══ FRAGMENT SIDEBAR ═══ -->
+<aside th:fragment="sidebar(activePage, role)"
+       id="sidebar"
+       class="col-md-3 col-lg-2 sidebar d-flex flex-column p-4">
+  
+  <div class="logo-box">
+    <img src="/assets/image.png" alt="Logo ADSIS" class="logo"
+         onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%234e73df%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2265%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E'"/>
+    <h5 class="brand-name m-0 ms-2 fw-bold text-primary">ADSIS</h5>
+    <button class="sidebar-close-btn ms-auto d-md-none" id="sidebar-close" aria-label="Fermer le menu">&times;</button>
+  </div>
+  
+  <div class="mb-4">
+    <small class="text-secondary fw-bold" style="font-size:.7rem;letter-spacing:1px;">ÉTABLISSEMENT</small>
+    <h6 class="fw-bold text-dark mt-1">Saint Jean Ingénieur</h6>
+  </div>
+  
+  <nav class="nav flex-column mb-auto" id="main-sidebar-nav">
+  
+    <!-- ADMIN LINKS -->
+    <th:block th:if="${role == 'ADMIN' or role == 'SHARED'}">
+      <div class="nav-admin sidebar-role-group" th:classappend="${role == 'SHARED'} ? ' sidebar-role-hidden'">
+        <a class="nav-link" th:classappend="${activePage == 'tableaudebord' and role != 'SHARED'} ? ' active'"
+           href="/admin/tableaudebord"><i class="bi bi-grid"></i>Tableau de bord</a>
+        <a class="nav-link" th:classappend="${activePage == 'staff'} ? ' active'"
+           href="/admin/gestionutilisateur"><i class="bi bi-people"></i>Gestion du Staff</a>
+        <a class="nav-link" th:classappend="${activePage == 'acces'} ? ' active'"
+           href="/admin/gestionacces"><i class="bi bi-shield-lock"></i>Gestion des accès</a>
+        <a class="nav-link" th:classappend="${activePage == 'cycles'} ? ' active'"
+           href="/admin/cycles"><i class="bi bi-diagram-3 me-2"></i>Cycles &amp; Filières</a>
+      </div>
+    </th:block>
+
+    <!-- ASSISTANT LINKS -->
+    <th:block th:if="${role == 'ASSISTANT' or role == 'SHARED'}">
+      <div class="nav-assistant sidebar-role-group" th:classappend="${role == 'SHARED'} ? ' sidebar-role-hidden'">
+        <a class="nav-link" th:classappend="${activePage == 'tableaudebord' and role != 'SHARED'} ? ' active'"
+           href="/assistant/tableaudebord"><i class="bi bi-grid"></i>Tableau de bord</a>
+        <a class="nav-link" th:classappend="${activePage == 'matiere'} ? ' active'"
+           href="/assistant/matiere"><i class="bi bi-book"></i>Matiere</a>
+        <a class="nav-link" th:classappend="${activePage == 'etudiant'} ? ' active'"
+           href="/assistant/gestionetudiant"><i class="bi bi-person-badge"></i>Étudiants</a>
+        <a class="nav-link" th:classappend="${activePage == 'emploi'} ? ' active'"
+           href="/assistant/emploidutemps"><i class="bi bi-calendar3"></i>Emploi du temps</a>
+      </div>
+    </th:block>
+
+    <!-- ENSEIGNANT LINKS -->
+    <th:block th:if="${role == 'ENSEIGNANT' or role == 'SHARED'}">
+      <div class="nav-enseignant sidebar-role-group" th:classappend="${role == 'SHARED'} ? ' sidebar-role-hidden'">
+        <a class="nav-link" th:classappend="${activePage == 'tableaudebord' and role != 'SHARED'} ? ' active'"
+           href="/enseignant/dashboard"><i class="bi bi-grid"></i>Tableau de bord</a>
+        <a class="nav-link" th:classappend="${activePage == 'emploi'} ? ' active'"
+           href="/enseignant/emploi"><i class="bi bi-calendar3"></i>Emploi de temps</a>
+        <a class="nav-link" th:classappend="${activePage == 'appel'} ? ' active'"
+           href="/enseignant/appel"><i class="bi bi-clipboard-check"></i>Appel</a>
+      </div>
+    </th:block>
+    <!--ETUDIANTS LINK-->
+    <th:block th:if="${role == 'ETUDIANT'}">
+    <div class="nav-etudiant sidebar-role-group">
+        <a class="nav-link" th:classappend="${activePage == 'dashboard' ? ' active' : ''}"
+           href="/etudiant/dashboard"><i class="bi bi-speedometer2"></i>Tableau de bord</a>
+        <a class="nav-link" th:classappend="${activePage == 'emploi' ? ' active' : ''}"
+           href="/etudiant/emploi"><i class="bi bi-calendar-week"></i>Emploi du temps</a>
+        <a class="nav-link" th:classappend="${activePage == 'absences' ? ' active' : ''}"
+           href="/etudiant/absences"><i class="bi bi-exclamation-triangle"></i>Mes absences</a>
+        <a class="nav-link" th:classappend="${activePage == 'justifications' ? ' active' : ''}"
+           href="/etudiant/justifications"><i class="bi bi-file-earmark-text"></i>Justifier une absence</a>
+        <a class="nav-link" th:classappend="${activePage == 'profil' ? ' active' : ''}"
+           href="/etudiant/profil"><i class="bi bi-person-circle"></i>Mon profil</a>
+    </div>
+</th:block>
+
+    <!-- COMMON LINKS -->
+    <a class="nav-link mt-2 border-top pt-3" th:classappend="${activePage == 'profil'} ? ' active'" href="/shared/profil">
+      <i class="bi bi-person"></i>Mon profil
+    </a>
+    
+  </nav>
+
+  <!-- ROLE INDICATOR -->
+  <hr class="mx-2 mt-4 d-none d-md-block"/>
+  <div class="user-role-indicator mx-2 mt-2 text-muted fw-bold small text-uppercase d-none d-md-flex align-items-center">
+    <i class="bi bi-person-circle me-2 fs-5"></i>
+    <span id="sidebar-role-display" th:text="${role == 'SHARED' ? 'Chargement...' : role}"></span>
+  </div>
+  
+  <script th:if="${role == 'SHARED'}">
+    document.addEventListener("DOMContentLoaded", () => {
+       const userStr = localStorage.getItem('adsis_user');
+       if(userStr) {
+           const user = JSON.parse(userStr);
+           const roles = user.roles || [];
+           const roleDisplay = document.getElementById('sidebar-role-display');
+           if(roles.includes("ADMIN")) {
+               document.querySelectorAll('.nav-admin').forEach(el=>el.classList.remove('sidebar-role-hidden'));
+               if(roleDisplay) roleDisplay.textContent = 'ADMIN';
+           } else if(roles.includes("ASSISTANT_PEDAGOGIQUE") || roles.includes("SURVEILLANT")) {
+               document.querySelectorAll('.nav-assistant').forEach(el=>el.classList.remove('sidebar-role-hidden'));
+               if(roleDisplay) roleDisplay.textContent = 'ASSISTANT';
+           } else {
+               document.querySelectorAll('.nav-enseignant').forEach(el=>el.classList.remove('sidebar-role-hidden'));
+               if(roleDisplay) roleDisplay.textContent = 'ENSEIGNANT';
+           }
+       }
+    });
+  </script>
+
+  <!-- Mobile sidebar toggle (runs on ALL pages) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.getElementById('sidebar');
+      const burger  = document.getElementById('burger');
+      const closeBtn = document.getElementById('sidebar-close');
+      if (!sidebar) return;
+
+      // Dynamically create overlay (since it must be outside the aside)
+      let overlay = document.getElementById('sidebar-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.id = 'sidebar-overlay';
+        sidebar.parentElement.insertBefore(overlay, sidebar);
+      }
+
+      function open()  { sidebar.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow='hidden'; }
+      function close() { sidebar.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow=''; }
+
+      if(burger)   burger.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.contains('open') ? close() : open(); });
+      if(closeBtn) closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if(e.key==='Escape') close(); });
+      sidebar.querySelectorAll('.nav-link').forEach(a => a.addEventListener('click', () => { if(window.innerWidth<=768) close(); }));
+    });
+  </script>
+</aside>
+
+</html>

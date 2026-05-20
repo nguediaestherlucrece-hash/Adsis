@@ -339,9 +339,46 @@ body {
 }
 
 .table-timetable td.resize-active {
-    background-color: #fff3cd !important;
-    border: 2px solid #ffc107;
+    background-color: #fef9c3 !important;
+    border: 2px solid #eab308;
 }
+
+/* Cellules qui seront SUPPRIMÉES lors d'un rétrécissement → fond rouge */
+.table-timetable td.resize-shrink {
+    background-color: #fee2e2 !important;
+    border: 2px dashed #ef4444;
+    position: relative;
+}
+.table-timetable td.resize-shrink::after {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #ef4444;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Label de taille live affiché sur le bloc pendant le resize */
+.resize-size-label {
+    position: absolute;
+    bottom: 4px;
+    right: 5px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+
 
 /* Cellule de cours */
 .course-slot {
@@ -672,3 +709,33 @@ body {
     background: linear-gradient(135deg, #4e73df 0%, #6366f1 100%) !important;
     border-radius: 16px 16px 0 0;
 }
+
+/* ── Bouton "Appel" sur une séance active (dans la fenêtre ±15 min) ── */
+.appel-link-btn {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    background: rgba(22, 163, 74, 0.92);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    border-radius: 20px;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(22,163,74,0.4);
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+    animation: appel-pulse 2s infinite;
+}
+
+.appel-link-btn:hover {
+    background: rgba(21, 128, 61, 1);
+    color: #fff;
+    transform: scale(1.06);
+    text-decoration: none;
+}
+
+@keyframes appel-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.45); }
+    50%       { box-shadow: 0 0 0 5px rgba(22,163,74,0);  }
+}

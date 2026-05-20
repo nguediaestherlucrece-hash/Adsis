@@ -6,7 +6,8 @@
 <body>
   <div class="container-fluid">
     <div class="row min-vh-100">
-      <aside th:replace="~{fragments/sidebar :: sidebar(activePage='profil', role='SHARED')}"></aside>
+      <!-- sidebarRole injecté par le contrôleur (ETUDIANT depuis /etudiant/profil, SHARED sinon) -->
+      <aside th:replace="~{fragments/sidebar :: sidebar(activePage='profil', role=${sidebarRole != null ? sidebarRole : 'SHARED'})}"></aside>
 
       <div class="col-md-9 col-lg-10 p-0 d-flex flex-column">
         <header th:replace="~{fragments/enseignant-layout :: topbar('Mon profil')}"></header>

@@ -59,26 +59,35 @@
            href="/enseignant/appel"><i class="bi bi-clipboard-check"></i>Appel</a>
       </div>
     </th:block>
-    <!--ETUDIANTS LINK-->
+
+    <!-- ETUDIANT LINKS — visible uniquement quand role=ETUDIANT -->
+    <!-- En mode SHARED, on n'affiche pas le bloc étudiant : l'étudiant accède au profil via /etudiant/profil qui utilise role=ETUDIANT -->
     <th:block th:if="${role == 'ETUDIANT'}">
-    <div class="nav-etudiant sidebar-role-group">
+      <div class="nav-etudiant sidebar-role-group">
         <a class="nav-link" th:classappend="${activePage == 'dashboard' ? ' active' : ''}"
            href="/etudiant/dashboard"><i class="bi bi-speedometer2"></i>Tableau de bord</a>
         <a class="nav-link" th:classappend="${activePage == 'emploi' ? ' active' : ''}"
            href="/etudiant/emploi"><i class="bi bi-calendar-week"></i>Emploi du temps</a>
+        <a class="nav-link" th:classappend="${activePage == 'appel' ? ' active' : ''}"
+           href="/etudiant/appel"><i class="bi bi-qr-code-scan"></i>Répondre à l'appel</a>
         <a class="nav-link" th:classappend="${activePage == 'absences' ? ' active' : ''}"
            href="/etudiant/absences"><i class="bi bi-exclamation-triangle"></i>Mes absences</a>
         <a class="nav-link" th:classappend="${activePage == 'justifications' ? ' active' : ''}"
            href="/etudiant/justifications"><i class="bi bi-file-earmark-text"></i>Justifier une absence</a>
         <a class="nav-link" th:classappend="${activePage == 'profil' ? ' active' : ''}"
            href="/etudiant/profil"><i class="bi bi-person-circle"></i>Mon profil</a>
-    </div>
-</th:block>
+      </div>
+    </th:block>
 
-    <!-- COMMON LINKS -->
-    <a class="nav-link mt-2 border-top pt-3" th:classappend="${activePage == 'profil'} ? ' active'" href="/shared/profil">
-      <i class="bi bi-person"></i>Mon profil
-    </a>
+    <!-- COMMON LINKS — "Mon profil" affiché uniquement pour les non-étudiants -->
+    <!-- Pour les étudiants, le lien profil est déjà dans le bloc ETUDIANT ci-dessus -->
+    <th:block th:if="${role != 'ETUDIANT'}">
+      <a class="nav-link mt-2 border-top pt-3"
+         th:classappend="${activePage == 'profil'} ? ' active'"
+         href="/shared/profil">
+        <i class="bi bi-person"></i>Mon profil
+      </a>
+    </th:block>
     
   </nav>
 
@@ -103,6 +112,7 @@
                document.querySelectorAll('.nav-assistant').forEach(el=>el.classList.remove('sidebar-role-hidden'));
                if(roleDisplay) roleDisplay.textContent = 'ASSISTANT';
            } else {
+               // Enseignant par défaut (et tout autre rôle non-étudiant)
                document.querySelectorAll('.nav-enseignant').forEach(el=>el.classList.remove('sidebar-role-hidden'));
                if(roleDisplay) roleDisplay.textContent = 'ENSEIGNANT';
            }
@@ -118,7 +128,6 @@
       const closeBtn = document.getElementById('sidebar-close');
       if (!sidebar) return;
 
-      // Dynamically create overlay (since it must be outside the aside)
       let overlay = document.getElementById('sidebar-overlay');
       if (!overlay) {
         overlay = document.createElement('div');

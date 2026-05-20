@@ -743,7 +743,10 @@ async function fetchSeancesForEdt(edtId) {
                         enseignants: [],
                         enseignantIds: first.enseignantIds || [],
                         couleur: first.couleur || (matiereColors[first.coursId]) || colors[colorIdx],
-                        linkedIds: linkedIds
+                        linkedIds: linkedIds,
+                        date: first.date || '',
+                        heureDebut: first.heureDebut ? (typeof first.heureDebut === 'string' ? first.heureDebut : String(first.heureDebut)) : '',
+                        heureFin:   first.heureFin   ? (typeof first.heureFin   === 'string' ? first.heureFin   : String(first.heureFin))   : ''
                     };
 
                     if (first.enseignantIds && first.enseignantIds.length > 0 && matiere && matiere.enseignants) {
@@ -798,7 +801,10 @@ function renderSingleSeance(s) {
         matiereId: s.coursId,
         enseignants: [],
         enseignantIds: s.enseignantIds || [],
-        couleur: s.couleur || (matiereColors[s.coursId]) || colors[colorIdx]
+        couleur: s.couleur || (matiereColors[s.coursId]) || colors[colorIdx],
+        date: s.date || '',
+        heureDebut: s.heureDebut ? (typeof s.heureDebut === 'string' ? s.heureDebut : String(s.heureDebut)) : '',
+        heureFin:   s.heureFin   ? (typeof s.heureFin   === 'string' ? s.heureFin   : String(s.heureFin))   : ''
     };
 
     if (s.enseignantIds && s.enseignantIds.length > 0 && matiere && matiere.enseignants) {
@@ -1012,6 +1018,25 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
         content += `<span style="font-size:0.6rem; display:block;">${durationLabel.join(' × ')}</span>`;
     }
 
+    // ── Bouton "Appel" si la séance est aujourd'hui dans la fenêtre ±15 min ────────────
+    if (data.date && data.heureDebut && data.heureFin) {
+        const today   = new Date().toISOString().split('T')[0];
+        const dateStr = typeof data.date === 'string' ? data.date : String(data.date);
+        if (dateStr === today) {
+            const toMin = t => { const p = String(t).split(':').map(Number); return p[0] * 60 + (p[1] || 0); };
+            const nowMin  = new Date().getHours() * 60 + new Date().getMinutes();
+            const inWindow = nowMin >= toMin(data.heureDebut) - 15 && nowMin <= toMin(data.heureFin) + 15;
+            if (inWindow) {
+                content += `<a href="/enseignant/appel?seanceId=${data.dbId}"
+                               onclick="event.stopPropagation()"
+                               class="appel-link-btn"
+                               title="Démarrer l'appel de cette séance">
+                               🎓 Appel
+                            </a>`;
+            }
+        }
+    }
+
     content += `<div class="resize-handle rh-top" title="Étirer vers le haut"></div>`;
     content += `<div class="resize-handle rh-bottom" title="Étirer vers le bas"></div>`;
     content += `<div class="resize-handle rh-left" title="Étirer vers la gauche"></div>`;
@@ -1021,8 +1046,13 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
     cell.appendChild(div);
 
     // Clic gauche : ouvrir le modal d'édition de la séance
+    // Guard: ignore the click that is fired immediately after a resize drag ends.
     div.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (_wasResizing) {
+            _wasResizing = false; // reset after consuming once
+            return;
+        }
         openSeanceConfigModalForEdit(div, cell);
     });
 
@@ -1121,6 +1151,11 @@ let resizeState = {
     previewHoraire: 0
 };
 
+// Flag used to prevent the click event from opening the modal when the user
+// just finished a resize drag. Set to true in handleResizeEnd, cleared after
+// the next click event has been evaluated.
+let _wasResizing = false;
+
 function attachResizeHandlers(element, cell) {
     const handleMap = {
         '.rh-top': 'top',
@@ -1166,11 +1201,45 @@ function startResize(direction, cell, element) {
     document.body.style.userSelect = 'none';
 }
 
+/**
+ * Trouve la cellule de la grille sous le pointeur en utilisant la géométrie
+ * du tableau — fonctionne même sur les cellules masquées (display:none).
+ */
+function getCellFromPoint(clientX, clientY) {
+    const table = document.getElementById('timetable');
+    if (!table) return null;
+
+    // Déterminer la colonne (jour) à partir des <th> du header
+    const ths = Array.from(document.querySelectorAll('#timetableHeaders th'));
+    let dayIdx = -1;
+    for (let j = 1; j < ths.length; j++) {
+        const r = ths[j].getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right) {
+            dayIdx = j - 1;
+            break;
+        }
+    }
+    if (dayIdx < 0) return null;
+
+    // Déterminer la ligne (horaire) à partir des <tr> du tbody
+    const rows = table.querySelectorAll('tbody tr');
+    let horaireIdx = -1;
+    for (let h = 0; h < rows.length; h++) {
+        const r = rows[h].getBoundingClientRect();
+        if (clientY >= r.top && clientY <= r.bottom) {
+            horaireIdx = h;
+            break;
+        }
+    }
+    if (horaireIdx < 0) return null;
+
+    return document.querySelector(`td[data-horaire="${horaireIdx}"][data-jour="${dayIdx}"]`) || null;
+}
+
 function handleResizeMove(e) {
     if (!resizeState.active) return;
 
-    const els = document.elementsFromPoint(e.clientX, e.clientY);
-    const targetCell = els.find(el => el.tagName === 'TD' && el.dataset.jour !== undefined);
+    const targetCell = getCellFromPoint(e.clientX, e.clientY);
     if (!targetCell) return;
 
     const targetJ = parseInt(targetCell.dataset.jour);
@@ -1178,56 +1247,60 @@ function handleResizeMove(e) {
     const { origJour, origHoraire, origRowspan, origColspan, direction } = resizeState;
     const nbJours = currentEdt ? (currentEdt.nombreJours || 6) : 6;
 
-    let newJour = resizeState.previewJour;
-    let newHoraire = resizeState.previewHoraire;
-    let newRowspan = resizeState.previewRowspan;
-    let newColspan = resizeState.previewColspan;
+    let newJour     = resizeState.previewJour;
+    let newHoraire  = resizeState.previewHoraire;
+    let newRowspan  = resizeState.previewRowspan;
+    let newColspan  = resizeState.previewColspan;
 
     if (direction === 'bottom') {
-        newJour = origJour;
+        newJour    = origJour;
         newHoraire = origHoraire;
         newRowspan = Math.max(1, targetH - origHoraire + 1);
         newRowspan = Math.min(newRowspan, horaires.length - origHoraire);
         newColspan = origColspan;
     } else if (direction === 'top') {
         const bottomH = origHoraire + origRowspan - 1;
-        newHoraire = Math.min(targetH, bottomH);
-        newHoraire = Math.max(0, newHoraire);
-        newRowspan = bottomH - newHoraire + 1;
-        newRowspan = Math.max(1, newRowspan);
-        newJour = origJour;
-        newColspan = origColspan;
+        newHoraire    = Math.min(targetH, bottomH);
+        newHoraire    = Math.max(0, newHoraire);
+        newRowspan    = bottomH - newHoraire + 1;
+        newRowspan    = Math.max(1, newRowspan);
+        newJour       = origJour;
+        newColspan    = origColspan;
     } else if (direction === 'right') {
-        newJour = origJour;
+        newJour    = origJour;
         newHoraire = origHoraire;
         newColspan = Math.max(1, targetJ - origJour + 1);
         newColspan = Math.min(newColspan, nbJours - origJour);
         newRowspan = origRowspan;
     } else if (direction === 'left') {
         const rightJ = origJour + origColspan - 1;
-        newJour = Math.min(targetJ, rightJ);
-        newJour = Math.max(0, newJour);
-        newColspan = rightJ - newJour + 1;
-        newColspan = Math.max(1, newColspan);
-        newHoraire = origHoraire;
-        newRowspan = origRowspan;
+        newJour      = Math.min(targetJ, rightJ);
+        newJour      = Math.max(0, newJour);
+        newColspan   = rightJ - newJour + 1;
+        newColspan   = Math.max(1, newColspan);
+        newHoraire   = origHoraire;
+        newRowspan   = origRowspan;
     }
 
     if (newRowspan !== resizeState.previewRowspan || newColspan !== resizeState.previewColspan ||
         newJour !== resizeState.previewJour || newHoraire !== resizeState.previewHoraire) {
 
-        document.querySelectorAll('.dropzone').forEach(c => c.classList.remove('resize-active'));
+        // Réinitialiser tous les highlights
+        document.querySelectorAll('.dropzone').forEach(c => {
+            c.classList.remove('resize-active', 'resize-shrink');
+        });
 
         let canResize = true;
+
+        // Vérifier que les cellules du nouveau bloc sont libres ou font partie du bloc courant
         for (let h = 0; h < newRowspan; h++) {
             for (let j = 0; j < newColspan; j++) {
                 const c = document.querySelector(`td[data-horaire="${newHoraire + h}"][data-jour="${newJour + j}"]`);
                 if (!c) { canResize = false; break; }
                 const isPartOfCurrent = isWithinBlock(c, origJour, origHoraire, origColspan, origRowspan);
-                if (!isPartOfCurrent && (c.children.length > 0 || (c.style.display === 'none'))) {
+                if (!isPartOfCurrent && (c.children.length > 0 || c.style.display === 'none')) {
                     canResize = false;
                 }
-                if (canResize) c.classList.add('resize-active');
             }
             if (!canResize) break;
         }
@@ -1235,8 +1308,45 @@ function handleResizeMove(e) {
         if (canResize) {
             resizeState.previewRowspan = newRowspan;
             resizeState.previewColspan = newColspan;
-            resizeState.previewJour = newJour;
+            resizeState.previewJour    = newJour;
             resizeState.previewHoraire = newHoraire;
+
+            // ── Cellules CONSERVÉES (dans le nouveau bloc) → resize-active (jaune) ──
+            for (let h = 0; h < newRowspan; h++) {
+                for (let j = 0; j < newColspan; j++) {
+                    const c = document.querySelector(`td[data-horaire="${newHoraire + h}"][data-jour="${newJour + j}"]`);
+                    if (c) c.classList.add('resize-active');
+                }
+            }
+
+            // ── Cellules SUPPRIMÉES (dans l'ancien bloc mais PAS dans le nouveau) → resize-shrink (rouge) ──
+            for (let h = 0; h < origRowspan; h++) {
+                for (let j = 0; j < origColspan; j++) {
+                    const ch = origHoraire + h;
+                    const cj = origJour + j;
+                    const inNew = (ch >= newHoraire && ch < newHoraire + newRowspan &&
+                                   cj >= newJour    && cj < newJour    + newColspan);
+                    if (!inNew) {
+                        const c = document.querySelector(`td[data-horaire="${ch}"][data-jour="${cj}"]`);
+                        if (c) c.classList.add('resize-shrink');
+                    }
+                }
+            }
+
+            // ── Afficher la taille courante sur le bloc ──────────────────────────
+            const el = resizeState.element;
+            if (el) {
+                let sizeLabel = el.querySelector('.resize-size-label');
+                if (!sizeLabel) {
+                    sizeLabel = document.createElement('div');
+                    sizeLabel.className = 'resize-size-label';
+                    el.appendChild(sizeLabel);
+                }
+                const parts = [];
+                if (newRowspan > 0) parts.push(`${newRowspan}h`);
+                if (newColspan > 1) parts.push(`${newColspan}j`);
+                sizeLabel.textContent = parts.join(' × ');
+            }
         }
     }
 }
@@ -1245,20 +1355,32 @@ function isWithinBlock(cell, blockJour, blockHoraire, blockColspan, blockRowspan
     const cj = parseInt(cell.dataset.jour);
     const ch = parseInt(cell.dataset.horaire);
     return cj >= blockJour && cj < blockJour + blockColspan &&
-        ch >= blockHoraire && ch < blockHoraire + blockRowspan;
+           ch >= blockHoraire && ch < blockHoraire + blockRowspan;
 }
 
 async function handleResizeEnd() {
     document.removeEventListener('mousemove', handleResizeMove);
     document.removeEventListener('mouseup', handleResizeEnd);
     document.body.style.userSelect = '';
-    document.querySelectorAll('.dropzone').forEach(c => c.classList.remove('resize-active'));
+    document.querySelectorAll('.dropzone').forEach(c => c.classList.remove('resize-active', 'resize-shrink'));
+
+    // Retirer le label de taille live
+    if (resizeState.element) {
+        const lbl = resizeState.element.querySelector('.resize-size-label');
+        if (lbl) lbl.remove();
+    }
 
     if (!resizeState.active) return;
     resizeState.active = false;
 
     const { anchorCell, element, origJour, origHoraire, origRowspan, origColspan,
         previewRowspan, previewColspan, previewJour, previewHoraire } = resizeState;
+
+    // Mark that a resize just ended so the following click event is ignored.
+    _wasResizing = true;
+    // Safety: reset the flag after a short delay in case no click follows
+    // (e.g. mouseup outside the element).
+    setTimeout(() => { _wasResizing = false; }, 300);
 
     if (previewRowspan === origRowspan && previewColspan === origColspan &&
         previewJour === origJour && previewHoraire === origHoraire) return;

@@ -1,34 +1,73 @@
-/* static/css/etudiant-justifications.css */
-.main-content {
-    background-color: #f8f9fc;
+/* ── Justifications étudiant ── */
+.main-content { background: var(--etu-bg); }
+
+/* Form card */
+.col-lg-6 .card {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--etu-border-light) !important;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s;
 }
 
-#justification-form {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
-    max-width: 700px;
+.col-lg-6 .card:hover { box-shadow: var(--shadow-md); }
+
+/* Form card header — left form */
+.col-lg-6:first-child .card-header {
+  background: linear-gradient(135deg, var(--etu-primary), var(--etu-primary-2)) !important;
+  color: #fff !important;
+  border-bottom: none !important;
+  font-weight: 700;
 }
 
-#justification-form .form-label {
-    font-weight: 600;
-    color: #2c3e50;
+/* History card header */
+.col-lg-6:last-child .card-header {
+  background: var(--etu-bg) !important;
+  color: var(--text) !important;
+  font-weight: 700;
+  border-bottom: 1px solid var(--etu-border-light) !important;
 }
 
-#justification-form button {
-    background-color: #0d6efd;
-    border: none;
-    border-radius: 30px;
-    padding: 0.5rem 1.8rem;
-    transition: 0.2s;
+/* File input */
+#piece-jointe {
+  font-size: .82rem;
 }
 
-#justification-form button:hover {
-    background-color: #0b5ed7;
-    transform: translateY(-2px);
+.form-text {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-top: .3rem;
 }
 
-#message .alert {
-    border-radius: 12px;
+/* Submit button */
+#btn-submit {
+  border-radius: 20px !important;
+  padding: .55rem 1.5rem;
+  font-weight: 700;
+  font-size: .88rem;
+  letter-spacing: .01em;
 }
+
+/* Feedback message */
+#form-message .alert {
+  border-radius: var(--radius);
+  border: none;
+  font-weight: 600;
+  font-size: .875rem;
+  padding: .75rem 1rem;
+}
+
+/* History list */
+#historique-list .list-group-item {
+  padding: .9rem 1.1rem;
+  border-color: var(--etu-border-light);
+  font-size: .875rem;
+  transition: background .15s, transform .15s;
+}
+
+#historique-list .list-group-item:hover {
+  background: var(--etu-primary-pale);
+  transform: translateX(3px);
+}
+
+/* Absence select */
+#absence-select option { font-size: .875rem; }

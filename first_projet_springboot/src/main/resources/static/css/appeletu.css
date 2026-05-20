@@ -1,0 +1,140 @@
+/* ── Appel étudiant ── */
+.main-content { background: var(--etu-bg); }
+
+/* Date indicator */
+#date-jour {
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+
+/* Course items */
+.cours-item {
+  border-left: 4px solid var(--etu-primary);
+  margin-bottom: .85rem;
+  padding: 1rem 1.2rem;
+  background: var(--etu-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s cubic-bezier(.4,0,.2,1), border-color .2s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cours-item::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, rgba(78,115,223,.05), transparent);
+  pointer-events: none;
+}
+
+.cours-item:hover {
+  transform: translateX(5px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Active course */
+.cours-item.cours-active {
+  border-left-color: #16a34a;
+  background: linear-gradient(to right, rgba(22,163,74,.06), var(--etu-surface));
+}
+
+/* Targeted item */
+.cours-item.cours-target {
+  animation: pulse-target .8s ease 2;
+}
+
+@keyframes pulse-target {
+  0%   { box-shadow: 0 0 0 0   rgba(78,115,223,.45); }
+  70%  { box-shadow: 0 0 0 10px rgba(78,115,223,0);  }
+  100% { box-shadow: 0 0 0 0   rgba(78,115,223,0);   }
+}
+
+/* Buttons */
+.btn-present {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-radius: 30px;
+  padding: .3rem 1.1rem;
+  border: none;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16,185,129,.35);
+  transition: transform .2s, box-shadow .2s, opacity .2s;
+}
+
+.btn-absent {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border-radius: 30px;
+  padding: .3rem 1.1rem;
+  border: none;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(239,68,68,.3);
+  transition: transform .2s, box-shadow .2s, opacity .2s;
+}
+
+.btn-present:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,.45); }
+.btn-absent:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.4); }
+
+.btn-present:disabled,
+.btn-absent:disabled {
+  opacity: .38;
+  filter: grayscale(50%);
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-justifie {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: .3rem 1rem;
+  font-weight: 700;
+  font-size: .82rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(245,158,11,.3);
+  transition: transform .2s, box-shadow .2s;
+}
+
+.btn-justifie:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,.4); }
+
+.statut-badge {
+  font-size: .73rem;
+  padding: .3rem .7rem;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+/* Pulsing badge */
+.badge.bg-success { animation: badge-pulse 2s infinite; }
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .7; }
+}
+
+/* Scanner / PIN cards */
+#scanner-card .card-header,
+#pin-card .card-header {
+  background: linear-gradient(135deg, var(--etu-primary), var(--etu-primary-2)) !important;
+  color: #fff;
+  border-bottom: none !important;
+}
+
+/* PIN input */
+#pin-input {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-align: center;
+}

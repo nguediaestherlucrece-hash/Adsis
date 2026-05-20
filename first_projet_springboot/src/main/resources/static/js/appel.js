@@ -14,6 +14,7 @@ let appelId = null;
 let studentsData = []; // EtudiantSeanceDTO[]
 let creneauxHeaders = []; // [{heureDebut, heureFin}]
 let seanceInfo = null; // SeanceEnseignantDTO
+let autoRefreshInterval = null; // ID du setInterval pour l'auto-actualisation
 
 const user = getUser();
 
@@ -22,7 +23,53 @@ const urlParams = new URLSearchParams(window.location.search);
 seanceId = parseInt(urlParams.get('seanceId')) || null;
 
 // ── Éléments DOM ─────────────────────────────────────────────────────────────
-const sessionSelectEl = document.getElementById('session-select');
+// Le <select> peut ne pas exister dans le HTML (il est utilisé en interne).
+// On le crée à la volée s'il est absent pour éviter les crash null-pointer.
+let sessionSelectEl = document.getElementById('session-select');
+if (!sessionSelectEl) {
+    sessionSelectEl = document.createElement('select');
+    sessionSelectEl.id = 'session-select';
+    sessionSelectEl.style.display = 'none';
+    document.body.appendChild(sessionSelectEl);
+}
+
+// ── Bloquer l'accès sans séance sélectionnée ─────────────────────────────────
+// Si aucun seanceId n'est passé en URL, afficher une page de blocage claire
+// pour rediriger vers l'emploi du temps plutôt que de crasher.
+if (!seanceId) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const contentEl = document.querySelector('.content');
+        if (contentEl) {
+            contentEl.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                            min-height:60vh;text-align:center;padding:2rem;">
+                    <div style="width:80px;height:80px;border-radius:50%;background:#EFF6FF;
+                                display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"
+                             width="40" height="40">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size:1.3rem;font-weight:800;color:#1C1C1E;margin-bottom:0.5rem;">
+                        Aucune séance sélectionnée
+                    </h3>
+                    <p style="color:#8E8E93;font-size:0.9rem;max-width:380px;line-height:1.6;margin-bottom:1.5rem;">
+                        Pour démarrer un appel, cliquez sur une séance <strong>en cours</strong>
+                        depuis votre emploi du temps.
+                    </p>
+                    <a href="/enseignant/emploi"
+                       style="background:#007AFF;color:white;border:none;padding:12px 32px;
+                              border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer;
+                              text-decoration:none;display:inline-block;transition:transform 0.15s;">
+                        📅 Aller à l'emploi du temps
+                    </a>
+                </div>`;
+        }
+    });
+    throw new Error('Aucun seanceId fourni — appel bloqué');
+}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 let toastTimer = null;
@@ -76,8 +123,8 @@ async function loadSeances() {
 
         // Peupler le sélecteur
         sessionSelectEl.innerHTML = '';
-        const DAY_MAP = { 'MONDAY':'Lun', 'TUESDAY':'Mar', 'WEDNESDAY':'Mer', 'THURSDAY':'Jeu', 'FRIDAY':'Ven', 'SATURDAY':'Sam', 'SUNDAY':'Dim' };
-        
+        const DAY_MAP = { 'MONDAY': 'Lun', 'TUESDAY': 'Mar', 'WEDNESDAY': 'Mer', 'THURSDAY': 'Jeu', 'FRIDAY': 'Ven', 'SATURDAY': 'Sam', 'SUNDAY': 'Dim' };
+
         seances.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.id;
@@ -229,12 +276,34 @@ async function checkAppelOuvert() {
             const data = await res.json();
             appelId = data.id;
             updateSessionStatus(true);
+            startAutoRefresh(); // Démarrer l'actualisation automatique
         } else {
             appelId = null;
             updateSessionStatus(false);
+            stopAutoRefresh();
         }
     } catch {
         appelId = null;
+    }
+}
+
+/** Démarre l'auto-actualisation toutes les 20 secondes. */
+function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshInterval = setInterval(async () => {
+        if (!appelId) { stopAutoRefresh(); return; }
+        await loadEtudiants();
+        // Mettre à jour le libellé "dernière actualisation"
+        const el = document.getElementById('last-refresh-time');
+        if (el) el.textContent = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }, 20000);
+}
+
+/** Arrête l'auto-actualisation. */
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
     }
 }
 
@@ -343,6 +412,12 @@ function renderHourlyGrid() {
         else if (allAbsent) statusClass = 'absent';
         else if (creneaux.some(c => c.present)) statusClass = 'partial';
 
+        // Badge de mode d'enregistrement (QR / PIN / Manuel)
+        const modeIcons = { 'QR': '📷\u00a0QR', 'PIN': '🔢\u00a0PIN', 'manuel': '✏️\u00a0Manuel', 'automatique': '🤖\u00a0Auto' };
+        const modeBadge = student.modeEnregistrement
+            ? `<span style="font-size:.7rem;background:#e0f2fe;color:#0369a1;border-radius:4px;padding:1px 5px;margin-left:4px;">${modeIcons[student.modeEnregistrement] || student.modeEnregistrement}</span>`
+            : '';
+
         // Colonne étudiant
         const initials = ((student.nom || '?')[0] + (student.prenom || '')[0]).toUpperCase();
         row.innerHTML = `
@@ -351,7 +426,7 @@ function renderHourlyGrid() {
                     <div class="status-indicator ${statusClass}"></div>
                     <div class="student-avatar" style="width:32px;height:32px;font-size:0.75rem;">${initials}</div>
                     <div>
-                        <div class="hourly-student-name">${student.nom || ''} ${student.prenom || ''}</div>
+                        <div class="hourly-student-name">${student.nom || ''} ${student.prenom || ''}${modeBadge}</div>
                         <div class="hourly-student-mat">${student.matricule || ''}</div>
                     </div>
                 </div>
@@ -498,6 +573,14 @@ document.getElementById('student-search').addEventListener('input', function () 
     });
 });
 
+// Actualiser manuellement la liste
+document.getElementById('btn-refresh-list')?.addEventListener('click', async () => {
+    await loadEtudiants();
+    const el = document.getElementById('last-refresh-time');
+    if (el) el.textContent = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    showToast('Liste actualisée', 'success', 2000);
+});
+
 // Marquer tous présents
 document.getElementById('btn-mark-all-present').addEventListener('click', async () => {
     if (!appelId) {
@@ -607,13 +690,13 @@ async function startScan() {
     const config = { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 };
 
     try {
-        await html5QrCode.start({ facingMode: 'environment' }, config, onQrSuccess, () => {});
+        await html5QrCode.start({ facingMode: 'environment' }, config, onQrSuccess, () => { });
         scanning = true;
         btnStart.style.display = 'none';
         btnStop.style.display = 'inline-flex';
     } catch {
         try {
-            await html5QrCode.start({ facingMode: 'user' }, config, onQrSuccess, () => {});
+            await html5QrCode.start({ facingMode: 'user' }, config, onQrSuccess, () => { });
             scanning = true;
             btnStart.style.display = 'none';
             btnStop.style.display = 'inline-flex';
@@ -625,7 +708,7 @@ async function startScan() {
 
 async function stopScan() {
     if (!scanning || !html5QrCode) return;
-    try { await html5QrCode.stop(); } catch {}
+    try { await html5QrCode.stop(); } catch { }
     scanning = false;
     btnStart.style.display = 'inline-flex';
     btnStop.style.display = 'none';
@@ -1001,6 +1084,7 @@ modalConfirm.addEventListener('click', async () => {
 
 async function clotureAppel() {
     stopScan();
+    stopAutoRefresh(); // Arrêter l'auto-actualisation
     clearInterval(qrTimerInterval);
     clearInterval(pinTimerInterval);
 

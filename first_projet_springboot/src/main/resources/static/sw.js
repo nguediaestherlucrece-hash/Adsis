@@ -2,26 +2,43 @@
 // Stratégie : Network-first partout (fiabilité > performance)
 // Le cache sert uniquement de fallback hors-ligne
 
-const CACHE_NAME = 'adsis-v10';
-const API_CACHE  = 'adsis-v10-api';
+const CACHE_NAME = 'adsis-v12';
+const API_CACHE  = 'adsis-v12-api';
 
 // Assets à pré-cacher pour le mode hors-ligne
 const STATIC_ASSETS = [
+  // ── Partagés ──
+  '/css/sidebar.css',
+  '/js/shared.js',
+  '/js/auth.js',
+  '/js/api.js',
+  '/js/login.js',
+  '/js/profile-unified.js',
+  '/js/pwa.js',
+  '/manifest.json',
+  '/css/profil.css',
+  // ── Enseignant ──
   '/css/shared-ens.css',
   '/css/dashboardens.css',
   '/css/emploiens.css',
   '/css/appel.css',
   '/css/profilens.css',
-  '/js/shared.js',
-  '/js/auth.js',
-  '/js/api.js',
   '/js/dashboardens.js',
   '/js/emploiens.js',
   '/js/appel.js',
-  '/js/login.js',
-  '/js/profile-unified.js',
-  '/js/pwa.js',
-  '/manifest.json'
+  // ── Étudiant ──
+  '/css/dashboardetu.css',
+  '/css/emploietu.css',
+  '/css/absences.css',
+  '/css/justifications.css',
+  '/css/appeletu.css',
+  '/css/etudiant-shared.css',
+  '/js/dashboardetu.js',
+  '/js/emploietu.js',
+  '/js/absences.js',
+  '/js/justifications.js',
+  '/js/appeletu.js',
+  '/js/profiletu.js',
 ];
 
 // ── Install ──
@@ -67,9 +84,9 @@ async function networkFirst(request, cacheName) {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // API → Network-first, cache API séparé
+  // API GET → Network-first, cache API séparé (pas de POST/PUT/DELETE)
   if (url.pathname.startsWith('/api/')) {
-    if (event.request.method !== 'GET') return; // POST/PUT/DELETE = pas de cache
+    if (event.request.method !== 'GET') return;
     event.respondWith(networkFirst(event.request, API_CACHE));
     return;
   }
@@ -80,18 +97,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation → Network-first
+  // Navigation → Network-first, fallback vers la page hors-ligne selon le rôle
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match('/enseignant/dashboard')
-          .then(cached => cached || new Response('Hors ligne', { status: 503 }))
-      )
+      fetch(event.request).catch(() => {
+        const path = url.pathname;
+        // Fallback vers la dernière page du bon module mise en cache
+        if (path.startsWith('/etudiant')) {
+          return caches.match('/etudiant/dashboard')
+            .then(cached => cached || new Response('Hors ligne', { status: 503 }));
+        }
+        return caches.match('/enseignant/dashboard')
+          .then(cached => cached || new Response('Hors ligne', { status: 503 }));
+      })
     );
     return;
   }
 
-  // Default: passthrough (pas d'interception)
+  // Default: passthrough
 });
 
 // ── Background Sync ──

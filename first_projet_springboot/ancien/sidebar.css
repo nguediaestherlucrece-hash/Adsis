@@ -1,0 +1,179 @@
+/* ══════════════════════════════════════════════
+   SIDEBAR — Single Source of Truth (all modules)
+   ══════════════════════════════════════════════ */
+
+/* Sidebar container — uses Bootstrap col-md-3 col-lg-2 */
+.sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e3e6f0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+}
+
+/* ── Role group wrappers ── */
+.sidebar-role-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.sidebar-role-hidden {
+  display: none !important;
+}
+
+/* ── LOGO ── */
+.sidebar .logo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 20px 0;
+  border-bottom: 1px solid #f1f3f9;
+  margin-bottom: 20px;
+}
+.sidebar .logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.sidebar .brand-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2c3e50;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* ── MENU ITEMS ── */
+.sidebar .nav-link {
+  color: #5a5c69;
+  font-weight: 500;
+  padding: 10px 15px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+.sidebar .nav-link i {
+  font-size: 1.1rem;
+  color: #b7b9cc;
+  margin-right: 12px;
+  transition: color 0.2s;
+}
+.sidebar .nav-link:hover {
+  background-color: #f8f9fc;
+  color: #4e73df;
+}
+.sidebar .nav-link:hover i {
+  color: #4e73df;
+}
+.sidebar .nav-link.active {
+  background-color: #4e73df;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(78, 115, 223, 0.25);
+}
+.sidebar .nav-link.active i {
+  color: #ffffff;
+}
+
+/* ── LOGOUT ── */
+.sidebar .logout-btn {
+  margin-top: 30px;
+  color: #e74a3b;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+.sidebar .logout-btn:hover {
+  background-color: #fff2f1;
+  color: #c0392b;
+}
+
+/* ── Close button (mobile only) ── */
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar-close-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+/* ── Mobile overlay ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+.sidebar-overlay.open {
+  display: block;
+}
+
+/* ── Burger button (hidden on desktop, shown on mobile) ── */
+.burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.burger:hover { background: #f4f6ff; }
+.burger span {
+  display: block;
+  width: 22px;
+  height: 2.5px;
+  background: #1a1f36;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── RESPONSIVE: mobile drawer ── */
+@media (max-width: 767.98px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: min(300px, 85vw);
+    height: 100vh !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    z-index: 200;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 6px 0 40px rgba(0,0,0,0.22);
+  }
+
+  /* Show burger in topbar */
+  .burger {
+    display: flex !important;
+  }
+}

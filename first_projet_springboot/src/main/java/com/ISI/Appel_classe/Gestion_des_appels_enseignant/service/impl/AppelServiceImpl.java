@@ -273,7 +273,8 @@ public class AppelServiceImpl implements AppelService {
                 dto.setStatut(presence.getStatut());
                 dto.setPresenceId(presence.getId());
                 dto.setRetard(presence.isRetard());
-                
+                dto.setModeEnregistrement(presence.getModeEnregistrement());
+
                 // Convertir les créneaux horaires existants
                 if (presence.getPresencesHoraires() != null && !presence.getPresencesHoraires().isEmpty()) {
                     dto.setCreneaux(presence.getPresencesHoraires().stream()
@@ -286,7 +287,19 @@ public class AppelServiceImpl implements AppelService {
                         })
                         .collect(Collectors.toList()));
                 } else {
-                    dto.setCreneaux(creneauxDefaut);
+                    // Pas de créneaux stockés (cas QR/PIN sans créneaux) :
+                    // déduire la présence depuis le statut global pour éviter l'affichage "absent" erroné
+                    final boolean isPresent = "présent".equals(presence.getStatut())
+                            || "retard".equals(presence.getStatut());
+                    dto.setCreneaux(creneauxDefaut.stream()
+                        .map(c -> {
+                            CreneauPresenceDTO copy = new CreneauPresenceDTO();
+                            copy.setHeureDebut(c.getHeureDebut());
+                            copy.setHeureFin(c.getHeureFin());
+                            copy.setPresent(isPresent);
+                            return copy;
+                        })
+                        .collect(Collectors.toList()));
                 }
             } else {
                 dto.setStatut("non_enregistré");

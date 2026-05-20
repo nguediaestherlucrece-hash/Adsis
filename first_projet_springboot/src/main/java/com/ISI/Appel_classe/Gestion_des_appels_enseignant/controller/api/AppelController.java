@@ -7,11 +7,14 @@ import com.ISI.Appel_classe.Gestion_des_appels_enseignant.dto.response.AppelDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_enseignant.dto.response.EtudiantSeanceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_enseignant.dto.response.PresenceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_enseignant.service.serviceInterface.AppelService;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -25,6 +28,7 @@ import java.util.Map;
 public class AppelController {
     
     private final AppelService appelService;
+    private final EtudiantRepository etudiantRepository;
     
     /**
      * Démarre un nouvel appel pour une séance
@@ -89,7 +93,7 @@ public class AppelController {
      * GET /api/appels/seance/{seanceId}/ouvert
      */
     @GetMapping("/seance/{seanceId}/ouvert")
-    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE', 'ETUDIANT')")
     public ResponseEntity<AppelDTO> getAppelOuvertBySeance(@PathVariable Long seanceId) {
         AppelDTO appel = appelService.getAppelOuvertBySeance(seanceId);
         if (appel == null) {
@@ -205,5 +209,112 @@ public class AppelController {
         String qrToken = request.get("qrToken");
         PresenceDTO presence = appelService.validerQRCodeEtudiant(id, qrToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(presence);
+    }
+
+    // =====================================================================
+    // ENDPOINTS DÉDIÉS AUX ÉTUDIANTS : validation PIN/QR de l'enseignant
+    // =====================================================================
+
+    /**
+     * L'étudiant saisit le PIN généré par l'enseignant pour se marquer présent.
+     * POST /api/appels/seance/{seanceId}/etudiant/valider-pin
+     */
+    @PostMapping("/seance/{seanceId}/etudiant/valider-pin")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    public ResponseEntity<?> marquerPresentViaPin(
+            @PathVariable Long seanceId,
+            @RequestBody Map<String, String> request,
+            Authentication authentication) {
+        try {
+            // 1. Récupérer l'appel ouvert pour cette séance
+            AppelDTO appel = appelService.getAppelOuvertBySeance(seanceId);
+            if (appel == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Aucun appel ouvert pour cette séance"));
+            }
+
+            // 2. Valider le PIN de l'enseignant (stocké dans pinCache)
+            String codePIN = request.get("codePIN");
+            if (codePIN == null || codePIN.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Code PIN manquant"));
+            }
+            boolean pinValide = appelService.validerCodePIN(appel.getId(), codePIN);
+            if (!pinValide) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Code PIN invalide ou expiré"));
+            }
+
+            // 3. Identifier l'étudiant authentifié
+            String email = authentication.getName();
+            Long etudiantId = etudiantRepository.findByEmail(email)
+                    .map(e -> e.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé pour l'email: " + email));
+
+            // 4. Enregistrer la présence
+            EnregistrerPresenceRequest presenceReq = new EnregistrerPresenceRequest();
+            presenceReq.setEtudiantId(etudiantId);
+            presenceReq.setStatut("présent");
+            presenceReq.setModeEnregistrement("PIN");
+            presenceReq.setRetard(false);
+
+            PresenceDTO presence = appelService.enregistrerPresence(appel.getId(), presenceReq);
+            return ResponseEntity.status(HttpStatus.CREATED).body(presence);
+
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    /**
+     * L'étudiant scanne le QR code de l'enseignant pour se marquer présent.
+     * POST /api/appels/seance/{seanceId}/etudiant/valider-qr
+     */
+    @PostMapping("/seance/{seanceId}/etudiant/valider-qr")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    public ResponseEntity<?> marquerPresentViaQr(
+            @PathVariable Long seanceId,
+            @RequestBody Map<String, String> request,
+            Authentication authentication) {
+        try {
+            // 1. Récupérer l'appel ouvert pour cette séance
+            AppelDTO appel = appelService.getAppelOuvertBySeance(seanceId);
+            if (appel == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Aucun appel ouvert pour cette séance"));
+            }
+
+            // 2. Valider le QR token de l'enseignant
+            String qrToken = request.get("qrToken");
+            if (qrToken == null || qrToken.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "QR token manquant"));
+            }
+            // validerQRCode lève une exception si le token est invalide
+            appelService.validerQRCode(appel.getId(), qrToken);
+
+            // 3. Identifier l'étudiant authentifié
+            String email = authentication.getName();
+            Long etudiantId = etudiantRepository.findByEmail(email)
+                    .map(e -> e.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé pour l'email: " + email));
+
+            // 4. Enregistrer la présence
+            EnregistrerPresenceRequest presenceReq = new EnregistrerPresenceRequest();
+            presenceReq.setEtudiantId(etudiantId);
+            presenceReq.setStatut("présent");
+            presenceReq.setModeEnregistrement("QR");
+            presenceReq.setRetard(false);
+
+            PresenceDTO presence = appelService.enregistrerPresence(appel.getId(), presenceReq);
+            return ResponseEntity.status(HttpStatus.CREATED).body(presence);
+
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
     }
 }

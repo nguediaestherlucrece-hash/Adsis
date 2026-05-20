@@ -6,6 +6,8 @@ import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.request.MarquerPrese
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.CodePresenceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.PresenceEtudiantDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.service.serviceInterface.AppelEtudiantService;
+import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class AppelEtudiantController {
 
     private final AppelEtudiantService appelEtudiantService;
+    // ✅ Injecté pour corriger le bug extractEtudiantIdFromAuthentication
+    private final EtudiantRepository etudiantRepository;
 
     /**
      * Génère un code PIN et/ou QR code pour permettre à l'enseignant de marquer l'étudiant présent
@@ -109,12 +113,15 @@ public class AppelEtudiantController {
     }
 
     /**
-     * Extrait l'ID de l'étudiant depuis le contexte de sécurité
-     * Note: À adapter selon votre implémentation du contexte de sécurité
+     * ✅ CORRECTION BUG CRITIQUE :
+     * Avant : Long.parseLong(authentication.getName()) → NumberFormatException car getName() = email
+     * Après : on recherche l'Etudiant en base par email pour obtenir son ID Long
      */
     private Long extractEtudiantIdFromAuthentication(Authentication authentication) {
-        // Cette implémentation dépend de comment vous stockez l'ID utilisateur dans le contexte de sécurité
-        // Exemple simplifié - à adapter selon votre configuration
-        return Long.parseLong(authentication.getName());
+        String email = authentication.getName(); // getName() retourne l'email (username de UserDetails)
+        return etudiantRepository.findByEmail(email)
+                .map(etudiant -> etudiant.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Étudiant introuvable pour l'email: " + email));
     }
 }

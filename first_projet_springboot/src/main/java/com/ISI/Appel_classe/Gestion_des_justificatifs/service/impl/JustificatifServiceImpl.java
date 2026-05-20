@@ -32,9 +32,16 @@ import java.util.stream.Collectors;
 @Service
 public class JustificatifServiceImpl implements JustificatifService {
 
+    @Autowired
     private JustificatifRepository justificatifRepository;
+
+    @Autowired
     private PresenceRepository presenceRepository;
+
+    @Autowired
     private AssistantPedagogiqueRepository assistantPedagogiqueRepository;
+
+    @Autowired
     private JustificatifMapper justificatifMapper;
 
     @Override

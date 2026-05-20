@@ -1,73 +1,165 @@
-// static/js/etudiant-justifications.js
-const API_BASE = 'http://localhost:8081/api';
-const token = localStorage.getItem('adsis_token');
+/**
+ * ADSIS — justifications.js
+ * Page justifications étudiant — soumettre une justification + historique
+ */
+import { requireRole, getUser } from './auth.js';
 
-// Récupérer l'ID d'absence passé en paramètre (optionnel)
+if (!requireRole(['ETUDIANT'])) throw new Error('Accès refusé');
+
+const user = getUser();
+if (user) {
+    const n = document.getElementById('user-name-top');
+    const e = document.getElementById('user-email-top');
+    const a = document.getElementById('user-avatar');
+    if (n) n.textContent = `${user.prenom} ${user.nom}`;
+    if (e) e.textContent = user.email || '';
+    if (a) a.textContent = (user.prenom?.[0] || 'E').toUpperCase();
+}
+
+// Pré-sélection via URL ?id=XX
 const urlParams = new URLSearchParams(window.location.search);
-const preselectedAbsenceId = urlParams.get('id');
+const preselectedId = urlParams.get('id');
 
+// ── Charger absences non justifiées dans le select ────────────────────────────
 async function loadAbsencesNonJustifiees() {
+    const select = document.getElementById('absence-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">Chargement…</option>';
     try {
-        const response = await fetch(`${API_BASE}/etudiant/absences/non-justifiees`, {
+        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
+        const res = await fetch('/api/etudiant/absences/non-justifiees', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error('Erreur chargement absences');
-        const absences = await response.json();
-        const select = document.getElementById('absence-select');
-        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const absences = await res.json();
         if (absences.length === 0) {
             select.innerHTML = '<option value="">Aucune absence à justifier</option>';
             select.disabled = true;
-            document.getElementById('justification-form').querySelector('button[type="submit"]').disabled = true;
+            document.getElementById('btn-submit').disabled = true;
             return;
         }
-        
-        select.innerHTML = '<option value="">Sélectionnez une absence</option>' +
-            absences.map(a => `<option value="${a.id}" ${preselectedAbsenceId == a.id ? 'selected' : ''}>${a.matiere} - ${new Date(a.date).toLocaleDateString('fr-FR')}</option>`).join('');
-        
-        if (preselectedAbsenceId && absences.find(a => a.id == preselectedAbsenceId)) {
-            // On a déjà présélectionné
-        }
-    } catch (error) {
-        console.error(error);
-        document.getElementById('absence-select').innerHTML = '<option>Erreur de chargement</option>';
+        select.innerHTML = '<option value="">— Sélectionnez une absence —</option>' +
+            absences.map(a => {
+                const date     = a.date ? new Date(a.date).toLocaleDateString('fr-FR') : '?';
+                const selected = preselectedId && String(a.id) === String(preselectedId) ? 'selected' : '';
+                // Si un justificatif est EN_ATTENTE, l'option est disabled avec un indicateur
+                if (a.justificatifStatut === 'EN_ATTENTE') {
+                    return `<option value="${a.id}" disabled ${selected}>⏳ En attente de validation — ${a.matiere || '—'} (${date})</option>`;
+                }
+                if (a.justificatifStatut === 'REJETE') {
+                    return `<option value="${a.id}" ${selected}>⚠️ Rejeté — résoumettre — ${a.matiere || '—'} (${date})</option>`;
+                }
+                return `<option value="${a.id}" ${selected}>${a.matiere || '—'} — ${date}</option>`;
+            }).join('');
+    } catch (err) {
+        console.warn('[justifications] Erreur chargement absences:', err);
+        select.innerHTML = '<option value="">⚠ Hors ligne — réessayez plus tard</option>';
     }
 }
 
-// Envoi du formulaire
-document.getElementById('justification-form').addEventListener('submit', async (e) => {
+// ── Charger l'historique des justificatifs ────────────────────────────────────
+async function loadHistorique() {
+    const list = document.getElementById('historique-list');
+    if (!list || !user) return;
+    try {
+        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
+        const res = await fetch(`/api/justificatifs/my-justificatifs?etudiantId=${user.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.justificatifs || data.content || data || [];
+        if (items.length === 0) {
+            list.innerHTML = '<li class="list-group-item text-muted text-center py-3">Aucun justificatif soumis</li>';
+            return;
+        }
+        const statutConfig = {
+            'EN_ATTENTE': { badge: 'warning', label: 'En attente', icon: 'hourglass-split' },
+            'ACCEPTE':    { badge: 'success', label: 'Accepté',    icon: 'check-circle'   },
+            'REFUSE':     { badge: 'danger',  label: 'Refusé',     icon: 'x-circle'       },
+        };
+        list.innerHTML = items.map(j => {
+            const cfg = statutConfig[j.statutValidation] || { badge: 'secondary', label: j.statutValidation, icon: 'question' };
+            const date = j.dateSoumission ? new Date(j.dateSoumission).toLocaleDateString('fr-FR') : '—';
+            return `
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold small">${j.matiere || j.absence?.matiere || '—'}</div>
+                        <div class="text-muted" style="font-size:.78rem;">Soumis le ${date}</div>
+                        <div class="text-muted" style="font-size:.78rem;">${(j.motif || '').substring(0,60)}${j.motif && j.motif.length > 60 ? '…' : ''}</div>
+                    </div>
+                    <span class="badge bg-${cfg.badge}"><i class="bi bi-${cfg.icon} me-1"></i>${cfg.label}</span>
+                </div>
+            </li>`;
+        }).join('');
+    } catch (err) {
+        console.warn('[justifications] Erreur historique:', err);
+        const list2 = document.getElementById('historique-list');
+        if (list2) list2.innerHTML = '<li class="list-group-item text-warning text-center py-2"><i class="bi bi-wifi-off me-2"></i>Hors ligne</li>';
+    }
+}
+
+// ── Soumission du formulaire ──────────────────────────────────────────────────
+document.getElementById('justification-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const msgDiv    = document.getElementById('form-message');
     const absenceId = document.getElementById('absence-select').value;
-    const motif = document.getElementById('motif').value;
-    const messageDiv = document.getElementById('message');
-    
+    const motif     = document.getElementById('motif').value.trim();
+    const fichier   = document.getElementById('piece-jointe')?.files?.[0];
+    const btn       = document.getElementById('btn-submit');
+
     if (!absenceId) {
-        messageDiv.innerHTML = '<div class="alert alert-warning">Veuillez sélectionner une absence.</div>';
+        msgDiv.innerHTML = '<div class="alert alert-warning">Veuillez sélectionner une absence.</div>';
         return;
     }
-    
+    if (!motif) {
+        msgDiv.innerHTML = '<div class="alert alert-warning">Veuillez saisir un motif.</div>';
+        return;
+    }
+    if (!user?.id) {
+        msgDiv.innerHTML = '<div class="alert alert-danger">Session expirée. Reconnectez-vous.</div>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Envoi…';
+
     try {
-        const response = await fetch(`${API_BASE}/etudiant/justifications`, {
+        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
+        const formData = new FormData();
+        formData.append('presenceId', absenceId);
+        formData.append('motif', motif);
+        // Le champ s'appelle 'document' dans CreateJustificatifRequest (@ModelAttribute)
+        if (fichier) formData.append('document', fichier);
+
+        const res = await fetch(`/api/justificatifs/submit?etudiantId=${user.id}`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ absenceId, motif })
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
         });
-        
-        if (response.ok) {
-            messageDiv.innerHTML = '<div class="alert alert-success">Justification envoyée avec succès. Un responsable la validera.</div>';
+
+        if (res.ok) {
+            msgDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Justification envoyée. Un responsable la traitera sous peu.</div>';
             document.getElementById('justification-form').reset();
-            loadAbsencesNonJustifiees(); // Recharge la liste
+            // Rafraîchir les deux listes
+            await loadAbsencesNonJustifiees();
+            await loadHistorique();
         } else {
-            const error = await response.text();
-            messageDiv.innerHTML = `<div class="alert alert-danger">Erreur : ${error}</div>`;
+            const err = await res.text();
+            msgDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Erreur : ${err}</div>`;
         }
-    } catch (error) {
-        console.error(error);
-        messageDiv.innerHTML = '<div class="alert alert-danger">Erreur réseau. Veuillez réessayer.</div>';
+    } catch (err) {
+        console.error('[justifications] Erreur soumission:', err);
+        msgDiv.innerHTML = '<div class="alert alert-warning"><i class="bi bi-wifi-off me-2"></i>Hors ligne. Réessayez une fois connecté.</div>';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send me-2"></i>Envoyer la justification';
     }
 });
 
-loadAbsencesNonJustifiees();
+// ── Lancement ─────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    loadAbsencesNonJustifiees();
+    loadHistorique();
+});

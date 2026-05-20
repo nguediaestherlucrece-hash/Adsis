@@ -31,4 +31,16 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findByEnseignantIdAndDateBetween(@Param("enseignantId") Long enseignantId,
                                                     @Param("dateDebut") LocalDate dateDebut,
                                                     @Param("dateFin") LocalDate dateFin);
+
+    /**
+     * Récupère les séances d'une classe sur une plage de dates
+     * Utilisé pour l'emploi du temps et les prochains cours de l'étudiant
+     */
+    @Query("SELECT s FROM Seance s " +
+           "WHERE s.emploiDuTemps.classe.id = :classeId " +
+           "AND s.date BETWEEN :dateDebut AND :dateFin " +
+           "ORDER BY s.date, s.heureDebut")
+    List<Seance> findByClasseIdAndDateBetween(@Param("classeId") Long classeId,
+                                              @Param("dateDebut") LocalDate dateDebut,
+                                              @Param("dateFin") LocalDate dateFin);
 }

@@ -1,50 +1,87 @@
-// static/js/etudiant-absences.js
-const API_BASE = 'http://localhost:8081/api';
-const token = localStorage.getItem('adsis_token');
+/**
+ * ADSIS — absences.js
+ * Page absences étudiant — toutes les absences avec statut et actions
+ */
+import { requireRole, getUser } from './auth.js';
+
+if (!requireRole(['ETUDIANT'])) throw new Error('Accès refusé');
+
+const user = getUser();
+if (user) {
+    const n = document.getElementById('user-name-top');
+    const e = document.getElementById('user-email-top');
+    const a = document.getElementById('user-avatar');
+    if (n) n.textContent = `${user.prenom} ${user.nom}`;
+    if (e) e.textContent = user.email || '';
+    if (a) a.textContent = (user.prenom?.[0] || 'E').toUpperCase();
+}
+
+const CACHE_KEY = 'etu_absences_toutes';
 
 async function loadAbsences() {
+    const tbody = document.getElementById('absences-body');
+    if (!tbody) return;
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) renderAbsences(JSON.parse(cached), tbody);
     try {
-        const response = await fetch(`${API_BASE}/etudiant/absences/toutes`, {
+        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
+        const res = await fetch('/api/etudiant/absences/toutes', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error('Erreur chargement absences');
-        const absences = await response.json();
-        const tbody = document.getElementById('absences-body');
-        
-        if (absences.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Aucune absence enregistrée</td></tr>';
-            return;
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        renderAbsences(data, tbody);
+        updateCompteurs(data);
+    } catch (err) {
+        console.warn('[absences] Erreur:', err);
+        if (!cached) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-warning"><i class="bi bi-wifi-off me-2"></i>Données hors ligne indisponibles</td></tr>';
         }
-        
-        tbody.innerHTML = absences.map(a => `
-            <tr>
-                <td>${new Date(a.date).toLocaleDateString('fr-FR')}</td>
-                <td>${a.matiere}</td>
-                <td>
-                    <span class="badge ${a.justifiee ? 'bg-success' : 'bg-warning text-dark'}">
-                        ${a.justifiee ? 'Justifiée' : 'En attente / Non justifiée'}
-                    </span>
-                </td>
-                <td>
-                    ${a.justificatif ? 
-                        `<a href="${API_BASE}/etudiant/justificatifs/${a.id}" target="_blank" class="btn btn-sm btn-outline-info">Voir le justificatif</a>` : 
-                        `<button class="btn btn-sm btn-primary justify-btn" data-absence-id="${a.id}">Justifier</button>`
-                    }
-                </td>
-            </tr>
-        `).join('');
-        
-        // Attacher les événements aux boutons "Justifier"
-        document.querySelectorAll('.justify-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const absenceId = btn.getAttribute('data-absence-id');
-                window.location.href = `/etudiant/justifications?id=${absenceId}`;
-            });
-        });
-    } catch (error) {
-        console.error(error);
-        document.getElementById('absences-body').innerHTML = '<tr><td colspan="4" class="text-danger text-center">Erreur de chargement</td></tr>';
     }
 }
 
-loadAbsences();
+function renderAbsences(absences, tbody) {
+    if (!absences || absences.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>Aucune absence enregistrée</td></tr>';
+        return;
+    }
+    tbody.innerHTML = absences.map(a => {
+        const date    = a.date ? new Date(a.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'}) : '—';
+        const horaire = a.heureDebut ? `${a.heureDebut}–${a.heureFin || '?'}` : '—';
+        const statutBadge = a.statut === 'retard'
+            ? '<span class="badge bg-warning text-dark">Retard</span>'
+            : '<span class="badge bg-danger">Absent</span>';
+
+        // Badge justificatif basé sur justificatifStatut (plus précis que justifiee)
+        let justBadge, action;
+        if (a.justificatifStatut === 'ACCEPTE') {
+            justBadge = '<span class="badge bg-success">Justifiée</span>';
+            action    = '<span class="text-success small"><i class="bi bi-check-circle me-1"></i>Traitée</span>';
+        } else if (a.justificatifStatut === 'EN_ATTENTE') {
+            justBadge = '<span class="badge bg-info text-dark">⏳ En attente</span>';
+            action    = '<span class="text-info small"><i class="bi bi-hourglass-split me-1"></i>Justificatif en cours</span>';
+        } else if (a.justificatifStatut === 'REJETE') {
+            justBadge = '<span class="badge bg-danger">Rejetée</span>';
+            action    = `<a href="/etudiant/justifications?id=${a.id}" class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-repeat"></i> Re-soumettre</a>`;
+        } else {
+            justBadge = '<span class="badge bg-secondary">Non justifiée</span>';
+            action    = `<a href="/etudiant/justifications?id=${a.id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-plus"></i> Justifier</a>`;
+        }
+        return `<tr><td>${date}</td><td><strong>${a.matiere || '—'}</strong></td><td><small>${horaire}</small></td><td>${statutBadge}</td><td>${justBadge}</td><td>${action}</td></tr>`;
+    }).join('');
+}
+
+function updateCompteurs(abs) {
+    const total = abs.length;
+    const inj   = abs.filter(a => !a.justifiee).length;
+    const just  = abs.filter(a => a.justifiee).length;
+    const t = document.getElementById('cnt-total');
+    const i = document.getElementById('cnt-injustifiees');
+    const j = document.getElementById('cnt-justifiees');
+    if (t) t.textContent = total;
+    if (i) i.textContent = inj;
+    if (j) j.textContent = just;
+}
+
+document.addEventListener('DOMContentLoaded', loadAbsences);

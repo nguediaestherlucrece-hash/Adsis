@@ -149,6 +149,16 @@ const NAV_CONFIG = {
 // SURVEILLANT utilise la même nav qu'ASSISTANT
 NAV_CONFIG.SURVEILLANT = NAV_CONFIG.ASSISTANT_PEDAGOGIQUE;
 
+// ETUDIANT — redirige vers son propre espace
+NAV_CONFIG.ETUDIANT = [
+    { label: 'Tableau de bord',  href: '/etudiant/dashboard',     icon: `<i class="bi bi-speedometer2"></i>` },
+    { label: 'Emploi du temps', href: '/etudiant/emploi',         icon: `<i class="bi bi-calendar-week"></i>` },
+    { label: 'Répondre à l\'appel', href: '/etudiant/appel',       icon: `<i class="bi bi-qr-code-scan"></i>` },
+    { label: 'Mes absences',    href: '/etudiant/absences',       icon: `<i class="bi bi-exclamation-triangle"></i>` },
+    { label: 'Justificatifs',   href: '/etudiant/justifications', icon: `<i class="bi bi-file-earmark-text"></i>` },
+    { label: 'Mon profil',      href: '#', active: true,          icon: `<i class="bi bi-person-circle"></i>` },
+];
+
 /* ── 2. Injecter la navigation ──────────────────────────────────────── */
 function buildSidebar() {
   const navEl = document.getElementById('sidebar-nav');
@@ -187,6 +197,7 @@ const ROLE_CONFIG = {
   ENSEIGNANT:            { label: 'Enseignant',            color: '#3B55E6', roleLabel: 'ENSEIGNANT'     },
   ASSISTANT_PEDAGOGIQUE: { label: 'Assistant Pédagogique', color: '#10b981', roleLabel: 'ASSISTANT PÉDAGOGIQUE' },
   SURVEILLANT:           { label: 'Surveillant',           color: '#f59e0b', roleLabel: 'SURVEILLANT'    },
+  ETUDIANT:              { label: 'Étudiant',              color: '#10b981', roleLabel: 'ÉTUDIANT'       },
 };
 
 const roleCfg = ROLE_CONFIG[userRole];
@@ -217,6 +228,7 @@ const API_ENDPOINTS = {
   ENSEIGNANT:            `/api/enseignants/${userId}`,
   ASSISTANT_PEDAGOGIQUE: `/api/assistants-pedagogiques/${userId}`,
   SURVEILLANT:           `/api/assistants-pedagogiques/${userId}`,
+  ETUDIANT:              `/api/etudiants/${userId}`,
 };
 
 async function loadProfileData() {
