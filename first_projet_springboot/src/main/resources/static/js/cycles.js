@@ -133,10 +133,14 @@ function populateAnneeScolaireSelect(selectedValue = '') {
     });
 }
 
-// Remplit la liste déroulante des années scolaires dans la modale classe
+// Remplit la liste déroulante ou le champ caché des années scolaires dans la modale classe
 function populateAnneeScolaireClasseSelect(selectedValue = '') {
     const sel = document.getElementById('classeAnneeScolaire');
     if (!sel) return;
+    if (sel.tagName === 'INPUT') {
+        sel.value = selectedValue;
+        return;
+    }
     const years = generateAnneesScolaires();
     sel.innerHTML = `<option value="">-- Sélectionnez --</option>`;
     years.forEach(y => {
@@ -201,17 +205,15 @@ function renderCycles() {
     const tbody = document.getElementById('cyclesTableBody');
     if (!tbody) return;
     if (cycles.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Aucun cycle enregistré</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Aucun cycle enregistré</td></tr>`;
         return;
     }
     tbody.innerHTML = cycles.map(c => {
         const filieresDuCycle = filieres.filter(f => f.cycleId == c.id);
-        const anneeLabel = getAnneeAcademiqueFromCycle(c);
         return `
         <tr>
             <td class="ps-4 fw-semibold">${c.nomCycle || '—'}</td>
             <td><span class="badge bg-primary">${c.idCycle || '—'}</span></td>
-            <td class="text-muted small">${anneeLabel || '—'}</td>
             <td class="small">
                 ${filieresDuCycle.length > 0
                 ? filieresDuCycle.map(f => `<span class="badge bg-secondary me-1 mb-1">${f.nomFiliere}</span>`).join('')
@@ -235,8 +237,6 @@ function openCreateCycle() {
     document.getElementById('cycleIdCycle').value = '';
     document.getElementById('cycleNom').value = '';
     document.getElementById('cycleAnneeCreation').value = '';
-    const now = new Date().getFullYear();
-    populateAnneeScolaireSelect(`${now}-${now + 1}`);
     new bootstrap.Modal(document.getElementById('cycleModal')).show();
 }
 
@@ -248,21 +248,15 @@ function openEditCycle(id) {
     document.getElementById('cycleIdCycle').value = c.idCycle || '';
     document.getElementById('cycleNom').value = c.nomCycle || '';
     document.getElementById('cycleAnneeCreation').value = c.anneeDeCreation ?? '';
-    populateAnneeScolaireSelect(getAnneeAcademiqueFromCycle(c));
     new bootstrap.Modal(document.getElementById('cycleModal')).show();
 }
 
 async function saveCycle() {
     const id = document.getElementById('cycleId').value;
-    const anneeScolaire = document.getElementById('cycleAnneeScolaire').value;
-    if (!anneeScolaire) { showToast('Veuillez sélectionner une année scolaire.', 'warning'); return; }
-    const parts = anneeScolaire.split('-');
     const payload = {
         idCycle: document.getElementById('cycleIdCycle').value.trim(),
         nomCycle: document.getElementById('cycleNom').value.trim(),
-        anneeDeCreation: parseInt(document.getElementById('cycleAnneeCreation').value) || null,
-        anneeDebut: parseInt(parts[0]),
-        anneeFin: parseInt(parts[1]),
+        anneeDeCreation: parseInt(document.getElementById('cycleAnneeCreation').value) || null
     };
     if (!payload.nomCycle) { showToast('Le nom du cycle est requis.', 'warning'); return; }
     try {
@@ -320,7 +314,10 @@ function renderFilieres() {
         const niveauxF = niveaux.filter(n => n.filiereId == f.id);
         return `
         <tr>
-            <td class="ps-4 fw-semibold">${f.nomFiliere || '—'}</td>
+            <td class="ps-4 fw-semibold">
+                ${f.nomFiliere || '—'}
+                ${(f.isTroncCommun || f.troncCommun) ? '<span class="badge bg-success ms-2 text-white" style="font-size:0.75rem;">Tronc Commun</span>' : ''}
+            </td>
             <td><span class="badge bg-info text-dark">${f.idFiliere || '—'}</span></td>
             <td>${cycle
                 ? `<span class="badge bg-primary">${cycle.nomCycle}</span>`
@@ -359,6 +356,7 @@ function openCreateFiliere() {
     document.getElementById('filiereIdFiliere').value = '';
     document.getElementById('filiereNom').value = '';
     document.getElementById('filiereDescription').value = '';
+    document.getElementById('filiereIsTroncCommun').checked = false;
     populateCycleSelect('filiereCycleId');
     new bootstrap.Modal(document.getElementById('filiereModal')).show();
 }
@@ -371,6 +369,7 @@ function openEditFiliere(id) {
     document.getElementById('filiereIdFiliere').value = f.idFiliere || '';
     document.getElementById('filiereNom').value = f.nomFiliere || '';
     document.getElementById('filiereDescription').value = f.description || '';
+    document.getElementById('filiereIsTroncCommun').checked = f.isTroncCommun || f.troncCommun || false;
     populateCycleSelect('filiereCycleId', f.cycleId);
     new bootstrap.Modal(document.getElementById('filiereModal')).show();
 }
@@ -386,6 +385,7 @@ async function saveFiliere() {
         nomFiliere: nom,
         description: document.getElementById('filiereDescription').value.trim(),
         cycleId: parseInt(cycleId),
+        isTroncCommun: document.getElementById('filiereIsTroncCommun').checked
     };
     try {
         if (id) {
@@ -399,7 +399,7 @@ async function saveFiliere() {
             showToast('Filière créée.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('filiereModal'))?.hide();
-        updateCounts(); renderCurrentTab();
+        await loadAll();
     } catch (e) { showToast('Erreur : ' + parseError(e), 'danger'); }
 }
 
@@ -543,6 +543,7 @@ function openCreateNiveau() {
     document.getElementById('niveauId').value = '';
     document.getElementById('niveauIdNiveau').value = '';
     document.getElementById('niveauNom').value = '';
+    document.getElementById('niveauOrdre').value = '1';
     populateFiliereSelect('niveauFiliereId');
     new bootstrap.Modal(document.getElementById('niveauModal')).show();
 }
@@ -554,6 +555,7 @@ function openEditNiveau(id) {
     document.getElementById('niveauId').value = n.id;
     document.getElementById('niveauIdNiveau').value = n.idNiveau || '';
     document.getElementById('niveauNom').value = n.nom || n.nomNiveau || '';
+    document.getElementById('niveauOrdre').value = n.ordre || '1';
     populateFiliereSelect('niveauFiliereId', n.filiereId);
     new bootstrap.Modal(document.getElementById('niveauModal')).show();
 }
@@ -565,7 +567,13 @@ async function saveNiveau() {
     if (!nom) { showToast('Le nom du niveau est requis.', 'warning'); return; }
     const filiereId = document.getElementById('niveauFiliereId').value;
     if (!filiereId) { showToast('Veuillez sélectionner une filière.', 'warning'); return; }
-    const payload = { idNiveau: idNiv, nom, filiereId: parseInt(filiereId) };
+    const ordreVal = document.getElementById('niveauOrdre').value;
+    const payload = {
+        idNiveau: idNiv,
+        nom,
+        filiereId: parseInt(filiereId),
+        ordre: parseInt(ordreVal || 1)
+    };
     try {
         if (id) {
             const updated = await apiFetch(`/niveaux/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
@@ -579,7 +587,7 @@ async function saveNiveau() {
             showToast('Niveau créé.', 'success');
         }
         bootstrap.Modal.getInstance(document.getElementById('niveauModal'))?.hide();
-        updateCounts(); renderCurrentTab();
+        await loadAll();
     } catch (e) { showToast('Erreur : ' + parseError(e), 'danger'); }
 }
 
@@ -1017,6 +1025,7 @@ window.openEditAnnee = openEditAnnee;
 window.saveAnnee = saveAnnee;
 window.deleteAnnee = deleteAnnee;
 window.activerAnnee = activerAnnee;
+window.toggleMigration = toggleMigration;
 
 // Semestres
 window.openCreateSemestre = openCreateSemestre;
@@ -1049,6 +1058,9 @@ function renderAnnees() {
         const activerBtn = a.actif
             ? '<button class="btn btn-sm btn-outline-secondary" disabled title="Déjà actif"><i class="bi bi-check-circle"></i></button>'
             : `<button class="btn btn-sm btn-outline-success" title="Activer" onclick="activerAnnee(${a.id})"><i class="bi bi-lightning"></i></button>`;
+        const migrationBtn = a.migrationAutorisee
+            ? `<button class="btn btn-sm btn-success" title="Désautoriser la migration" onclick="toggleMigration(${a.id}, false)"><i class="bi bi-shield-fill-check"></i></button>`
+            : `<button class="btn btn-sm btn-outline-warning" title="Autoriser la migration" onclick="toggleMigration(${a.id}, true)"><i class="bi bi-shield-slash"></i></button>`;
         const semCount = a.nombreSemestres || 0;
         return `<tr>
             <td class="ps-4 fw-semibold">${a.nomAnneeAcademique || ''}</td>
@@ -1062,6 +1074,7 @@ function renderAnnees() {
                     <button class="btn btn-outline-primary" onclick="openEditAnnee(${a.id})"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-outline-danger" onclick="deleteAnnee(${a.id})"><i class="bi bi-trash"></i></button>
                     ${activerBtn}
+                    ${migrationBtn}
                 </div>
             </td>
         </tr>`;
@@ -1092,12 +1105,13 @@ function openEditAnnee(id) {
 
 async function saveAnnee() {
     const id = document.getElementById('anneeId').value;
+    const existing = id ? anneesAcademiques.find(x => x.id == id) : null;
     const dto = {
         nomAnneeAcademique: document.getElementById('anneeNom').value.trim(),
         idAnneeAcademique: document.getElementById('anneeCode').value.trim(),
         anneeDebut: document.getElementById('anneeDebut').value || null,
         anneeFin: document.getElementById('anneeFin').value || null,
-        actif: false
+        actif: existing ? existing.actif : false
     };
     if (!dto.nomAnneeAcademique || !dto.idAnneeAcademique) {
         showToast('Nom et code requis.', 'warning');
@@ -1132,6 +1146,17 @@ async function activerAnnee(id) {
     try {
         await apiFetch(`/annees-academiques/${id}/activer`, { method: 'PATCH' });
         showToast('Année activée.', 'success');
+        await loadAll();
+    } catch (e) { showToast(parseError(e), 'danger'); }
+}
+
+async function toggleMigration(id, autoriser) {
+    const action = autoriser ? 'autoriser' : 'interdire';
+    const ok = await showConfirm('Migration', `Voulez-vous ${action} la migration pour cette année académique ?`);
+    if (!ok) return;
+    try {
+        await apiFetch(`/annees-academiques/${id}/autoriser-migration?autoriser=${autoriser}`, { method: 'PATCH' });
+        showToast(autoriser ? 'Migration autorisée.' : 'Migration interdite.', 'success');
         await loadAll();
     } catch (e) { showToast(parseError(e), 'danger'); }
 }
@@ -1203,10 +1228,11 @@ function openEditSemestre(id) {
 async function saveSemestre() {
     const id = document.getElementById('semestreId').value;
     const anneeId = document.getElementById('semestreAnneeId').value;
+    const existing = id ? semestres.find(x => x.id == id) : null;
     const dto = {
         nomSemestre: document.getElementById('semestreNom').value.trim(),
         idSemestre: document.getElementById('semestreCode').value.trim(),
-        statut: false,
+        statut: existing ? existing.statut : false,
         anneeAcademiqueId: anneeId ? parseInt(anneeId) : null
     };
     if (!dto.nomSemestre || !dto.idSemestre) {

@@ -40,16 +40,33 @@ async function loadAbsencesNonJustifiees() {
         }
         select.innerHTML = '<option value="">— Sélectionnez une absence —</option>' +
             absences.map(a => {
-                const date     = a.date ? new Date(a.date).toLocaleDateString('fr-FR') : '?';
-                const selected = preselectedId && String(a.id) === String(preselectedId) ? 'selected' : '';
-                // Si un justificatif est EN_ATTENTE, l'option est disabled avec un indicateur
+                const date       = a.date ? new Date(a.date).toLocaleDateString('fr-FR') : '?';
+                const matiere    = a.matiere || '—';
+                const selected   = preselectedId && String(a.id) === String(preselectedId) ? 'selected' : '';
+
+                // Détail des heures précises
+                let heuresInfo = '';
+                if (a.heuresAbsentes > 0) {
+                    if (a.statut === 'présent_partiel') {
+                        const plage = (a.heureDebutSeance && a.heureFinSeance)
+                            ? ` (séance ${a.heureDebutSeance}–${a.heureFinSeance})`
+                            : '';
+                        heuresInfo = ` — ${a.heuresAbsentes}h abs${plage}`;
+                    } else {
+                        heuresInfo = ` — ${a.heuresAbsentes}h`;
+                    }
+                }
+
+                const label = `${matiere} (${date})${heuresInfo}`;
+
+                // Si un justificatif est EN_ATTENTE, l'option est disabled
                 if (a.justificatifStatut === 'EN_ATTENTE') {
-                    return `<option value="${a.id}" disabled ${selected}>⏳ En attente de validation — ${a.matiere || '—'} (${date})</option>`;
+                    return `<option value="${a.id}" disabled ${selected}>⏳ En attente — ${label}</option>`;
                 }
                 if (a.justificatifStatut === 'REJETE') {
-                    return `<option value="${a.id}" ${selected}>⚠️ Rejeté — résoumettre — ${a.matiere || '—'} (${date})</option>`;
+                    return `<option value="${a.id}" ${selected}>⚠️ Rejeté — résoumettre — ${label}</option>`;
                 }
-                return `<option value="${a.id}" ${selected}>${a.matiere || '—'} — ${date}</option>`;
+                return `<option value="${a.id}" ${selected}>${label}</option>`;
             }).join('');
     } catch (err) {
         console.warn('[justifications] Erreur chargement absences:', err);
@@ -74,18 +91,36 @@ async function loadHistorique() {
             return;
         }
         const statutConfig = {
-            'EN_ATTENTE': { badge: 'warning', label: 'En attente', icon: 'hourglass-split' },
-            'ACCEPTE':    { badge: 'success', label: 'Accepté',    icon: 'check-circle'   },
-            'REFUSE':     { badge: 'danger',  label: 'Refusé',     icon: 'x-circle'       },
+            'EN_ATTENTE': { badge: 'warning',   label: 'En attente', icon: 'hourglass-split' },
+            'ACCEPTE':    { badge: 'success',   label: 'Accepté',    icon: 'check-circle'   },
+            'REJETE':     { badge: 'danger',    label: 'Rejeté',     icon: 'x-circle'       },
         };
         list.innerHTML = items.map(j => {
-            const cfg = statutConfig[j.statutValidation] || { badge: 'secondary', label: j.statutValidation, icon: 'question' };
+            const cfg  = statutConfig[j.statutValidation] || { badge: 'secondary', label: j.statutValidation, icon: 'question' };
             const date = j.dateSoumission ? new Date(j.dateSoumission).toLocaleDateString('fr-FR') : '—';
+            const matiere = j.coursNom || '—';
+
+            // Informations sur la séance + heures absentes
+            let seanceInfo = '';
+            if (j.seanceDate) {
+                const sd = new Date(j.seanceDate).toLocaleDateString('fr-FR');
+                seanceInfo = `<div class="text-muted" style="font-size:.78rem;">Séance du ${sd}`;
+                if (j.seanceHeureDebut) seanceInfo += ` ${j.seanceHeureDebut}–${j.seanceHeureFin || '?'}`;
+                if (j.heuresAbsentes > 0) {
+                    seanceInfo += ` — <span class="text-danger fw-semibold">${j.heuresAbsentes}h absente${j.heuresAbsentes > 1 ? 's' : ''}</span>`;
+                    if (j.heuresPresentes > 0) {
+                        seanceInfo += ` / ${j.heuresPresentes}h présente${j.heuresPresentes > 1 ? 's' : ''}`;
+                    }
+                }
+                seanceInfo += '</div>';
+            }
+
             return `
             <li class="list-group-item">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="fw-semibold small">${j.matiere || j.absence?.matiere || '—'}</div>
+                        <div class="fw-semibold small">${matiere}</div>
+                        ${seanceInfo}
                         <div class="text-muted" style="font-size:.78rem;">Soumis le ${date}</div>
                         <div class="text-muted" style="font-size:.78rem;">${(j.motif || '').substring(0,60)}${j.motif && j.motif.length > 60 ? '…' : ''}</div>
                     </div>

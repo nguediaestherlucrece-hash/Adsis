@@ -29,8 +29,6 @@ public class CycleMapper {
         c.setIdCycle(dto.getIdCycle());
         c.setNomCycle(dto.getNomCycle());
         c.setAnneeDeCreation(dto.getAnneeDeCreation());
-        c.setAnneeDebut(dto.getAnneeDebut());
-        c.setAnneeFin(dto.getAnneeFin());
         return c;
     }
 
@@ -41,9 +39,5 @@ public class CycleMapper {
             cycle.setNomCycle(dto.getNomCycle());
         if (dto.getAnneeDeCreation() != null)
             cycle.setAnneeDeCreation(dto.getAnneeDeCreation());
-        if (dto.getAnneeDebut() != null)
-            cycle.setAnneeDebut(dto.getAnneeDebut());
-        if (dto.getAnneeFin() != null)
-            cycle.setAnneeFin(dto.getAnneeFin());
     }
 }

@@ -15,4 +15,5 @@ public class AssistantPageController {
     @GetMapping("/matiere")          public String matiere()   { return "assistant/matiere"; }
     @GetMapping("/gestionetudiant")  public String etudiant()  { return "assistant/gestionetudiant"; }
     @GetMapping("/emploidutemps")    public String emploi()    { return "assistant/emploidutemps"; }
+    @GetMapping("/justificatifs")    public String justificatifs() { return "assistant/justificatifs"; }
 }

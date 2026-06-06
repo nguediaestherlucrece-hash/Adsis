@@ -200,32 +200,53 @@ function renderEDT(seances, tbody) {
                 const isToday  = s.date === todayStr;
                 const active   = isToday && isSessionActive(hDeb, hFin);
 
-                const activeBadge = active
-                    ? `<div style="font-size:.65rem;background:#16a34a;color:#fff;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:3px;">🟢 Appel ouvert</div>`
-                    : (isToday ? `<div style="font-size:.65rem;background:#64748b;color:#fff;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:3px;">⏳ Hors fenêtre</div>` : '');
+                if (s.isEvent) {
+                    const evtColor = s.couleur || '#d97706';
+                    const cleanNom = cleanEventNameString(s.nomEvenement);
+                    const iconMap = { 'Pause': '☕', 'TPE': '📚' };
+                    const icon = iconMap[cleanNom] || '📅';
+                    td.innerHTML = `
+                        <div class="cours-card rounded-2 p-2" style="
+                            background: linear-gradient(145deg, #fef3c7, #fde68a);
+                            border-left: 4px solid ${evtColor};
+                            min-height: ${minH}px; height: 100%;
+                            display: flex; flex-direction: column; justify-content: center;
+                        ">
+                            <div class="fw-semibold" style="font-size:.83rem; color:#92400e;">
+                                ${icon} ${cleanNom}
+                            </div>
+                            <div style="font-size:.72rem; color:#78350f; margin-top:3px;">
+                                🕐 ${hDeb} – ${hFin}
+                            </div>
+                        </div>`;
+                } else {
+                    const activeBadge = active
+                        ? `<div style="font-size:.65rem;background:#16a34a;color:#fff;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:3px;">🟢 Appel ouvert</div>`
+                        : (isToday ? `<div style="font-size:.65rem;background:#64748b;color:#fff;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:3px;">⏳ Hors fenêtre</div>` : '');
 
-                td.innerHTML = `
-                    <div class="cours-card rounded-2 p-2" style="
-                        background: linear-gradient(145deg,${active ? '#dcfce7,#bbf7d0' : '#eff6ff,#dbeafe'});
-                        border-left: 4px solid ${active ? '#16a34a' : '#3b82f6'};
-                        min-height: ${minH}px;
-                        height: 100%;
-                        display: flex; flex-direction: column; justify-content: center;
-                        cursor: ${s.seanceId ? 'pointer' : 'default'};
-                    " data-seance-id="${s.seanceId || ''}">
-                        <div class="fw-semibold" style="font-size:.83rem;color:${active ? '#15803d' : '#1d4ed8'};">${s.matiere || '—'}</div>
-                        <div style="font-size:.72rem;color:#64748b;margin-top:3px;">🕐 ${hDeb} – ${hFin}</div>
-                        ${s.salle      ? `<div style="font-size:.7rem;color:#64748b;">📍 ${s.salle}</div>`      : ''}
-                        ${s.enseignant ? `<div style="font-size:.7rem;color:#64748b;">👤 ${s.enseignant}</div>` : ''}
-                        ${activeBadge}
-                    </div>`;
+                    td.innerHTML = `
+                        <div class="cours-card rounded-2 p-2" style="
+                            background: linear-gradient(145deg,${active ? '#dcfce7,#bbf7d0' : '#eff6ff,#dbeafe'});
+                            border-left: 4px solid ${active ? '#16a34a' : '#3b82f6'};
+                            min-height: ${minH}px;
+                            height: 100%;
+                            display: flex; flex-direction: column; justify-content: center;
+                            cursor: ${s.seanceId ? 'pointer' : 'default'};
+                        " data-seance-id="${s.seanceId || ''}">
+                            <div class="fw-semibold" style="font-size:.83rem;color:${active ? '#15803d' : '#1d4ed8'};">${s.matiere || '—'}</div>
+                            <div style="font-size:.72rem;color:#64748b;margin-top:3px;">🕐 ${hDeb} – ${hFin}</div>
+                            ${s.salle      ? `<div style="font-size:.7rem;color:#64748b;">📍 ${s.salle}</div>`      : ''}
+                            ${s.enseignant ? `<div style="font-size:.7rem;color:#64748b;">👤 ${s.enseignant}</div>` : ''}
+                            ${activeBadge}
+                        </div>`;
 
-                // Click: redirect to attendance page for this session
-                if (s.seanceId) {
-                    td.style.cursor = 'pointer';
-                    td.querySelector('.cours-card').addEventListener('click', () => {
-                        window.location.href = `/etudiant/appel?seanceId=${s.seanceId}`;
-                    });
+                    // Click: redirect to attendance page for this session
+                    if (s.seanceId) {
+                        td.style.cursor = 'pointer';
+                        td.querySelector('.cours-card').addEventListener('click', () => {
+                            window.location.href = `/etudiant/appel?seanceId=${s.seanceId}`;
+                        });
+                    }
                 }
             } else {
                 td.style.cssText = 'background:#fafbfc;min-width:80px;';
@@ -236,6 +257,18 @@ function renderEDT(seances, tbody) {
 
         tbody.appendChild(tr);
     });
+}
+
+function cleanEventNameString(nom) {
+    if (!nom) return 'Événement';
+    // Supprimer les timestamps numériques et les noms de jours (français/anglais)
+    const days = /\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi;
+    return nom
+        .replace(/\b\d+\b/g, '')
+        .replace(days, '')
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Événement';
 }
 
 function buildTimeCell(slot) {

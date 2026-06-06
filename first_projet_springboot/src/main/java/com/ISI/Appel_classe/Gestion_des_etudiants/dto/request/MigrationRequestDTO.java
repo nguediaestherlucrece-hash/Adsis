@@ -7,6 +7,7 @@ import java.util.List;
 @Data
 public class MigrationRequestDTO {
     private List<Long> etudiantIds;
+    private Long classeSourceId;
     private Long classeDestinationId;
     private String motif;
 }

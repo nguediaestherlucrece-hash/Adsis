@@ -5,6 +5,7 @@ import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.request.MarquerPrese
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.request.MarquerPresentParQRCodeRequest;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.CodePresenceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.PresenceEtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.StatutSeanceEtudiantDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.service.serviceInterface.AppelEtudiantService;
 import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
@@ -113,15 +114,33 @@ public class AppelEtudiantController {
     }
 
     /**
+     * Retourne le statut de l’appel pour l’étudiant authentifié sur une séance :
+     * - appelOuvert : y a-t-il un appel en cours ?
+     * - dejaPresent : a-t-il répondu à CET appel (pas les précédents) ?
+     * - messageStatut: message lisible pour l’affichage ("✅ Présent · 08h25", "⚠️ En retard…")
+     * GET /api/appels-etudiant/statut-seance/{seanceId}
+     */
+    @GetMapping("/statut-seance/{seanceId}")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    public ResponseEntity<StatutSeanceEtudiantDTO> getStatutSeancePourEtudiant(
+            @PathVariable Long seanceId,
+            Authentication authentication) {
+        Long etudiantId = extractEtudiantIdFromAuthentication(authentication);
+        StatutSeanceEtudiantDTO statut = appelEtudiantService
+                .getStatutSeancePourEtudiant(seanceId, etudiantId);
+        return ResponseEntity.ok(statut);
+    }
+
+    /**
      * ✅ CORRECTION BUG CRITIQUE :
      * Avant : Long.parseLong(authentication.getName()) → NumberFormatException car getName() = email
-     * Après : on recherche l'Etudiant en base par email pour obtenir son ID Long
+     * Après : on recherche l’Etudiant en base par email pour obtenir son ID Long
      */
     private Long extractEtudiantIdFromAuthentication(Authentication authentication) {
-        String email = authentication.getName(); // getName() retourne l'email (username de UserDetails)
+        String email = authentication.getName(); // getName() retourne l’email (username de UserDetails)
         return etudiantRepository.findByEmail(email)
                 .map(etudiant -> etudiant.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Étudiant introuvable pour l'email: " + email));
+                        "Étudiant introuvable pour l’email : " + email));
     }
 }

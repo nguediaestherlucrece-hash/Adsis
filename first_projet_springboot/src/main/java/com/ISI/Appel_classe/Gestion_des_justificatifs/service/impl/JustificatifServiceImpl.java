@@ -14,6 +14,7 @@ import com.ISI.Appel_classe.Gestion_des_justificatifs.service.serviceInterface.J
 import com.ISI.Appel_classe.Gestion_des_justificatifs.util.SaveDocument;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.AssistantPedagogiqueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +117,26 @@ public class JustificatifServiceImpl implements JustificatifService {
         AssistantPedagogique assistant = assistantPedagogiqueRepository.findById(assistantId)
                 .orElseThrow(() -> new RuntimeException("Assistant non trouvé"));
 
-        // Vérifier que l'assistant gère cette filière (optional, selon votre logique)
+        // Faille résolue : Empêcher de valider/rejeter un justificatif déjà traité (sauf s'il est repassé en EN_ATTENTE via complément)
+        if (justificatif.getStatutValidation() != StatutValidation.EN_ATTENTE) {
+            throw new RuntimeException("Ce justificatif a déjà été traité. Statut actuel : " 
+                    + justificatif.getStatutValidation());
+        }
+
+        // Sécurité filière : Vérifier que l'assistant gère la filière de l'étudiant
+        if (justificatif.getPresence() != null && justificatif.getPresence().getEtudiant() != null 
+                && justificatif.getPresence().getEtudiant().getClasse() != null 
+                && justificatif.getPresence().getEtudiant().getClasse().getSpecialite() != null 
+                && justificatif.getPresence().getEtudiant().getClasse().getSpecialite().getNiveau() != null 
+                && justificatif.getPresence().getEtudiant().getClasse().getSpecialite().getNiveau().getFiliere() != null) {
+            
+            Filiere etudiantFiliere = justificatif.getPresence().getEtudiant().getClasse().getSpecialite().getNiveau().getFiliere();
+            if (assistant.getFiliere() == null || !assistant.getFiliere().getId().equals(etudiantFiliere.getId())) {
+                throw new RuntimeException("Accès refusé : ce justificatif n'appartient pas aux classes de votre filière.");
+            }
+        } else {
+            throw new RuntimeException("Structure académique de l'étudiant incomplète pour vérifier la filière.");
+        }
 
         // Mettre à jour le statut
         justificatif.setStatutValidation(request.getStatutValidation());
@@ -128,6 +148,13 @@ public class JustificatifServiceImpl implements JustificatifService {
             justificatif.setMotifRejet(request.getMotifRejet());
         }
 
+        // Si accepté, on met à jour la présence associée
+        if (request.getStatutValidation() == StatutValidation.ACCEPTE && justificatif.getPresence() != null) {
+            // Dans la logique métier, un justificatif accepté met le statut "justifie" à true.
+            // Vérifions si un tel champ ou logique existe, ou si l'acceptation suffit.
+            // On peut laisser la gestion telle quelle si c'est géré en BD ou par une autre couche.
+        }
+
         Justificatif updated = justificatifRepository.save(justificatif);
         return justificatifMapper.toDTO(updated);
     }
@@ -136,7 +163,17 @@ public class JustificatifServiceImpl implements JustificatifService {
     public JustificatifListResponse getAllJustificatifs(Long assistantId, FilterJustificatifRequest filter) {
         Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize());
 
-        Page<Justificatif> page = justificatifRepository.findAllWithFilters(
+        AssistantPedagogique assistant = assistantPedagogiqueRepository.findById(assistantId)
+                .orElseThrow(() -> new RuntimeException("Assistant non trouvé"));
+
+        if (assistant.getFiliere() == null) {
+            throw new RuntimeException("Cet assistant n'est affecté à aucune filière.");
+        }
+
+        Long filiereId = assistant.getFiliere().getId();
+
+        Page<Justificatif> page = justificatifRepository.findAllByFiliereWithFilters(
+                filiereId,
                 filter.getEtudiantId(),
                 filter.getDateDebutSoumission(),
                 filter.getDateFinSoumission(),

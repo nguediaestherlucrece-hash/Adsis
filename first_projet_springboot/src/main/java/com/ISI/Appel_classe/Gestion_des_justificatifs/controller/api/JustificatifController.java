@@ -105,7 +105,7 @@ public class JustificatifController {
      * GET /api/justificatifs/{id}
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ETUDIANT') or (hasRole('ASSISTANT_PEDAGOGIQUE') and hasAuthority('JUSTIFICATION_VALIDATE'))")
     public ResponseEntity<JustificatifResponse> getJustificatifById(@PathVariable Long id) {
         try {
             JustificatifResponse response = justificatifService.getJustificatifById(id);
@@ -122,7 +122,7 @@ public class JustificatifController {
      * GET /api/justificatifs/assistant/all
      */
     @GetMapping("/assistant/all")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE') and hasAuthority('JUSTIFICATION_VALIDATE')")
     public ResponseEntity<JustificatifListResponse> getAllJustificatifs(
             @RequestParam Long assistantId,
             @RequestParam(required = false) Long etudiantId,
@@ -155,7 +155,7 @@ public class JustificatifController {
      * PUT /api/justificatifs/{id}/validate
      */
     @PutMapping("/{id}/validate")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE') and hasAuthority('JUSTIFICATION_VALIDATE')")
     public ResponseEntity<?> validateJustificatif(
             @PathVariable Long id,
             @RequestBody UpdateJustificatifRequest request,

@@ -18,8 +18,9 @@ public class FiliereMapper {
         dto.setNomFiliere(filiere.getNomFiliere());
         dto.setDescription(filiere.getDescription());
         dto.setCycleId(filiere.getCycle() != null ? filiere.getCycle().getId() : null);
+        dto.setTroncCommun(filiere.isTroncCommun());
         return dto;
-    }
+     }
 
     public Filiere fromCreateDTO(FiliereCreateDTO dto) {
         if (dto == null)
@@ -28,6 +29,7 @@ public class FiliereMapper {
         f.setIdFiliere(dto.getIdFiliere());
         f.setNomFiliere(dto.getNomFiliere());
         f.setDescription(dto.getDescription());
+        f.setTroncCommun(dto.isTroncCommun());
         return f;
     }
 
@@ -38,5 +40,7 @@ public class FiliereMapper {
             filiere.setNomFiliere(dto.getNomFiliere());
         if (dto.getDescription() != null)
             filiere.setDescription(dto.getDescription());
+        if (dto.getIsTroncCommun() != null)
+            filiere.setTroncCommun(dto.getIsTroncCommun());
     }
 }

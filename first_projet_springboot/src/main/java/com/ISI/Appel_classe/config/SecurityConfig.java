@@ -77,6 +77,7 @@ public class SecurityConfig {
                                 "/assistant/**",
                                 "/shared/**",
                                 "/css/**", "/js/**", "/assets/**",
+                                "/uploads/**",
                                 "/manifest.json", "/sw.js", "/icons/**",
                                 "/favicon.ico", "/login"
                         ).permitAll()

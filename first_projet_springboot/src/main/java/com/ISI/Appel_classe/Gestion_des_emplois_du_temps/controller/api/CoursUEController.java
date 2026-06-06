@@ -11,6 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
+import org.springframework.security.core.Authentication;
+
 import java.util.List;
 
 @Slf4j
@@ -20,37 +25,44 @@ import java.util.List;
 public class CoursUEController {
 
     private final CourUEService courUEService;
+    private final UtilisateurRepository utilisateurRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
-    public ResponseEntity<List<CoursUEDTO>> getAllCours() {
+    @PreAuthorize("hasAuthority('COURSE_VIEW')")
+    public ResponseEntity<List<CoursUEDTO>> getAllCours(Authentication auth) {
+        if (auth != null) {
+            Utilisateur user = utilisateurRepository.findByEmail(auth.getName());
+            if (user instanceof AssistantPedagogique ap && ap.getFiliere() != null) {
+                return ResponseEntity.ok(courUEService.getCoursByFiliere(ap.getFiliere().getId()));
+            }
+        }
         List<CoursUEDTO> cours = courUEService.getAllCours();
         return ResponseEntity.ok(cours);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_VIEW')")
     public ResponseEntity<CoursUEDTO> getCoursById(@PathVariable Long id) {
         CoursUEDTO dto = courUEService.getCoursById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idCours}")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_VIEW')")
     public ResponseEntity<CoursUEDTO> getCoursByCode(@PathVariable String idCours) {
         CoursUEDTO dto = courUEService.getCoursByCode(idCours);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<CoursUEDTO> createCours(@RequestBody coursUECreateDTO dto) {
         CoursUEDTO created = courUEService.createCours(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<CoursUEDTO> updateCours(
             @PathVariable Long id,
             @RequestBody coursUEUpdateDTO dto) {
@@ -59,14 +71,14 @@ public class CoursUEController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<Void> deleteCours(@PathVariable Long id) {
         courUEService.deleteCours(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/specialite/{specialiteId}")
-    @PreAuthorize("hasRole('ASSISTANT_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('COURSE_VIEW')")
     public ResponseEntity<List<CoursUEDTO>> getCoursBySpecialite(@PathVariable Long specialiteId) {
         List<CoursUEDTO> cours = courUEService.getCoursBySpecialite(specialiteId);
         return ResponseEntity.ok(cours);

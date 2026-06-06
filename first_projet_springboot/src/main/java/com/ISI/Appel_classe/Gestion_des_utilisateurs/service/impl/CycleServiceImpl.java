@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CycleServiceImpl implements CycleService {
 
     private final CycleRepository cycleRepository;

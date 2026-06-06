@@ -30,6 +30,10 @@ import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.EtudiantMapper;
 import com.ISI.Appel_classe.Gestion_des_etudiants.mappers.HistoriqueClasseMapper;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.util.UserPasswordGenerator;
 import com.ISI.Appel_classe.mail.EmailSenderService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Niveau;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.AssistantPedagogiqueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,6 +73,7 @@ public class EtudiantServiceImpl implements EtudiantService {
     private final SemestreRepository semestreRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailSenderService emailSenderService;
+    private final AssistantPedagogiqueRepository assistantPedagogiqueRepository;
 
 
     @Override
@@ -293,6 +298,9 @@ public class EtudiantServiceImpl implements EtudiantService {
         // ========================================
 
         if (dto.getClasseId() != null) {
+            if (etudiant.getClasse() != null && !dto.getClasseId().equals(etudiant.getClasse().getId())) {
+                throw new BadRequestException("La classe ne peut pas être modifiée après affectation.");
+            }
             Classe classe = classeRepository.findById(Objects.requireNonNull(dto.getClasseId(), "ClasseId cannot be null"))
                     .orElseThrow(
                             () -> new ResourceNotFoundException("Classe non trouvée avec l'ID: " + dto.getClasseId()));
@@ -481,36 +489,112 @@ public class EtudiantServiceImpl implements EtudiantService {
     }
 
     @Override
+    public List<EtudiantDTO> getEtudiantsByFiliere(Long filiereId) {
+        log.info("Récupération des étudiants de la filière id={}", filiereId);
+        return classeRepository.findBySpecialiteNiveauFiliereId(filiereId).stream()
+                .flatMap(c -> etudiantRepository.findByClasseActuelleId(c.getId()).stream())
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
-    public List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto) {
+    public List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto, String emailAssistant) {
         log.info("🔄 Début de la migration de {} étudiant(s) vers la classe id={}",
                 dto.getEtudiantIds().size(), dto.getClasseDestinationId());
 
-        // 1. Charger la classe destination
-        Classe classeDestination = classeRepository.findById(dto.getClasseDestinationId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Classe destination non trouvée avec l'ID: " + dto.getClasseDestinationId()));
+        // 1. Récupérer l'assistant et sa filière
+        AssistantPedagogique assistant = assistantPedagogiqueRepository.findByEmail(emailAssistant)
+                .orElseThrow(() -> new BadRequestException("Assistant non trouvé"));
+        Filiere filiereAssistant = assistant.getFiliere();
+        if (filiereAssistant == null) {
+            throw new BadRequestException("Cet assistant n'est affecté à aucune filière");
+        }
+
+        // 2. Vérifier qu'une année N+1 existe et est inactive et que la migration y est autorisée
+        AnneeAcademique anneeEnCours = anneeAcademiqueRepository.findByActifTrue()
+                .orElseThrow(() -> new BadRequestException("Aucune année académique en cours"));
+        List<AnneeAcademique> toutesLesAnnees = anneeAcademiqueRepository.findAll();
+        AnneeAcademique anneeNplusUn = toutesLesAnnees.stream()
+                .filter(a -> a.getAnneeDebut() != null && a.getAnneeDebut().isAfter(anneeEnCours.getAnneeFin()))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException(
+                    "La migration n'est possible qu'une fois l'année N+1 créée par l'administrateur"));
+
+        if (anneeNplusUn.isActif()) {
+            throw new BadRequestException("L'année N+1 doit être inactive pour y migrer des étudiants.");
+        }
+
+        if (!anneeNplusUn.isMigrationAutorisee()) {
+            throw new BadRequestException("La migration vers l'année N+1 n'a pas encore été autorisée par l'administrateur.");
+        }
+
+        // 3. Récupérer la classe source
+        Classe classeSource = classeRepository.findById(dto.getClasseSourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Classe source introuvable"));
+
+        // 4. Vérifier que la classe source appartient à la filière de l'assistant
+        Filiere filiereSource = classeSource.getSpecialite().getNiveau().getFiliere();
+        if (!filiereSource.getId().equals(filiereAssistant.getId())) {
+            throw new BadRequestException(
+                "La classe source n'appartient pas à votre filière");
+        }
+
+        // 5. Récupérer la classe de destination
+        Classe classeDest = classeRepository.findById(dto.getClasseDestinationId())
+                .orElseThrow(() -> new ResourceNotFoundException("Classe destination introuvable"));
+        Niveau niveauDest = classeDest.getSpecialite().getNiveau();
+        Filiere filiereDest = niveauDest.getFiliere();
+
+        // 6. Vérifier les règles de destination
+        boolean memeFiliere = filiereDest.getId().equals(filiereAssistant.getId());
+        boolean isTroncCommun = filiereAssistant.isTroncCommun();
+
+        // Déterminer si source est au dernier niveau de la filière (ordre max)
+        int maxOrdre = filiereAssistant.getNiveaux().stream()
+                .mapToInt(Niveau::getOrdre).max().orElse(1);
+        int ordreSource = classeSource.getSpecialite().getNiveau().getOrdre();
+        boolean sourceEstDernierNiveau = (ordreSource == maxOrdre);
+
+        // Déterminer si destination est au premier niveau de la filière de destination
+        int minOrdreDest = filiereDest.getNiveaux().stream()
+                .mapToInt(Niveau::getOrdre).min().orElse(1);
+        boolean destEstPremierNiveau = (niveauDest.getOrdre() == minOrdreDest);
+
+        if (memeFiliere) {
+            // Cas normal ou redoublement : OK
+        } else if (isTroncCommun && sourceEstDernierNiveau && destEstPremierNiveau) {
+            // Tronc commun → première année d'une autre filière : OK
+        } else {
+            throw new BadRequestException(
+                "Destination de migration non autorisée pour votre filière");
+        }
 
         // 2. Capturer les repères temporels globaux actifs
-        AnneeAcademique anneeActive = anneeAcademiqueRepository.findByActifTrue().orElse(null);
         Semestre semestreActif = semestreRepository.findByStatutTrue().orElse(null);
 
         List<EtudiantDTO> result = new java.util.ArrayList<>();
 
-        // 3. Pour chaque étudiant
+        // 7. Pour chaque étudiant
         for (Long etudiantId : dto.getEtudiantIds()) {
             Etudiant etudiant = etudiantRepository.findById(etudiantId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé avec l'ID: " + etudiantId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Étudiant " + etudiantId + " non trouvé"));
+
+            // Vérifier que l'étudiant appartient à la classe source
+            if (etudiant.getClasse() == null || !etudiant.getClasse().getId().equals(classeSource.getId())) {
+                throw new BadRequestException("L'étudiant " + etudiantId
+                    + " n'appartient pas à la classe source");
+            }
 
             Classe ancienneClasse = etudiant.getClasse();
 
             // Ne migrer que si la classe change réellement
-            if (ancienneClasse != null && !ancienneClasse.getId().equals(classeDestination.getId())) {
+            if (!ancienneClasse.getId().equals(classeDest.getId())) {
                 // Créer l'entrée d'historique
                 HistoriqueClasse historique = new HistoriqueClasse();
                 historique.setEtudiant(etudiant);
                 historique.setClasse(ancienneClasse);
-                historique.setAnneeAcademique(anneeActive);
+                historique.setAnneeAcademique(anneeEnCours);
                 historique.setSemestre(semestreActif);
                 historique.setDateSortie(java.time.LocalDate.now());
                 historique.setMotif(dto.getMotif() != null ? dto.getMotif() : "Migration");
@@ -529,11 +613,11 @@ public class EtudiantServiceImpl implements EtudiantService {
 
                 historiqueClasseRepository.save(historique);
                 log.info("✅ Historique créé pour l'étudiant {} : {} → {}",
-                        etudiantId, ancienneClasse.getNomClasse(), classeDestination.getNomClasse());
+                        etudiantId, ancienneClasse.getNomClasse(), classeDest.getNomClasse());
             }
 
             // Changer la classe courante
-            etudiant.setClasse(classeDestination);
+            etudiant.setClasse(classeDest);
             Etudiant updated = etudiantRepository.save(etudiant);
             result.add(mapper.toDTO(updated));
         }

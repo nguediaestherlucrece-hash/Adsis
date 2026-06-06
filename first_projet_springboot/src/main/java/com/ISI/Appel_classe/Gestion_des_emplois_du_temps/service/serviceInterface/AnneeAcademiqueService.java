@@ -21,5 +21,7 @@ public interface AnneeAcademiqueService {
     void deleteAnnee(Long id);
 
     AnneeAcademiqueDTO activerAnnee(Long id);
+
+    AnneeAcademiqueDTO autoriserMigration(Long id, boolean autoriser);
 }
 

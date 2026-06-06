@@ -4,13 +4,18 @@ import com.ISI.Appel_classe.Gestion_des_etudiants.dto.response.ClasseDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseCreateDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.dto.request.ClasseUpdateDTO;
 import com.ISI.Appel_classe.Gestion_des_etudiants.service.serviceInterface.ClasseService;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Utilisateur;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.AssistantPedagogique;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -19,11 +24,18 @@ import java.util.List;
 public class ClasseController {
 
     private final ClasseService classeService;
+    private final UtilisateurRepository utilisateurRepository;
 
     // Lecture : accessible à tous les rôles staff
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
-    public ResponseEntity<List<ClasseDTO>> getAllClasses() {
+    public ResponseEntity<List<ClasseDTO>> getAllClasses(Authentication auth) {
+        if (auth != null) {
+            Utilisateur user = utilisateurRepository.findByEmail(auth.getName());
+            if (user instanceof AssistantPedagogique ap && ap.getFiliere() != null) {
+                return ResponseEntity.ok(classeService.getClassesByFiliere(ap.getFiliere().getId()));
+            }
+        }
         return ResponseEntity.ok(classeService.getAllClasses());
     }
 

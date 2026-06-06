@@ -30,12 +30,41 @@ public class JustificatifMapper {
         if (justificatif.getPresence() != null) {
             response.setPresenceId(justificatif.getPresence().getId());
             response.setPresenceStatut(justificatif.getPresence().getStatut());
+
+            // Heures précises depuis les créneaux horaires
+            com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence pres = justificatif.getPresence();
+            response.setHeuresAbsentes(pres.getHeuresAbsentes());
+            response.setHeuresPresentes(pres.getHeuresPresentes());
+
             if (justificatif.getPresence().getSeance() != null) {
-                response.setCoursNom(justificatif.getPresence().getSeance().getCours().getIntitule());
+                com.ISI.Appel_classe.Gestion_des_emplois_du_temps.model.Seance seance =
+                        justificatif.getPresence().getSeance();
+                // Null-safe : cours peut être null si la séance est un événement sans UE
+                if (seance.getCours() != null) {
+                    String intitule = seance.getCours().getIntitule();
+                    String code = seance.getCours().getCodeUE();
+                    response.setCoursNom(
+                        (intitule != null && !intitule.isBlank()) ? intitule
+                        : (code != null && !code.isBlank()) ? code
+                        : "—");
+                } else {
+                    response.setCoursNom("—");
+                }
+                response.setSeanceDate(seance.getDate());
+                if (seance.getHeureDebut() != null) {
+                    response.setSeanceHeureDebut(seance.getHeureDebut().toString());
+                }
+                if (seance.getHeureFin() != null) {
+                    response.setSeanceHeureFin(seance.getHeureFin().toString());
+                }
             }
             if (justificatif.getPresence().getEtudiant() != null) {
                 response.setEtudiantNom(justificatif.getPresence().getEtudiant().getNom());
                 response.setEtudiantPrenom(justificatif.getPresence().getEtudiant().getPrenom());
+                response.setEtudiantMatricule(justificatif.getPresence().getEtudiant().getMatricule());
+                if (justificatif.getPresence().getEtudiant().getClasse() != null) {
+                    response.setEtudiantClasse(justificatif.getPresence().getEtudiant().getClasse().getNomClasse());
+                }
             }
         }
 

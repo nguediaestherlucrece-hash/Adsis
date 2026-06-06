@@ -1,13 +1,12 @@
 /**
  * ADSIS — appeletu.js
- * Page appel étudiant : cours du jour, QR scan, saisie PIN, justification
+ * Page appel étudiant : cours du jour, QR scan, saisie PIN, résumé détaillé
  *
- * Corrections par rapport à la version collègue :
- *  - Import depuis auth.js (getUser + guard ETUDIANT)
- *  - URLs API corrigées (/api/etudiant/cours/a-venir filtré sur aujourd'hui,
- *    puis /api/appels-etudiant/* pour marquer présent)
- *  - Intégration html5-qrcode pour le scan caméra
- *  - Pas de `authFetch` (non exporté) → on utilise fetch standard avec Authorization header
+ * Refonte v2 :
+ *  - Polling API toutes les 30s (GET /api/appels-etudiant/statut-seance/{id})
+ *  - Blocage boutons PAR APPEL (pas par séance) — l'étudiant peut répondre au 2e appel
+ *  - Affichage détaillé du statut après réponse (retard, heures absentes/présentes)
+ *  - sessionStorage conservé uniquement comme indicateur informatif (pas de verrou)
  */
 import { requireRole, getUser } from './auth.js';
 
@@ -16,20 +15,21 @@ if (!requireRole(['ETUDIANT'])) throw new Error('Accès refusé');
 const user = getUser();
 let qrScanner = null;
 let currentSeanceId = null;
+let pollingInterval = null;
 
-// ── Gestion "déjà présent" — persistance via sessionStorage ──────────────────
+// ── sessionStorage : heure de la dernière réponse par séance (informatif uniquement) ──
 const TODAY = new Date().toISOString().split('T')[0];
 function _markedKey() { return `adsis_marked_${TODAY}`; }
 function getMarkedSeances() {
     try { return JSON.parse(sessionStorage.getItem(_markedKey()) || '{}'); } catch { return {}; }
 }
-function markSeanceAsPresent(seanceId) {
+function setDerniereReponse(seanceId, heureISO) {
     const m = getMarkedSeances();
-    m[String(seanceId)] = new Date().toISOString();
+    m[String(seanceId)] = heureISO;
     sessionStorage.setItem(_markedKey(), JSON.stringify(m));
 }
-function isSeanceAlreadyMarked(seanceId) {
-    return !!getMarkedSeances()[String(seanceId)];
+function getDerniereReponse(seanceId) {
+    return getMarkedSeances()[String(seanceId)] || null;
 }
 
 // ── Init topbar ───────────────────────────────────────────────────────────────
@@ -50,19 +50,22 @@ if (jourEl) {
     });
 }
 
-// ── Helper: récupérer le token JWT ──────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function getToken() {
     return localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
 }
+function authHeaders(extra = {}) {
+    return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', ...extra };
+}
+function localDateString(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
 
-// ── Helper: seanceId depuis l'URL (?seanceId=X) ─────────────────────────────
 const urlSeanceId = new URLSearchParams(window.location.search).get('seanceId');
 
-// ── Helper: fenêtre de 15 min autour d'une séance ───────────────────────────
-/**
- * Returns true if the current time is within [-15min, +15min] of [heureDebut, heureFin].
- * Expects "HH:MM" or "HH:MM:SS" strings.
- */
 function isSessionActive(heureDebut, heureFin) {
     if (!heureDebut || !heureFin) return false;
     const now = new Date();
@@ -71,11 +74,6 @@ function isSessionActive(heureDebut, heureFin) {
     return nowMin >= toMin(heureDebut) - 15 && nowMin <= toMin(heureFin) + 15;
 }
 
-function authHeaders(extra = {}) {
-    return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', ...extra };
-}
-
-// ── Afficher message ──────────────────────────────────────────────────────────
 function showMsg(msg, type = 'success') {
     const div = document.getElementById('appel-message');
     if (!div) return;
@@ -85,25 +83,52 @@ function showMsg(msg, type = 'success') {
     setTimeout(() => div.classList.add('d-none'), 4000);
 }
 
+// ── Polling ───────────────────────────────────────────────────────────────────
+function startPolling(seancesIds) {
+    stopPolling();
+    if (!seancesIds || seancesIds.length === 0) return;
+    pollingInterval = setInterval(async () => {
+        // Rafraîchir uniquement si on est sur la page
+        if (document.visibilityState === 'visible') {
+            await chargerCoursDuJour();
+        }
+    }, 30000);
+}
+function stopPolling() {
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+}
+
+// ── API : statut de l'appel pour l'étudiant ───────────────────────────────────
+async function verifierStatutAppel(seanceId) {
+    try {
+        const res = await fetch(`/api/appels-etudiant/statut-seance/${parseInt(seanceId)}`, {
+            headers: authHeaders()
+        });
+        if (!res.ok) return null;
+        return await res.json(); // StatutSeanceEtudiantDTO
+    } catch { return null; }
+}
+
 // ── Charger les cours du jour ─────────────────────────────────────────────────
 async function chargerCoursDuJour() {
     const container = document.getElementById('cours-container');
     if (!container) return;
 
-    container.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-success me-2"></div>Chargement…</div>';
+    // Ne montrer le spinner que si le container est vide
+    if (!container.querySelector('.cours-item')) {
+        container.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-success me-2"></div>Chargement…</div>';
+    }
 
     try {
-        // On récupère les "prochains cours" et on filtre sur aujourd'hui
-        const res = await fetch('/api/etudiant/cours/a-venir', {
-            headers: authHeaders()
-        });
+        const res = await fetch('/api/etudiant/cours/a-venir', { headers: authHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const tousLesSeances = await res.json();
 
         const todayStr = localDateString(new Date());
-        const seancesAujourdhui = tousLesSeances.filter(s => s.date === todayStr);
+        const seancesAujourdhui = tousLesSeances.filter(s => s.date === todayStr && !s.evenement);
 
         if (seancesAujourdhui.length === 0) {
+            stopPolling();
             container.innerHTML = `
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
@@ -113,13 +138,20 @@ async function chargerCoursDuJour() {
         }
 
         container.innerHTML = '';
-        seancesAujourdhui.forEach(cours => {
-            renderCours(cours, container);
+        const seancesIds = seancesAujourdhui.map(s => s.seanceId);
+
+        // Charger les statuts en parallèle
+        const statuts = await Promise.all(
+            seancesAujourdhui.map(s => verifierStatutAppel(s.seanceId))
+        );
+
+        seancesAujourdhui.forEach((cours, idx) => {
+            renderCours(cours, container, statuts[idx]);
         });
 
         bindButtons();
+        startPolling(seancesIds);
 
-        // Si un seanceId est passé en URL, scroll vers la séance cible
         if (urlSeanceId) {
             setTimeout(() => {
                 const target = container.querySelector(`[data-seance-id="${urlSeanceId}"]`);
@@ -138,66 +170,129 @@ async function chargerCoursDuJour() {
     }
 }
 
-function renderCours(cours, container) {
-    const active         = isSessionActive(cours.heureDebut, cours.heureFin);
-    const isTarget       = urlSeanceId && String(cours.seanceId) === String(urlSeanceId);
-    const alreadyPresent = isSeanceAlreadyMarked(cours.seanceId);
+// ── Rendu d'un cours ──────────────────────────────────────────────────────────
+function renderCours(cours, container, statut) {
+    const windowActive = isSessionActive(cours.heureDebut, cours.heureFin);
+    const isTarget = urlSeanceId && String(cours.seanceId) === String(urlSeanceId);
+
+    // Déterminer l'état des boutons selon le statut API
+    const appelOuvert  = statut?.appelOuvert ?? false;
+    const dejaPresent  = statut?.dejaPresent ?? false;
+
+    // Badge fenêtre horaire
+    const statusBadge = appelOuvert
+        ? `<span class="badge bg-success ms-2"><i class="bi bi-unlock me-1"></i>Appel ouvert</span>`
+        : `<span class="badge bg-secondary ms-2"><i class="bi bi-lock me-1"></i>Aucun appel</span>`;
+
+    // Heure de dernière réponse (sessionStorage informatif)
+    const derniereReponseISO = getDerniereReponse(cours.seanceId);
+    const derniereHeure = derniereReponseISO
+        ? new Date(derniereReponseISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        : null;
+
+    // ── Génération de la zone boutons/statut ──
+    let actionZone = '';
+    if (dejaPresent) {
+        // A déjà répondu à un appel de cette séance (statut persistant après clôture)
+        actionZone = genererResumePresence(statut);
+    } else if (!windowActive && !appelOuvert) {
+        // Hors fenêtre, aucun appel
+        actionZone = `
+            <div class="text-muted small">
+                <i class="bi bi-clock me-1"></i>Hors de la fenêtre d'appel
+            </div>`;
+    } else if (appelOuvert && !dejaPresent) {
+        // Appel ouvert, pas encore répondu → boutons actifs
+        const infoReponse = derniereHeure
+            ? `<small class="text-success d-block mt-1"><i class="bi bi-check-circle me-1"></i>Précédente réponse à ${derniereHeure}</small>`
+            : '';
+        actionZone = `
+            <div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button class="btn-present btn-scan-qr"
+                            data-seance="${cours.seanceId}"
+                            data-label="${cours.matiere || '—'} ${cours.heureDebut || ''}">
+                        <i class="bi bi-qr-code-scan me-1"></i>Scanner QR
+                    </button>
+                    <button class="btn-absent btn-saisir-pin"
+                            data-seance="${cours.seanceId}"
+                            data-label="${cours.matiere || '—'}">
+                        <i class="bi bi-lock me-1"></i>Code PIN
+                    </button>
+                </div>
+                ${infoReponse}
+            </div>`;
+    } else {
+        // Fenêtre active mais aucun appel lancé
+        actionZone = `
+            <span class="badge bg-warning text-dark">
+                <i class="bi bi-hourglass-split me-1"></i>En attente d'un appel
+            </span>`;
+    }
 
     const el = document.createElement('div');
     el.id = `cours-item-${cours.seanceId}`;
-    el.className = `cours-item d-flex justify-content-between align-items-start flex-wrap gap-2 m-3`
-        + (isTarget       ? ' border border-primary border-2 rounded-3' : '')
-        + (alreadyPresent ? ' border border-success border-2 rounded-3' : '');
+    el.className = 'cours-item d-flex justify-content-between align-items-start flex-wrap gap-2 m-3'
+        + (isTarget ? ' border border-primary border-2 rounded-3' : '')
+        + (dejaPresent ? ' border border-success border-2 rounded-3' : '');
     el.dataset.seanceId = cours.seanceId;
-    if (isTarget)       el.style.boxShadow = '0 0 0 3px rgba(13,110,253,.25)';
-    if (alreadyPresent) el.style.boxShadow = '0 0 0 3px rgba(25,135,84,.25)';
-
-    // Badge statut appel
-    const statusBadge = active
-        ? `<span class="badge bg-success ms-2"><i class="bi bi-unlock me-1"></i>Appel ouvert</span>`
-        : `<span class="badge bg-secondary ms-2"><i class="bi bi-lock me-1"></i>Hors fenêtre</span>`;
-
-    // Badge "déjà présent" (persisté en sessionStorage)
-    const presentBadge = alreadyPresent
-        ? `<span class="badge bg-success ms-2"><i class="bi bi-check-circle-fill me-1"></i>Présence enregistrée</span>`
-        : '';
-
-    const lockMsg = active ? '' : `
-        <div class="alert alert-warning py-1 px-2 mt-2 mb-0" style="font-size:.8rem;">
-            <i class="bi bi-clock me-1"></i>
-            L'appel n'est disponible que 15 min avant ou après le début du cours.
-        </div>`;
+    if (isTarget)    el.style.boxShadow = '0 0 0 3px rgba(13,110,253,.25)';
+    if (dejaPresent) el.style.boxShadow = '0 0 0 3px rgba(25,135,84,.25)';
 
     el.innerHTML = `
         <div class="flex-grow-1">
-            <div class="fw-bold">${cours.matiere || '—'} ${statusBadge}${presentBadge}</div>
+            <div class="fw-bold">${cours.matiere || '—'} ${statusBadge}</div>
             <small class="text-muted">
                 <i class="bi bi-clock me-1"></i>${cours.heureDebut || ''} – ${cours.heureFin || ''}
                 &nbsp;|&nbsp;
                 <i class="bi bi-person me-1"></i>${cours.enseignant || '—'}
             </small>
-            ${lockMsg}
         </div>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            ${alreadyPresent
-                ? `<span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-check2-all me-1"></i>Vous êtes présent ✓</span>`
-                : `<button class="btn-present btn-scan-qr"
-                        data-seance="${cours.seanceId}"
-                        data-label="${cours.matiere || '—'} ${cours.heureDebut || ''}"
-                        ${active ? '' : 'disabled title="Hors fenêtre d\'appel"'}>
-                    <i class="bi bi-qr-code-scan me-1"></i>Scanner QR
-                   </button>
-                   <button class="btn-absent btn-saisir-pin"
-                        data-seance="${cours.seanceId}"
-                        data-label="${cours.matiere || '—'}"
-                        ${active ? '' : 'disabled title="Hors fenêtre d\'appel"'}>
-                    <i class="bi bi-lock me-1"></i>Code PIN
-                   </button>`
-            }
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-end">
+            ${actionZone}
         </div>`;
+
     container.appendChild(el);
 }
 
+// ── Génération du résumé détaillé après réponse ───────────────────────────────
+function genererResumePresence(statut) {
+    if (!statut) return '';
+
+    const icones = {
+        'présent':         '✅',
+        'retard':          '⚠️',
+        'présent_partiel': '⚡',
+        'absent':          '❌'
+    };
+    const icone = icones[statut.statut] || '🔵';
+
+    // Message principal
+    const message = statut.messageStatut || 'Présence enregistrée';
+
+    // Détails supplémentaires
+    let details = '';
+    if (statut.retard) {
+        details += `<span class="badge bg-warning text-dark me-1"><i class="bi bi-clock-history me-1"></i>En retard</span>`;
+    }
+    if (statut.heuresAbsentes > 0) {
+        details += `<span class="badge bg-danger me-1"><i class="bi bi-x-circle me-1"></i>${statut.heuresAbsentes}h absent(es)</span>`;
+    }
+    if (statut.heuresPresentes > 0) {
+        details += `<span class="badge bg-success me-1"><i class="bi bi-check-circle me-1"></i>${statut.heuresPresentes}h présent(es)</span>`;
+    }
+
+    return `
+        <div class="presence-resume rounded border border-success-subtle bg-success-subtle px-3 py-2" style="max-width:320px;">
+            <div class="fw-semibold mb-1">${icone} ${message}</div>
+            ${details ? `<div class="mt-1">${details}</div>` : ''}
+            <small class="text-muted d-block mt-1">
+                <i class="bi bi-lock-fill me-1"></i>Présence enregistrée pour cet appel
+            </small>
+        </div>`;
+}
+
+// ── Liaison des boutons ───────────────────────────────────────────────────────
 function bindButtons() {
     document.querySelectorAll('.btn-scan-qr').forEach(btn => {
         btn.addEventListener('click', () => ouvrirQrScan(btn.dataset.seance, btn.dataset.label));
@@ -213,12 +308,11 @@ function ouvrirQrScan(seanceId, label) {
     const modal = new bootstrap.Modal(document.getElementById('qrScanModal'));
     modal.show();
 
-    const resultDiv  = document.getElementById('qr-modal-result');
-    const errorDiv   = document.getElementById('qr-modal-error');
+    const resultDiv = document.getElementById('qr-modal-result');
+    const errorDiv  = document.getElementById('qr-modal-error');
     if (resultDiv) resultDiv.classList.add('d-none');
     if (errorDiv)  errorDiv.classList.add('d-none');
 
-    // Stopper un éventuel scan précédent
     if (qrScanner) { try { qrScanner.stop(); } catch(e) {} qrScanner = null; }
 
     if (typeof Html5QrcodeScanner !== 'undefined') {
@@ -239,27 +333,30 @@ async function validerQrCode(token, seanceId) {
     const resultDiv = document.getElementById('qr-modal-result');
     const errorDiv  = document.getElementById('qr-modal-error');
     try {
-        // Utilise AppelController — vérifie le QR de l'enseignant dans le pinCache
         const res = await fetch(`/api/appels/seance/${parseInt(seanceId)}/etudiant/valider-qr`, {
             method: 'POST',
             headers: authHeaders(),
             body: JSON.stringify({ qrToken: token })
         });
         if (res.ok) {
+            const data = await res.json().catch(() => null);
             if (resultDiv) {
-                resultDiv.querySelector('#qr-modal-text').textContent = 'Présence enregistrée avec succès !';
+                const texte = document.getElementById('qr-modal-text');
+                if (texte) texte.textContent = 'Présence enregistrée avec succès !';
                 resultDiv.classList.remove('d-none');
             }
             if (errorDiv) errorDiv.classList.add('d-none');
-            // Enregistrer dans sessionStorage
-            markSeanceAsPresent(seanceId);
+            // Enregistrer l'heure de réponse (informatif)
+            setDerniereReponse(seanceId, new Date().toISOString());
             showMsg('✔ Présence enregistrée !', 'success');
-            setTimeout(() => chargerCoursDuJour(), 1500);
+            // Rafraîchir immédiatement pour afficher le résumé
+            setTimeout(() => chargerCoursDuJour(), 1000);
         } else {
             const data = await res.json().catch(() => null);
             const msg  = data?.error || 'QR invalide ou expiré';
             if (errorDiv) {
-                document.getElementById('qr-modal-err-text').textContent = msg;
+                const errTexte = document.getElementById('qr-modal-err-text');
+                if (errTexte) errTexte.textContent = msg;
                 errorDiv.classList.remove('d-none');
             }
             if (resultDiv) resultDiv.classList.add('d-none');
@@ -267,7 +364,8 @@ async function validerQrCode(token, seanceId) {
     } catch (err) {
         console.error('[appeletu] QR error:', err);
         if (errorDiv) {
-            document.getElementById('qr-modal-err-text').textContent = 'Erreur réseau';
+            const errTexte = document.getElementById('qr-modal-err-text');
+            if (errTexte) errTexte.textContent = 'Erreur réseau';
             errorDiv.classList.remove('d-none');
         }
     }
@@ -305,20 +403,21 @@ document.getElementById('btn-valider-pin')?.addEventListener('click', async () =
     if (msgEl) msgEl.classList.add('d-none');
 
     try {
-        // Utilise AppelController — vérifie le PIN de l'enseignant dans le pinCache
         const res = await fetch(`/api/appels/seance/${parseInt(currentSeanceId)}/etudiant/valider-pin`, {
             method: 'POST',
             headers: authHeaders(),
             body: JSON.stringify({ codePIN: pin })
         });
         if (res.ok) {
+            const data = await res.json().catch(() => null);
             if (msgEl) { msgEl.className = 'alert alert-success'; msgEl.textContent = '✔ Présence enregistrée !'; msgEl.classList.remove('d-none'); }
-            // Enregistrer dans sessionStorage
-            markSeanceAsPresent(currentSeanceId);
+            // Enregistrer l'heure de réponse (informatif)
+            setDerniereReponse(currentSeanceId, new Date().toISOString());
             showMsg('Présence enregistrée avec succès !', 'success');
             const pinCard = document.getElementById('pin-card');
             if (pinCard) pinCard.style.display = 'none';
-            setTimeout(() => chargerCoursDuJour(), 1000);
+            // Rafraîchir pour afficher le résumé détaillé
+            setTimeout(() => chargerCoursDuJour(), 800);
         } else {
             const data = await res.json().catch(() => null);
             const msg  = data?.error || 'Code PIN incorrect ou expiré';
@@ -370,16 +469,18 @@ document.getElementById('envoyer-justif')?.addEventListener('click', async () =>
     }
 });
 
-// ── Refresh ───────────────────────────────────────────────────────────────────
-document.getElementById('btn-refresh')?.addEventListener('click', chargerCoursDuJour);
+// ── Refresh manuel ────────────────────────────────────────────────────────────
+document.getElementById('btn-refresh')?.addEventListener('click', () => {
+    stopPolling();
+    chargerCoursDuJour();
+});
 
-// ── Helper : date locale sans problème UTC ────────────────────────────────────
-function localDateString(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
+// ── Arrêter le polling quand la page est cachée ───────────────────────────────
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        stopPolling();
+    }
+});
 
 // ── Lancement ─────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', chargerCoursDuJour);

@@ -9,4 +9,5 @@ public class NiveauDTO {
     private String idNiveau;
     private String nom;
     private Long filiereId;
+    private int ordre;
 }

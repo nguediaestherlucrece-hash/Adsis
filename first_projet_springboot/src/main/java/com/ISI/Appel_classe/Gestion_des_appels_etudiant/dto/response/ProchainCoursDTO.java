@@ -13,4 +13,6 @@ public class ProchainCoursDTO {
     private LocalTime heureDebut;
     private LocalTime heureFin;
     private String enseignant;
+    /** true si c'est un événement spécial (sans cours associé) → ne pas afficher dans l'onglet Appel */
+    private boolean evenement;
 }

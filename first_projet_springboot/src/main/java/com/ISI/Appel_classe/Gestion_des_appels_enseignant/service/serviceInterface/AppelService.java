@@ -40,6 +40,12 @@ public interface AppelService {
      * Récupère l'appel ouvert pour une séance (s'il existe)
      */
     AppelDTO getAppelOuvertBySeance(Long seanceId);
+
+    /**
+     * Récupère l'historique de tous les appels d'une séance (ouverts + clôturés),
+     * dans l'ordre chronologique. Utilisé pour le bouton « Relancer » côté enseignant.
+     */
+    List<AppelDTO> getHistoriqueAppels(Long seanceId);
     
     /**
      * Récupère la liste des étudiants d'une séance avec leur statut de présence

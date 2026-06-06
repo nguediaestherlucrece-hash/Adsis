@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository;
 
 
 
+import java.util.List;
+
 @Repository
 public interface NiveauRepository extends JpaRepository<Niveau, Long>{
-
+    List<Niveau> findAllByOrderByOrdreAsc();
 }

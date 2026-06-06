@@ -59,6 +59,27 @@ public interface JustificatifRepository extends JpaRepository<Justificatif, Long
             Pageable pageable
     );
 
+    // Recherche avec filtres multiples pour l'assistant limitée à sa filière
+    @Query("SELECT j FROM Justificatif j WHERE " +
+            "j.presence.etudiant.classe.specialite.niveau.filiere.id = :filiereId AND " +
+            "(:etudiantId IS NULL OR j.presence.etudiant.id = :etudiantId) AND " +
+            "(:dateSoumissionDebut IS NULL OR j.dateSoumission >= :dateSoumissionDebut) AND " +
+            "(:dateSoumissionFin IS NULL OR j.dateSoumission <= :dateSoumissionFin) AND " +
+            "(:dateValidationDebut IS NULL OR j.dateValidation >= :dateValidationDebut) AND " +
+            "(:dateValidationFin IS NULL OR j.dateValidation <= :dateValidationFin) AND " +
+            "(:statut IS NULL OR j.statutValidation = :statut) " +
+            "ORDER BY j.dateSoumission DESC")
+    Page<Justificatif> findAllByFiliereWithFilters(
+            @Param("filiereId") Long filiereId,
+            @Param("etudiantId") Long etudiantId,
+            @Param("dateSoumissionDebut") LocalDate dateSoumissionDebut,
+            @Param("dateSoumissionFin") LocalDate dateSoumissionFin,
+            @Param("dateValidationDebut") LocalDate dateValidationDebut,
+            @Param("dateValidationFin") LocalDate dateValidationFin,
+            @Param("statut") StatutValidation statut,
+            Pageable pageable
+    );
+
     // Compter les justificatifs en attente
     long countByStatutValidation(StatutValidation statut);
 

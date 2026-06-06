@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -25,4 +26,11 @@ public class EnregistrerPresenceRequest {
     private boolean retard; // Flag retard global
 
     private List<CreneauPresenceDTO> creneaux; // Présence par heure
+
+    /**
+     * Heure exacte à laquelle l’étudiant a répondu (QR/PIN).
+     * Si null, le service utilise LocalDateTime.now().
+     * Utilisé pour le calcul automatique des créneaux et du statut retard.
+     */
+    private LocalDateTime heureReponse;
 }

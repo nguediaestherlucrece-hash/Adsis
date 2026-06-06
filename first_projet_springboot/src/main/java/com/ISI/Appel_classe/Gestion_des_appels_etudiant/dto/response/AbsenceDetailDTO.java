@@ -15,4 +15,8 @@ public class AbsenceDetailDTO {
     private Long      justificatifId;
     /** null = pas de justificatif | EN_ATTENTE | ACCEPTE | REJETE */
     private String    justificatifStatut;
+    /** Nombre d'heures effectivement absentes (créneaux marqués false) */
+    private int       heuresAbsentes;
+    /** Nombre d'heures effectivement présentes (créneaux marqués true) */
+    private int       heuresPresentes;
 }

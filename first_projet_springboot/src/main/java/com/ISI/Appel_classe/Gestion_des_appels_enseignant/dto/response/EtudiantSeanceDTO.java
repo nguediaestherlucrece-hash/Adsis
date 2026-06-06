@@ -22,4 +22,6 @@ public class EtudiantSeanceDTO {
     private boolean retard;
     private String modeEnregistrement;   // "QR", "PIN", "manuel", "automatique"
     private List<CreneauPresenceDTO> creneaux; // Créneaux horaires pré-remplis
+    private int heuresPresentes;         // Cumul heures présent(es) sur la séance
+    private int heuresAbsentes;          // Cumul heures absent(es) sur la séance
 }

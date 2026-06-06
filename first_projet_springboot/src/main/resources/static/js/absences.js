@@ -49,9 +49,27 @@ function renderAbsences(absences, tbody) {
     tbody.innerHTML = absences.map(a => {
         const date    = a.date ? new Date(a.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'}) : '—';
         const horaire = a.heureDebut ? `${a.heureDebut}–${a.heureFin || '?'}` : '—';
-        const statutBadge = a.statut === 'retard'
-            ? '<span class="badge bg-warning text-dark">Retard</span>'
-            : '<span class="badge bg-danger">Absent</span>';
+
+        // Précision sur les heures : si des créneaux existent, on les affiche
+        let heuresPrecises = '';
+        if (a.heuresAbsentes > 0 || a.heuresPresentes > 0) {
+            if (a.statut === 'présent_partiel') {
+                heuresPrecises = `<br><span class="text-danger small fw-semibold">${a.heuresAbsentes}h absent${a.heuresAbsentes > 1 ? 'es' : ''}</span>`
+                               + ` <span class="text-muted small">/ ${a.heuresPresentes}h présent${a.heuresPresentes > 1 ? 'es' : ''}</span>`;
+            } else {
+                heuresPrecises = `<br><span class="text-danger small fw-semibold">${a.heuresAbsentes}h absent${a.heuresAbsentes > 1 ? 'es' : ''}</span>`;
+            }
+        }
+
+        // Badge selon statut réel
+        let statutBadge;
+        if (a.statut === 'retard') {
+            statutBadge = '<span class="badge bg-warning text-dark">Retard</span>';
+        } else if (a.statut === 'présent_partiel') {
+            statutBadge = '<span class="badge bg-orange text-white" style="background:#e67e22">Partiel</span>';
+        } else {
+            statutBadge = '<span class="badge bg-danger">Absent</span>';
+        }
 
         // Badge justificatif basé sur justificatifStatut (plus précis que justifiee)
         let justBadge, action;
@@ -68,7 +86,7 @@ function renderAbsences(absences, tbody) {
             justBadge = '<span class="badge bg-secondary">Non justifiée</span>';
             action    = `<a href="/etudiant/justifications?id=${a.id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-plus"></i> Justifier</a>`;
         }
-        return `<tr><td>${date}</td><td><strong>${a.matiere || '—'}</strong></td><td><small>${horaire}</small></td><td>${statutBadge}</td><td>${justBadge}</td><td>${action}</td></tr>`;
+        return `<tr><td>${date}</td><td><strong>${a.matiere || '—'}</strong></td><td><small>${horaire}${heuresPrecises}</small></td><td>${statutBadge}</td><td>${justBadge}</td><td>${action}</td></tr>`;
     }).join('');
 }
 

@@ -12,5 +12,6 @@ public class AnneeAcademiqueDTO {
     private LocalDate anneeDebut;
     private LocalDate anneeFin;
     private boolean actif;
+    private boolean migrationAutorisee;
     private int nombreSemestres;
 }

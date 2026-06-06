@@ -15,7 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "presence")
+@Table(name = "presence", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"seance_id", "etudiant_id"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -86,10 +88,12 @@ public class Presence {
         long total = presencesHoraires.size();
 
         if (totalPresent == total) {
-            this.statut = "présent";
+            // Présent sur tous les créneaux — distinguer retard vs présent pur
+            this.statut = retard ? "retard" : "présent";
         } else if (totalPresent == 0) {
             this.statut = "absent";
         } else {
+            // Mix présent/absent — présence partielle
             this.statut = "présent_partiel";
         }
     }

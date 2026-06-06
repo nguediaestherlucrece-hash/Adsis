@@ -27,6 +27,9 @@ public class Filiere {
     private String nomFiliere;
     private String description;
 
+    @Column(name = "is_tronc_commun", nullable = false)
+    private boolean isTroncCommun = false;
+
     // 🔹 Relations JPA
     @ManyToOne
     @JoinColumn(name = "cycle_id")

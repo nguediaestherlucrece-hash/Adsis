@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ClasseServiceImpl implements ClasseService {
 
     private final ClasseRepository repository;
@@ -31,6 +32,13 @@ public class ClasseServiceImpl implements ClasseService {
     @Override
     public List<ClasseDTO> getAllClasses() {
         return repository.findAll().stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ClasseDTO> getClassesByFiliere(Long filiereId) {
+        return repository.findBySpecialiteNiveauFiliereId(filiereId).stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }

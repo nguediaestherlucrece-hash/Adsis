@@ -22,35 +22,35 @@ public class SeanceController {
     private final SeanceService seanceService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasAuthority('COURSE_VIEW') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<SeanceDTO>> getAllSeances() {
         List<SeanceDTO> seances = seanceService.getAllSeances();
         return ResponseEntity.ok(seances);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasAuthority('COURSE_VIEW') or hasRole('SURVEILLANT')")
     public ResponseEntity<SeanceDTO> getSeanceById(@PathVariable Long id) {
         SeanceDTO dto = seanceService.getSeanceById(id);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/code/{idSeance}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasAuthority('COURSE_VIEW') or hasRole('SURVEILLANT')")
     public ResponseEntity<SeanceDTO> getSeanceByCode(@PathVariable String idSeance) {
         SeanceDTO dto = seanceService.getSeanceByCode(idSeance);
         return ResponseEntity.ok(dto);
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<SeanceDTO> createSeance(@RequestBody SeanceCreateDTO dto) {
         SeanceDTO created = seanceService.createSeance(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<SeanceDTO> updateSeance(
             @PathVariable Long id,
             @RequestBody SeanceUpdateDTO dto) {
@@ -59,14 +59,14 @@ public class SeanceController {
     }
 
     @GetMapping("/emploi-du-temps/{edtId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasAuthority('COURSE_VIEW') or hasRole('SURVEILLANT')")
     public ResponseEntity<List<SeanceDTO>> getSeancesByEmploiDuTemps(@PathVariable Long edtId) {
         List<SeanceDTO> seances = seanceService.getSeancesByEmploiDuTempsId(edtId);
         return ResponseEntity.ok(seances);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT') or hasRole('ASSISTANT_PEDAGOGIQUE') or hasRole('SURVEILLANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('COURSE_MANAGE')")
     public ResponseEntity<Void> deleteSeance(@PathVariable Long id) {
         seanceService.deleteSeance(id);
         return ResponseEntity.noContent().build();

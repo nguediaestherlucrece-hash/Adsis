@@ -3,6 +3,7 @@ package com.ISI.Appel_classe.Gestion_des_emplois_du_temps.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -36,4 +37,8 @@ public class SeanceEnseignantDTO {
     private Integer nombreAbsents;
     private Integer nombreRetards;
     private Integer nombreTotal;
+
+    @JsonProperty("isEvent")
+    private boolean isEvent;
+    private String nomEvenement;
 }

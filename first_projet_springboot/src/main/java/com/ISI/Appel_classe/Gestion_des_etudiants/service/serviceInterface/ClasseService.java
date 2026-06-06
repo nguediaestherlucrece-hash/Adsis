@@ -9,6 +9,8 @@ public interface ClasseService {
 
     List<ClasseDTO> getAllClasses();
 
+    List<ClasseDTO> getClassesByFiliere(Long filiereId);
+
     ClasseDTO getClasseById(Long id);
 
     ClasseDTO createClasse(ClasseCreateDTO dto);

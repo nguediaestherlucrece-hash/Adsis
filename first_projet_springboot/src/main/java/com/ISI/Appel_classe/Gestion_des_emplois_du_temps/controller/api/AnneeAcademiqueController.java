@@ -71,4 +71,13 @@ public class AnneeAcademiqueController {
         AnneeAcademiqueDTO activated = anneeAcademiqueService.activerAnnee(id);
         return ResponseEntity.ok(activated);
     }
+
+    @PatchMapping("/{id}/autoriser-migration")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AnneeAcademiqueDTO> autoriserMigration(
+            @PathVariable Long id,
+            @RequestParam boolean autoriser) {
+        AnneeAcademiqueDTO updated = anneeAcademiqueService.autoriserMigration(id, autoriser);
+        return ResponseEntity.ok(updated);
+    }
 }

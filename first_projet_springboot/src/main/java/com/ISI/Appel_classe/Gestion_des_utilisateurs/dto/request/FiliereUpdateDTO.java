@@ -9,4 +9,5 @@ public class FiliereUpdateDTO {
     private String description;
 
     private Long cycleId;
+    private Boolean isTroncCommun;
 }

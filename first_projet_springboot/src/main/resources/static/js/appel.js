@@ -250,18 +250,29 @@ async function initSession() {
     await loadEtudiants();
 }
 
-function updateBanner() {
+function updateBanner(appelInfo) {
     const courseEl = document.getElementById('session-course');
-    const metaEl = document.getElementById('session-meta');
+    const metaEl   = document.getElementById('session-meta');
+    const appelNumEl = document.getElementById('appel-num');
 
     if (seanceInfo) {
         courseEl.textContent = seanceInfo.coursIntitule || 'Cours';
         const hd = seanceInfo.heureDebut ? seanceInfo.heureDebut.substring(0, 5) : '';
-        const hf = seanceInfo.heureFin ? seanceInfo.heureFin.substring(0, 5) : '';
+        const hf = seanceInfo.heureFin   ? seanceInfo.heureFin.substring(0, 5)   : '';
         metaEl.textContent = [seanceInfo.classeNom, `${hd} – ${hf}`].filter(Boolean).join(' • ');
     } else {
         courseEl.textContent = 'Séance d\'appel';
         metaEl.textContent = '';
+    }
+
+    // Indicateur "Appel N/M" (si on a les données)
+    if (appelNumEl) {
+        if (appelInfo && appelInfo.numeroAppel && appelInfo.totalAppels) {
+            appelNumEl.textContent = `Appel ${appelInfo.numeroAppel}/${appelInfo.totalAppels}`;
+            appelNumEl.style.display = '';
+        } else {
+            appelNumEl.style.display = 'none';
+        }
     }
 }
 
@@ -276,11 +287,14 @@ async function checkAppelOuvert() {
             const data = await res.json();
             appelId = data.id;
             updateSessionStatus(true);
-            startAutoRefresh(); // Démarrer l'actualisation automatique
+            updateBanner(data); // passer les infos appel pour Appel N/M
+            startAutoRefresh();
         } else {
             appelId = null;
             updateSessionStatus(false);
             stopAutoRefresh();
+            // Charger le dernier état (appel clôturé) et proposer de relancer
+            await chargerDernierEtatAppel();
         }
     } catch {
         appelId = null;
@@ -305,6 +319,73 @@ function stopAutoRefresh() {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
     }
+}
+
+/**
+ * Charge le dernier état d'appel (clôturé) pour la séance.
+ * Affiche la grille en lecture seule + bouton "Relancer un appel".
+ */
+async function chargerDernierEtatAppel() {
+    try {
+        const res = await authFetch(`/api/appels/seance/${seanceId}/historique`);
+        if (!res || !res.ok) return;
+        const historique = await res.json();
+        if (!historique || historique.length === 0) return;
+
+        const dernierAppel = historique[historique.length - 1];
+
+        // Mettre à jour le bandeau avec le numéro du dernier appel
+        updateBanner(dernierAppel);
+
+        // Afficher le bouton "Relancer un appel"
+        afficherBoutonRelancer(historique.length);
+
+        // Charger les présences du dernier appel (lecture seule)
+        await loadEtudiants();
+
+    } catch (err) {
+        console.error('[appel.js] Erreur chargement historique:', err);
+    }
+}
+
+/**
+ * Affiche le bouton "Relancer un appel" avec le numéro d'appel suivant.
+ */
+function afficherBoutonRelancer(nbAppelsPrecedents) {
+    // Chercher une zone dédiée, sinon injecter sous le bandeau
+    let zone = document.getElementById('relancer-zone');
+    if (!zone) {
+        zone = document.createElement('div');
+        zone.id = 'relancer-zone';
+        zone.style.cssText = 'margin:1rem 0;padding:1rem;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;';
+        const content = document.querySelector('.content');
+        if (content) content.prepend(zone);
+    }
+
+    const prochain = nbAppelsPrecedents + 1;
+    zone.innerHTML = `
+        <div style="flex:1;min-width:200px;">
+            <div style="font-weight:700;color:#92400e;">⏰ Dernier appel clôturé</div>
+            <div style="font-size:0.85rem;color:#78350f;">
+                ${nbAppelsPrecedents} appel(s) enregistré(s) pour cette séance.
+                Lancez l'appel n°${prochain} pour la suite.
+            </div>
+        </div>
+        <button id="btn-relancer-appel"
+                style="background:#f59e0b;color:white;border:none;padding:10px 20px;
+                       border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap;">
+            ▶️ Lancer l'appel ${prochain}
+        </button>`;
+
+    document.getElementById('btn-relancer-appel')?.addEventListener('click', async () => {
+        const zone = document.getElementById('relancer-zone');
+        if (zone) zone.remove();
+        const data = await demarrerAppel('manuel');
+        if (data) {
+            updateBanner(data);
+            await loadEtudiants();
+        }
+    });
 }
 
 function updateSessionStatus(isOpen) {
@@ -340,7 +421,12 @@ async function demarrerAppel(mode = 'manuel') {
         const data = await res.json();
         appelId = data.id;
         updateSessionStatus(true);
+        updateBanner(data); // mettre à jour l'indicateur Appel N/M
+        // Retirer le bouton Relancer si présent
+        const relancerZone = document.getElementById('relancer-zone');
+        if (relancerZone) relancerZone.remove();
         showToast('Appel démarré !', 'success');
+        startAutoRefresh();
         return data;
     } catch (err) {
         showToast('Erreur de connexion', 'error');
@@ -418,6 +504,10 @@ function renderHourlyGrid() {
             ? `<span style="font-size:.7rem;background:#e0f2fe;color:#0369a1;border-radius:4px;padding:1px 5px;margin-left:4px;">${modeIcons[student.modeEnregistrement] || student.modeEnregistrement}</span>`
             : '';
 
+        const bilanBadge = (student.heuresPresentes > 0 || student.heuresAbsentes > 0)
+            ? `<span style="font-size:.7rem;background:#f0fdf4;color:#15803d;border-radius:4px;padding:1px 5px;margin-left:4px;">${student.heuresPresentes}h ✅ / ${student.heuresAbsentes}h ❌</span>`
+            : '';
+
         // Colonne étudiant
         const initials = ((student.nom || '?')[0] + (student.prenom || '')[0]).toUpperCase();
         row.innerHTML = `
@@ -426,7 +516,7 @@ function renderHourlyGrid() {
                     <div class="status-indicator ${statusClass}"></div>
                     <div class="student-avatar" style="width:32px;height:32px;font-size:0.75rem;">${initials}</div>
                     <div>
-                        <div class="hourly-student-name">${student.nom || ''} ${student.prenom || ''}${modeBadge}</div>
+                        <div class="hourly-student-name">${student.nom || ''} ${student.prenom || ''}${modeBadge}${bilanBadge}</div>
                         <div class="hourly-student-mat">${student.matricule || ''}</div>
                     </div>
                 </div>
@@ -723,7 +813,7 @@ async function onQrSuccess(decodedText) {
     }
 
     try {
-        const res = await authFetch(`/api/appels/${appelId}/valider-qr`, {
+        const res = await authFetch(`/api/appels/${appelId}/valider-qr-etudiant`, {
             method: 'POST',
             body: JSON.stringify({ qrToken: decodedText })
         });
@@ -1096,9 +1186,10 @@ async function clotureAppel() {
     try {
         const res = await authFetch(`/api/appels/${appelId}/cloturer`, { method: 'PUT' });
         if (res && res.ok) {
-            showToast('Appel clôturé avec succès !', 'success', 4000);
+            showToast('Appel clôturé avec succès !', 'success', 4000);
             updateSessionStatus(false);
-            setTimeout(() => { window.location.href = '/enseignant/dashboard'; }, 2500);
+            // Rediriger vers l'emploi du temps (pas le dashboard)
+            setTimeout(() => { window.location.href = '/enseignant/emploi'; }, 2500);
         } else {
             const err = await res?.text();
             showToast('Erreur: ' + (err || 'Clôture échouée'), 'error');

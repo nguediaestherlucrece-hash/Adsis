@@ -230,16 +230,21 @@ async function loadSchedule() {
                 day = DAY_MAP[dayOfWeek] || '';
             }
 
+            const isEvt = dto.isEvent || false;
+            const cleanNom = isEvt ? cleanEventNameString(dto.nomEvenement || 'Événement') : '';
+
             return {
                 id: dto.id,
-                course: dto.coursIntitule || 'Cours',
+                course: isEvt ? cleanNom : (dto.coursIntitule || 'Cours'),
                 class: dto.classeNom || '',
                 room: '', // pas de salle dans le DTO actuel
                 start: dto.heureDebut ? dto.heureDebut.substring(0, 5) : '',
                 end: dto.heureFin ? dto.heureFin.substring(0, 5) : '',
                 day: day,
-                color: dto.couleur || '#3B55E6',
+                color: dto.couleur || (isEvt ? '#d97706' : '#3B55E6'),
                 seanceId: dto.id,
+                isEvent: isEvt,
+                nomEvenement: cleanNom,
                 appelStatut: dto.appelStatut,
                 appelId: dto.appelId,
                 nombrePresents: dto.nombrePresents,
@@ -318,27 +323,37 @@ function getSeanceStatus(c) {
 function buildCard(c, showDay) {
     var card = document.createElement('div');
     card.className = 'course-card';
-    card.setAttribute('data-class', c.class);
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('aria-label', 'Ouvrir la séance de ' + c.course);
+    if (!c.isEvent) {
+        card.setAttribute('data-class', c.class);
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', 'Ouvrir la séance de ' + c.course);
+    } else {
+        card.setAttribute('aria-label', 'Événement : ' + c.course);
+    }
 
     var dayMeta = showDay
         ? '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + c.day + '</div>'
         : '';
 
-    var canOpen = isSeanceActive(c);
-    var status = canOpen ? '' : getSeanceStatus(c);
-    var footerHtml;
-    if (canOpen) {
-        footerHtml = '<div class="card-footer">' +
-            '<button class="open-session-btn">Lancer l\'appel <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+    var footerHtml = '';
+    if (c.isEvent) {
+        footerHtml = '<div class="card-footer card-footer-locked" style="background:#fef3c7; color:#b45309;">' +
+            '<span class="locked-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Événement</span>' +
             '</div>';
     } else {
-        var label = status === 'past' ? 'Séance passée' : 'Séance à venir';
-        footerHtml = '<div class="card-footer card-footer-locked">' +
-            '<span class="locked-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ' + label + '</span>' +
-            '</div>';
+        var canOpen = isSeanceActive(c);
+        var status = canOpen ? '' : getSeanceStatus(c);
+        if (canOpen) {
+            footerHtml = '<div class="card-footer">' +
+                '<button class="open-session-btn">Lancer l\'appel <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+                '</div>';
+        } else {
+            var label = status === 'past' ? 'Séance passée' : 'Séance à venir';
+            footerHtml = '<div class="card-footer card-footer-locked">' +
+                '<span class="locked-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ' + label + '</span>' +
+                '</div>';
+        }
     }
 
     card.innerHTML =
@@ -346,7 +361,7 @@ function buildCard(c, showDay) {
         '<div class="card-body">' +
         '<div class="card-header-row">' +
         '<span class="card-course-name">' + c.course + '</span>' +
-        '<span class="class-chip" style="background:' + c.color + ';">' + c.class + '</span>' +
+        (c.isEvent ? '' : '<span class="class-chip" style="background:' + c.color + ';">' + c.class + '</span>') +
         '</div>' +
         '<div class="card-meta">' +
         '<div class="card-meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + c.start + ' – ' + c.end + '</div>' +
@@ -356,13 +371,13 @@ function buildCard(c, showDay) {
         '</div>' +
         footerHtml;
 
-    if (canOpen) {
+    if (!c.isEvent && canOpen) {
         function openSession() { window.location.href = '/enseignant/appel?seanceId=' + c.seanceId; }
         card.addEventListener('click', openSession);
         card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') openSession(); });
     }
 
-    if (!activeClasses.has(c.class)) card.style.display = 'none';
+    if (!c.isEvent && !activeClasses.has(c.class)) card.style.display = 'none';
     return card;
 }
 
@@ -483,18 +498,22 @@ function renderWeek() {
                     td.style.height = (60 * rowspan) + 'px';
                 }
 
-                var canOpen = isSeanceActive(c);
+                var canOpen = !c.isEvent && isSeanceActive(c);
                 var block = document.createElement('div');
                 block.className = 'week-grid-course' + (canOpen ? ' week-grid-course-active' : '');
-                block.style.background = c.color;
-                block.setAttribute('data-class', c.class);
+                block.style.background = c.isEvent ? '#fde68a' : c.color;
+                block.style.color = c.isEvent ? '#92400e' : '';
+                block.style.borderLeft = c.isEvent ? '3px solid ' + c.color : '';
+                if (!c.isEvent) {
+                    block.setAttribute('data-class', c.class);
+                }
                 if (rowspan > 1) {
                     block.style.minHeight = ((60 * rowspan) - 6) + 'px';
                 }
 
-                block.innerHTML = '<div class="week-grid-course-name">' + c.course + '</div>' +
-                    '<div class="week-grid-course-info">' + c.class + '</div>' +
-                    '<div class="week-grid-course-time">' + c.start + ' – ' + c.end + '</div>';
+                block.innerHTML = '<div class="week-grid-course-name" style="font-weight:600;">' + (c.isEvent ? '📅 ' + c.course : c.course) + '</div>' +
+                    (c.isEvent ? '' : '<div class="week-grid-course-info">' + c.class + '</div>') +
+                    '<div class="week-grid-course-time"' + (c.isEvent ? ' style="color:#78350f;"' : '') + '>' + c.start + ' – ' + c.end + '</div>';
 
                 if (canOpen) {
                     block.addEventListener('click', function () {
@@ -595,20 +614,26 @@ function renderDay(day) {
         var topPx = (topMin / 60) * HOUR_HEIGHT;
         var heightPx = (durationMin / 60) * HOUR_HEIGHT;
 
-        var canOpen = isSeanceActive(c);
+        var isEvt = c.isEvent || false;
+        var canOpen = !isEvt && isSeanceActive(c);
         var status = canOpen ? '' : getSeanceStatus(c);
 
         var ev = document.createElement('div');
         ev.className = 'timeline-event' + (canOpen ? '' : ' timeline-event-locked');
-        ev.setAttribute('data-class', c.class);
-        ev.style.cssText = 'top:' + topPx + 'px;height:' + heightPx + 'px;background:' + c.color + ';left:64px;right:6px;';
-
-        var innerHtml = '<div class="timeline-event-title">' + c.course + '</div>';
-        if (heightPx >= 48) {
-            innerHtml += '<div class="timeline-event-subtitle">' + c.class + (c.room ? ' · ' + c.room : '') + '</div>';
+        if (!isEvt) {
+            ev.setAttribute('data-class', c.class);
         }
-        innerHtml += '<div class="timeline-event-time">' + c.start + ' – ' + c.end;
-        if (!canOpen) {
+        var bgCol = isEvt ? '#fde68a' : c.color;
+        var textCol = isEvt ? '#92400e' : '#fff';
+        var borderLeft = isEvt ? '3px solid ' + c.color : '';
+        ev.style.cssText = 'top:' + topPx + 'px;height:' + heightPx + 'px;background:' + bgCol + ';color:' + textCol + ';border-left:' + borderLeft + ';left:64px;right:6px;';
+
+        var innerHtml = '<div class="timeline-event-title" style="font-weight:600;">' + (isEvt ? '📅 ' + c.course : c.course) + '</div>';
+        if (heightPx >= 48) {
+            innerHtml += '<div class="timeline-event-subtitle" style="color:' + (isEvt ? '#78350f' : 'inherit') + ';">' + (isEvt ? '' : c.class + (c.room ? ' · ' + c.room : '')) + '</div>';
+        }
+        innerHtml += '<div class="timeline-event-time" style="color:' + (isEvt ? '#78350f' : 'inherit') + ';">' + c.start + ' – ' + c.end;
+        if (!isEvt && !canOpen) {
             var statusLabel = status === 'past' ? ' · Passé' : ' · À venir';
             innerHtml += '<span style="opacity:0.7;">' + statusLabel + '</span>';
         }
@@ -683,3 +708,15 @@ btnTodayWeek.addEventListener('click', function () {
 
 // Charger les données au démarrage
 loadSchedule();
+
+function cleanEventNameString(nom) {
+    if (!nom) return 'Événement';
+    const days = /\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi;
+    return nom
+        .replace(/\b(evt)\b/gi, '')
+        .replace(/\b\d+\b/g, '')
+        .replace(days, '')
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Événement';
+}

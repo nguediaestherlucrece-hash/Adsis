@@ -28,6 +28,9 @@ public class Niveau {
 
     private String nom;
 
+    @Column(name = "ordre", nullable = false)
+    private int ordre = 1;
+
     @ManyToOne
     @JoinColumn(name = "filiere_id")
     private Filiere filiere;

@@ -86,11 +86,13 @@ public interface EtudiantService {
      */
     byte[] generateEtudiantTemplate() throws IOException;
 
+    List<EtudiantDTO> getEtudiantsByFiliere(Long filiereId);
+
     /**
      * Migre un ou plusieurs étudiants vers une nouvelle classe
      * en conservant l'historique complet (classe, année, semestre actifs)
      */
-    List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto);
+    List<EtudiantDTO> migrerEtudiants(MigrationRequestDTO dto, String emailAssistant);
 
     /**
      * Récupère l'historique des classes d'un étudiant

@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +89,17 @@ public class AppelController {
         return ResponseEntity.ok(appel);
     }
     
+    /**
+     * Récupère l'historique de tous les appels d'une séance (ouverts + clôturés)
+     * GET /api/appels/seance/{seanceId}/historique
+     */
+    @GetMapping("/seance/{seanceId}/historique")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE')")
+    public ResponseEntity<List<AppelDTO>> getHistoriqueAppels(@PathVariable Long seanceId) {
+        List<AppelDTO> historique = appelService.getHistoriqueAppels(seanceId);
+        return ResponseEntity.ok(historique);
+    }
+
     /**
      * Récupère l'appel ouvert pour une séance
      * GET /api/appels/seance/{seanceId}/ouvert
@@ -251,12 +263,12 @@ public class AppelController {
                     .map(e -> e.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé pour l'email: " + email));
 
-            // 4. Enregistrer la présence
+            // 4. Enregistrer la présence (retard calculé automatiquement côté service)
             EnregistrerPresenceRequest presenceReq = new EnregistrerPresenceRequest();
             presenceReq.setEtudiantId(etudiantId);
             presenceReq.setStatut("présent");
             presenceReq.setModeEnregistrement("PIN");
-            presenceReq.setRetard(false);
+            presenceReq.setHeureReponse(LocalDateTime.now()); // heure exacte pour calcul retard/créneaux
 
             PresenceDTO presence = appelService.enregistrerPresence(appel.getId(), presenceReq);
             return ResponseEntity.status(HttpStatus.CREATED).body(presence);
@@ -301,12 +313,12 @@ public class AppelController {
                     .map(e -> e.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Étudiant non trouvé pour l'email: " + email));
 
-            // 4. Enregistrer la présence
+            // 4. Enregistrer la présence (retard calculé automatiquement côté service)
             EnregistrerPresenceRequest presenceReq = new EnregistrerPresenceRequest();
             presenceReq.setEtudiantId(etudiantId);
             presenceReq.setStatut("présent");
             presenceReq.setModeEnregistrement("QR");
-            presenceReq.setRetard(false);
+            presenceReq.setHeureReponse(LocalDateTime.now()); // heure exacte pour calcul retard/créneaux
 
             PresenceDTO presence = appelService.enregistrerPresence(appel.getId(), presenceReq);
             return ResponseEntity.status(HttpStatus.CREATED).body(presence);

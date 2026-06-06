@@ -263,16 +263,30 @@ function populateModalClasse() {
     });
 }
 
-function populateModalSemestre() {
+function populateModalSemestre(selectedSemestreId = null) {
     if (!modalSemestre) return;
-    modalSemestre.innerHTML = '<option value="">-- Sélectionnez un semestre --</option>';
+    modalSemestre.innerHTML = '';
+    
+    if (!selectedSemestreId) {
+        modalSemestre.innerHTML = '<option value="">-- Sélectionnez le semestre actif --</option>';
+    }
+
     semestres.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        const anneeLabel = s.anneeNom ? ` (${s.anneeNom})` : '';
-        opt.textContent = (s.nomSemestre || s.idSemestre || `Semestre ${s.id}`) + anneeLabel;
-        modalSemestre.appendChild(opt);
+        if (s.statut || (selectedSemestreId && String(s.id) === String(selectedSemestreId))) {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            const anneeLabel = s.anneeNom ? ` (${s.anneeNom})` : '';
+            opt.textContent = (s.nomSemestre || s.idSemestre || `Semestre ${s.id}`) + anneeLabel;
+            if (String(s.id) === String(selectedSemestreId)) {
+                opt.selected = true;
+            }
+            modalSemestre.appendChild(opt);
+        }
     });
+
+    if (modalSemestre.children.length === 0 || (modalSemestre.children.length === 1 && !selectedSemestreId)) {
+        modalSemestre.innerHTML = '<option value="">-- Aucun semestre actif disponible --</option>';
+    }
 }
 
 async function fetchEmploisDuTemps() {
@@ -436,6 +450,7 @@ window.openEditEdtModal = async function (edtId) {
             if (classeData) modalClasse.value = classeData.id;
         }
 
+        populateModalSemestre(edt.semestreId);
         if (modalSemestre && edt.semestreId) {
             modalSemestre.value = edt.semestreId;
         }
@@ -443,6 +458,17 @@ window.openEditEdtModal = async function (edtId) {
         new bootstrap.Modal(document.getElementById('createEdtModal')).show();
     } catch (e) { console.error(e); }
 };
+
+document.getElementById('createEdtModal').addEventListener('show.bs.modal', () => {
+    const isEdit = modalEdtId.value !== '';
+    if (!isEdit) {
+        populateModalSemestre();
+        const activeSem = semestres.find(s => s.statut === true);
+        if (activeSem && modalSemestre) {
+            modalSemestre.value = activeSem.id;
+        }
+    }
+});
 
 document.getElementById('createEdtModal').addEventListener('hidden.bs.modal', () => {
     edtModalTitle.textContent = "Créer un emploi du temps";
@@ -775,12 +801,7 @@ function renderSingleSeance(s) {
     // Détecter les événements spéciaux (coursId null ou idSeance commence par EVT-)
     const isEvent = !s.coursId || (s.idSeance && s.idSeance.startsWith('EVT-'));
     if (isEvent) {
-        // Extraire le nom de l'événement depuis idSeance (EVT-Pause-1234567890)
-        let eventName = 'Événement';
-        if (s.idSeance && s.idSeance.startsWith('EVT-')) {
-            const parts = s.idSeance.split('-');
-            eventName = parts.slice(1, -1).join(' ').replace(/_/g, ' ') || 'Événement';
-        }
+        const eventName = cleanEventNameString(s.idSeance || 'Événement');
         const iconMap = { 'Pause': 'coffee', 'TPE': 'user-clock' };
         createEventElement(cell, {
             nom: eventName,
@@ -1392,7 +1413,8 @@ async function handleResizeEnd() {
         matiereId: element.dataset.matiereId,
         enseignants: element.dataset.enseignants ? element.dataset.enseignants.split(',').filter(e => e) : [],
         couleur: element.style.backgroundColor,
-        linkedIds: JSON.parse(element.dataset.linkedIds || '[]')
+        linkedIds: JSON.parse(element.dataset.linkedIds || '[]'),
+        eventName: element.dataset.eventName || ''
     };
 
     unmergeCells(anchorCell, origRowspan, origColspan);
@@ -1488,7 +1510,18 @@ async function handleResizeEnd() {
     if (newCell) {
         dataSlot.linkedIds = newLinkedIds;
         dataSlot.dbId = newLinkedIds[0] || dataSlot.dbId;
-        createCourseElement(newCell, dataSlot, previewRowspan, previewColspan);
+        // Choisir la bonne fonction selon le type (cours ou événement)
+        if (dataSlot.type === 'event') {
+            createEventElement(newCell, {
+                dbId: dataSlot.dbId,
+                type: 'event',
+                nom: dataSlot.eventName || 'Événement',
+                couleur: dataSlot.couleur,
+                linkedIds: dataSlot.linkedIds
+            }, previewRowspan, previewColspan);
+        } else {
+            createCourseElement(newCell, dataSlot, previewRowspan, previewColspan);
+        }
     }
 }
 
@@ -1943,3 +1976,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', init);
+
+function cleanEventNameString(nom) {
+    if (!nom) return 'Événement';
+    const days = /\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi;
+    return nom
+        .replace(/\b(evt)\b/gi, '')
+        .replace(/\b\d+\b/g, '')
+        .replace(days, '')
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Événement';
+}

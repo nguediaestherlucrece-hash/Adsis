@@ -42,6 +42,15 @@ public class CoursUEServiceImpl implements CourUEService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<CoursUEDTO> getCoursByFiliere(Long filiereId) {
+        return coursUERepository.findBySpecialiteNiveauFiliereId(filiereId)
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CoursUEDTO getCoursById(Long id) {
         CoursUE cours = coursUERepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cours UE non trouvé avec l'id: " + id));

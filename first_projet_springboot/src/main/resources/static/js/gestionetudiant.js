@@ -307,7 +307,9 @@ function openCreateModal() {
     document.getElementById('etDateNaissanceInput').value = '';
     document.getElementById('etTelephoneInput').value = '';
     populateModalClasseSelect('etClasseSelect');
-    document.getElementById('etClasseSelect').value = '';
+    const select = document.getElementById('etClasseSelect');
+    select.value = '';
+    select.disabled = false;
     document.getElementById('saveEtudiantBtn').textContent = 'Créer';
     new bootstrap.Modal(document.getElementById('etudiantModal')).show();
 }
@@ -327,7 +329,13 @@ async function openEditModal(id) {
         document.getElementById('etDateNaissanceInput').value = e.dateNaissance || '';
         document.getElementById('etTelephoneInput').value = e.telephone || '';
         populateModalClasseSelect('etClasseSelect');
-        document.getElementById('etClasseSelect').value = e.classeId || '';
+        const select = document.getElementById('etClasseSelect');
+        select.value = e.classeId || '';
+        if (e.classeId) {
+            select.disabled = true;
+        } else {
+            select.disabled = false;
+        }
         document.getElementById('saveEtudiantBtn').textContent = 'Enregistrer';
         new bootstrap.Modal(document.getElementById('etudiantModal')).show();
     } catch (e) { console.error(e); showToast('Erreur réseau.', 'danger'); }

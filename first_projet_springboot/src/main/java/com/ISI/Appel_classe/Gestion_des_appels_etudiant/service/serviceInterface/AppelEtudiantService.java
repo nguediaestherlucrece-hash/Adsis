@@ -5,6 +5,7 @@ import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.request.MarquerPrese
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.request.MarquerPresentParQRCodeRequest;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.CodePresenceDTO;
 import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.PresenceEtudiantDTO;
+import com.ISI.Appel_classe.Gestion_des_appels_etudiant.dto.response.StatutSeanceEtudiantDTO;
 
 public interface AppelEtudiantService {
 
@@ -37,4 +38,13 @@ public interface AppelEtudiantService {
      * Valide et utilise un QR code généré par l'étudiant (côté enseignant)
      */
     PresenceEtudiantDTO validerQRCodeEtudiant(Long appelId, Long etudiantId, String qrToken);
+
+    /**
+     * Retourne le statut d’un appel pour un étudiant donné sur une séance :
+     * - Y a-t-il un appel ouvert ?
+     * - L’étudiant a-t-il déjà répondu à CET appel ?
+     * - Quel est son statut détaillé ?
+     * Utilisé par le frontend étudiant pour activer/désactiver les boutons QR/PIN.
+     */
+    StatutSeanceEtudiantDTO getStatutSeancePourEtudiant(Long seanceId, Long etudiantId);
 }

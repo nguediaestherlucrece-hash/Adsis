@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface FiliereRepository extends JpaRepository<Filiere, Long>{
-
+    Optional<Filiere> findByIsTroncCommunTrue();
 }

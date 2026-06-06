@@ -10,6 +10,8 @@ public interface CourUEService {
 
     List<CoursUEDTO> getAllCours();
 
+    List<CoursUEDTO> getCoursByFiliere(Long filiereId);
+
     CoursUEDTO getCoursById(Long id);
 
     CoursUEDTO getCoursByCode(String idCours);

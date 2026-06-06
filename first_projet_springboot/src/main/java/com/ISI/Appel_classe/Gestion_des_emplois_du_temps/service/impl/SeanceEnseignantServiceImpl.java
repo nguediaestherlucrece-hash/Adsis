@@ -141,6 +141,17 @@ public class SeanceEnseignantServiceImpl implements SeanceEnseignantService {
             dto.setCoursCode(seance.getCours().getCodeUE());
             dto.setCoursIntitule(seance.getCours().getIntitule());
         }
+
+        // Détecter et renseigner les événements
+        String idSeance = seance.getIdSeance();
+        boolean isEvt = seance.getCours() == null
+                        && idSeance != null && idSeance.startsWith("EVT-");
+        dto.setEvent(isEvt);
+        if (isEvt) {
+            String nom = cleanEventName(idSeance);
+            dto.setNomEvenement(nom);
+            dto.setCoursIntitule(nom);
+        }
         
         // Informations de la classe
         EmploiDuTemps emploiDuTemps = seance.getEmploiDuTemps();
@@ -176,5 +187,34 @@ public class SeanceEnseignantServiceImpl implements SeanceEnseignantService {
         }
         
         return dto;
+    }
+
+    private String cleanEventName(String idSeance) {
+        if (idSeance == null || !idSeance.startsWith("EVT-")) {
+            return "Événement";
+        }
+        String[] parts = idSeance.split("-");
+        List<String> cleanParts = new ArrayList<>();
+        List<String> days = Arrays.asList(
+            "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche",
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+        );
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (i == 0 && part.equalsIgnoreCase("EVT")) {
+                continue;
+            }
+            if (part.matches("\\d+")) {
+                continue;
+            }
+            if (days.contains(part.toLowerCase())) {
+                continue;
+            }
+            cleanParts.add(part.replace("_", " "));
+        }
+        if (cleanParts.isEmpty()) {
+            return "Événement";
+        }
+        return String.join(" ", cleanParts).trim();
     }
 }

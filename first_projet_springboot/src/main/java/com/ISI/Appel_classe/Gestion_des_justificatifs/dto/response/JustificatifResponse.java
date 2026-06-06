@@ -33,4 +33,15 @@ public class JustificatifResponse {
     private String etudiantPrenom;
     private String coursNom;
     private String validateurNom;
+
+    // Champs supplémentaires pour l'assistant
+    private LocalDate seanceDate;
+    private String seanceHeureDebut;
+    private String seanceHeureFin;
+    private String etudiantClasse;
+    private String etudiantMatricule;
+    /** Heures effectivement absentes sur cette séance */
+    private int heuresAbsentes;
+    /** Heures effectivement présentes sur cette séance */
+    private int heuresPresentes;
 }

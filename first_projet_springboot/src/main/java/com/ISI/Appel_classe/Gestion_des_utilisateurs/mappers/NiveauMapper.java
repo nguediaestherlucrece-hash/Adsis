@@ -16,6 +16,7 @@ public class NiveauMapper {
         dto.setId(niveau.getId());
         dto.setIdNiveau(niveau.getIdNiveau());
         dto.setNom(niveau.getNom());
+        dto.setOrdre(niveau.getOrdre());
         if (niveau.getFiliere() != null) {
             dto.setFiliereId(niveau.getFiliere().getId());
         }
@@ -28,6 +29,7 @@ public class NiveauMapper {
         Niveau n = new Niveau();
         n.setIdNiveau(dto.getIdNiveau());
         n.setNom(dto.getNom());
+        n.setOrdre(dto.getOrdre());
         return n;
     }
 
@@ -38,5 +40,7 @@ public class NiveauMapper {
             niveau.setIdNiveau(dto.getIdNiveau());
         if (dto.getNom() != null)
             niveau.setNom(dto.getNom());
+        if (dto.getOrdre() != null)
+            niveau.setOrdre(dto.getOrdre());
     }
 }

@@ -515,10 +515,6 @@ function openCreateModal() {
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = true;
     document.getElementById('userRole').value = 'Enseignant';
-    document.getElementById('userSpecialite') && (document.getElementById('userSpecialite').value = '');
-    document.getElementById('userGrade') && (document.getElementById('userGrade').value = '');
-    document.getElementById('userAffectation') && (document.getElementById('userAffectation').value = '');
-    document.getElementById('userDepartement') && (document.getElementById('userDepartement').value = '');
     updateMatieresBadges([]); updateFilieresBadges([], 'currentFilieresBadges');
     updateFilieresBadges([], 'currentFilieresBadgesAP');
     toggleRoleFields('Enseignant');
@@ -540,10 +536,6 @@ function openEditModal(id) {
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = false;
     document.getElementById('userRole').value = u.role;
-    document.getElementById('userSpecialite') && (document.getElementById('userSpecialite').value = u.raw.specialite || '');
-    document.getElementById('userGrade') && (document.getElementById('userGrade').value = u.raw.grade || '');
-    document.getElementById('userAffectation') && (document.getElementById('userAffectation').value = u.raw.affectation || '');
-    document.getElementById('userDepartement') && (document.getElementById('userDepartement').value = u.raw.departement || '');
     updateMatieresBadges(u.matieres || []);
     updateFilieresBadges(u.filieres || [], 'currentFilieresBadges');
     updateFilieresBadges(u.filieres || [], 'currentFilieresBadgesAP');
@@ -736,10 +728,6 @@ function openViewModal(u) {
             ? u.matieres.map(m => `<span class="badge rounded-pill me-1 mb-1" style="background:#fef9c3;color:#78350f;border:1px solid #fde68a;">${m.nomCours}</span>`).join('')
             : '<span class="text-muted fst-italic small">Aucune matière attribuée</span>';
         extraDiv.innerHTML = `
-            <div class="bg-light p-3 rounded-3 mb-2">
-                <label class="small text-muted fw-bold">SPÉCIALITÉ</label>
-                <div class="fw-semibold">${u.raw.specialite || '—'}</div>
-            </div>
             <div class="bg-light p-3 rounded-3">
                 <label class="small text-muted fw-bold d-flex align-items-center gap-1 mb-2"><i class="bi bi-book"></i> MATIÈRES</label>
                 <div class="d-flex flex-wrap gap-1">${matieresBadges}</div>
@@ -847,14 +835,10 @@ async function handleSaveUser() {
     }
 
     if (roleStr === 'Enseignant') {
-        baseData.specialite = document.getElementById('userSpecialite')?.value || '';
-        baseData.grade = document.getElementById('userGrade')?.value || '';
         baseData.roleNames = ['ENSEIGNANT'];
     } else if (roleStr === 'Surveillant') {
-        baseData.affectation = document.getElementById('userAffectation')?.value || '';
         baseData.roleNames = ['SURVEILLANT'];
     } else if (roleStr === 'Assistant pédagogique') {
-        baseData.departement = document.getElementById('userDepartement')?.value || '';
         baseData.roleNames = ['ASSISTANT_PEDAGOGIQUE'];
     } else if (roleStr === 'Administrateur') {
         baseData.roleNames = ['ADMIN'];

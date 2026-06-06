@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/bootstrap-layout :: head('justificatifs', 'justificatifsass.css')}"></head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR -->
+            <div th:replace="~{fragments/sidebar :: sidebar(activePage='justificatifs', role='ASSISTANT')}"></div>
+
+            <!-- CONTENU PRINCIPAL -->
+            <div class="col-lg-10 col-md-9 col-sm-12 p-3 p-md-4 main-content">
+                <!-- Topbar -->
+                <div class="main-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 fw-semibold header-title">
+                        <i class="bi bi-file-earmark-check me-2"></i>Justificatifs d'absence
+                    </h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold" id="pendingCounterBadge">
+                            0 en attente
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Barre de filtres -->
+                <div class="filter-bar mt-3 p-3 bg-white rounded-3 shadow-sm d-flex flex-wrap gap-3 align-items-center">
+                    <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width: 200px; max-width: 350px;">
+                        <label class="fw-semibold small text-muted mb-0"><i class="bi bi-search"></i></label>
+                        <input type="text" id="searchStudent" placeholder="Rechercher étudiant (nom, prénom)..." class="form-control form-control-sm rounded-2">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-semibold small text-muted mb-0">Statut</label>
+                        <select id="filterStatut" class="form-select form-select-sm rounded-2">
+                            <option value="">Tous les statuts</option>
+                            <option value="EN_ATTENTE" selected>En attente</option>
+                            <option value="ACCEPTE">Acceptés</option>
+                            <option value="REJETE">Rejetés</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-semibold small text-muted mb-0">Date début</label>
+                        <input type="date" id="filterDateDebut" class="form-control form-control-sm rounded-2">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-semibold small text-muted mb-0">Date fin</label>
+                        <input type="date" id="filterDateFin" class="form-control form-control-sm rounded-2">
+                    </div>
+                    <button class="btn btn-light btn-sm rounded-2 text-primary border" id="btnResetFilters">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="card-timetable mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="justificatifsTable">
+                            <thead>
+                                <tr>
+                                    <th>Étudiant</th>
+                                    <th>Motif</th>
+                                    <th>Séance / Matière</th>
+                                    <th>Soumis le</th>
+                                    <th>Statut</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="justificatifsBody">
+                                <!-- Rempli dynamiquement par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noDataMsg" class="no-data text-center py-5" style="display:none;">
+                        <i class="bi bi-inbox fa-2x mb-2 d-block text-muted" style="font-size: 2.5rem;"></i>
+                        Aucun justificatif trouvé.
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                    <span id="paginationInfo" class="small text-muted">0–0 de 0 justificatifs</span>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0 rounded-2" id="paginationControls">
+                            <!-- Rempli par JS -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Détail / Validation -->
+    <div class="modal fade" id="justificatifDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0 py-3">
+                    <h6 class="modal-title fw-bold" id="justificatifModalTitle">
+                        <i class="bi bi-file-earmark-check-fill me-2"></i>Dossier de justification
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <!-- Infos dossier (Gauche) -->
+                        <div class="col-lg-5 col-md-12">
+                            <div class="bg-light p-3 rounded-3 mb-3">
+                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Étudiant</label>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;" id="modalStudentInitials">U</div>
+                                    <div>
+                                        <div class="fw-bold" id="modalStudentName">Nom Prénom</div>
+                                        <div class="small text-muted" id="modalStudentInfo">Matricule - Classe</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded-3 mb-3">
+                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Séance d'absence</label>
+                                <div class="fw-semibold" id="modalMatiere">Matière</div>
+                                <div class="small text-muted" id="modalSeanceDate">Date - Horaire</div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded-3 mb-3">
+                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Motif déclaré</label>
+                                <div class="fw-semibold" id="modalMotif">Maladie / Autre</div>
+                                <p class="small text-muted mt-2 mb-0" id="modalCommentaire">Commentaire de l'étudiant...</p>
+                            </div>
+
+                            <div class="bg-light p-3 rounded-3 mb-3" id="modalComplementSection" style="display: none;">
+                                <label class="small text-uppercase text-danger fw-bold d-block mb-1">Complément d'information fourni</label>
+                                <div class="small text-dark fw-semibold" id="modalComplementCommentaire">Commentaire de complément...</div>
+                                <div class="small text-muted mt-1" id="modalComplementDate">Fourni le : Date</div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded-3 mb-3" id="modalStatusDetailSection" style="display: none;">
+                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Traitement du dossier</label>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <span class="badge rounded-pill px-3 py-1" id="modalStatusBadge">Statut</span>
+                                </div>
+                                <div class="small text-muted mt-2" id="modalValidationInfo">Traité par X le Date</div>
+                                <div class="small text-danger fw-semibold mt-2" id="modalMotifRejetDisplay" style="display: none;">
+                                    Motif de rejet : <span class="fw-normal text-dark">...</span>
+                                </div>
+                            </div>
+
+                            <!-- Formulaire de décision (visible si statut = EN_ATTENTE) -->
+                            <div id="decisionFormSection" style="display: none;">
+                                <hr class="my-3">
+                                <div class="mb-3">
+                                    <label for="rejectionReasonInput" class="form-label small fw-bold text-danger">MOTIF DE REJET (Obligatoire si rejeté)</label>
+                                    <textarea class="form-control rounded-3" id="rejectionReasonInput" rows="3" placeholder="Saisir le motif du rejet (minimum 10 caractères)..."></textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-success flex-grow-1 py-2 rounded-3" id="btnAcceptJustificatif">
+                                        <i class="bi bi-check-circle me-1"></i>Accepter le dossier
+                                    </button>
+                                    <button class="btn btn-danger flex-grow-1 py-2 rounded-3" id="btnRejectJustificatif">
+                                        <i class="bi bi-x-circle me-1"></i>Rejeter le dossier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pièce justificative (Droite) -->
+                        <div class="col-lg-7 col-md-12 border-start">
+                            <label class="small text-uppercase text-muted fw-bold d-block mb-3">
+                                <i class="bi bi-paperclip"></i> Pièce justificative
+                            </label>
+
+                            <!-- Cas : pas de document -->
+                            <div id="noDocPlaceholder" class="border rounded-3 p-4 text-center text-muted bg-light">
+                                <i class="bi bi-file-earmark-x" style="font-size:2.5rem;"></i>
+                                <div class="mt-2 fw-semibold">Aucune pièce jointe</div>
+                                <div class="small mt-1">L'étudiant n'a pas joint de fichier.</div>
+                            </div>
+
+                            <!-- Cas : document disponible -->
+                            <div id="btnDownloadDocSection" class="border rounded-3 p-4 text-center bg-light" style="display:none;">
+                                <i class="bi bi-file-earmark-text" style="font-size:2.5rem; color:#4e73df;"></i>
+                                <div class="mt-2 fw-semibold text-dark">Document joint</div>
+                                <div class="small text-muted mb-3">Cliquez pour télécharger et consulter le fichier.</div>
+                                <a id="btnDownloadDoc" href="#" target="_blank" class="btn btn-primary rounded-3 px-4">
+                                    <i class="bi bi-download me-2"></i>Télécharger le document
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index:9999;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" th:src="@{/js/justificatifsass.js}"></script>
+</body>
+
+</html>

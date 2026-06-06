@@ -54,12 +54,47 @@ public class EtudiantDashboardController {
                         "Étudiant non trouvé pour l'email : " + email));
     }
 
+    private String cleanEventName(String idSeance) {
+        if (idSeance == null || !idSeance.startsWith("EVT-")) {
+            return "Événement";
+        }
+        String[] parts = idSeance.split("-");
+        List<String> cleanParts = new java.util.ArrayList<>();
+        List<String> days = Arrays.asList(
+            "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche",
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+        );
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (i == 0 && part.equalsIgnoreCase("EVT")) {
+                continue;
+            }
+            if (part.matches("\\d+")) {
+                continue;
+            }
+            if (days.contains(part.toLowerCase())) {
+                continue;
+            }
+            cleanParts.add(part.replace("_", " "));
+        }
+        if (cleanParts.isEmpty()) {
+            return "Événement";
+        }
+        return String.join(" ", cleanParts).trim();
+    }
+
     /**
      * Libellé lisible d'un CoursUE.
      * CoursUE possède : intitule, codeUE  (pas getNom/getCode/getSalle)
      */
     private String getLibelleCours(Seance s) {
-        if (s == null || s.getCours() == null) return "—";
+        if (s == null) return "—";
+        if (s.getCours() == null) {
+            if (s.getIdSeance() != null && s.getIdSeance().startsWith("EVT-")) {
+                return cleanEventName(s.getIdSeance());
+            }
+            return "—";
+        }
         String intitule = s.getCours().getIntitule();
         String code     = s.getCours().getCodeUE();
         return (intitule != null && !intitule.isBlank()) ? intitule
@@ -67,10 +102,12 @@ public class EtudiantDashboardController {
              : "—";
     }
 
-    /** Vérifie si la présence est une absence (statut "absent" ou "retard"). */
+    /** Vérifie si la présence est une absence justifiable (absent, retard, ou présent_partiel). */
     private boolean estAbsent(Presence p) {
         String s = p.getStatut();
-        return "absent".equalsIgnoreCase(s) || "retard".equalsIgnoreCase(s);
+        return "absent".equalsIgnoreCase(s)
+            || "retard".equalsIgnoreCase(s)
+            || "présent_partiel".equalsIgnoreCase(s);
     }
 
     /** Vérifie si le justificatif associé à une présence est ACCEPTE. */
@@ -99,12 +136,12 @@ public class EtudiantDashboardController {
     /**
      * Retourne UNE seule présence par séance pour l'étudiant :
      * celle dont l'ID est le plus élevé (= le dernier appel enregistré).
-     * Cela garantit que si l'enseignant relance l'appel et marque l'étudiant
-     * présent, la présence de l'appel précédent (absent) ne remonte plus.
+     * Utilise JOIN FETCH pour charger seance+cours+presencesHoraires en une
+     * seule requête et éviter le lazy-loading hors transaction (à l'origine du — systématique).
      */
     private List<Presence> getLatestPresencesParSeance(Long etudiantId) {
         return new ArrayList<>(
-                presenceRepository.findByEtudiantId(etudiantId).stream()
+                presenceRepository.findByEtudiantIdFetchSeanceCours(etudiantId).stream()
                         .filter(p -> p.getSeance() != null)
                         .collect(Collectors.toMap(
                                 p -> p.getSeance().getId(),
@@ -153,6 +190,11 @@ public class EtudiantDashboardController {
                         dto.setEnseignant(s.getEnseignants().get(0).getPrenom()
                                 + " " + s.getEnseignants().get(0).getNom());
                     }
+                    // Marquer les événements spéciaux (pas de cours associé)
+                    boolean isEvt = s.getCours() == null
+                            && s.getIdSeance() != null
+                            && s.getIdSeance().startsWith("EVT-");
+                    dto.setEvenement(isEvt);
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -204,8 +246,11 @@ public class EtudiantDashboardController {
                     AbsenceDetailDTO dto = new AbsenceDetailDTO();
                     dto.setId(p.getId());
                     dto.setStatut(p.getStatut());
+                    dto.setHeuresAbsentes(p.getHeuresAbsentes());
+                    dto.setHeuresPresentes(p.getHeuresPresentes());
                     if (p.getSeance() != null) {
                         dto.setDate(p.getSeance().getDate());
+                        // heureDebut / heureFin = horaires de la séance complète
                         if (p.getSeance().getHeureDebut() != null)
                             dto.setHeureDebut(p.getSeance().getHeureDebut().toString());
                         if (p.getSeance().getHeureFin() != null)
@@ -240,9 +285,16 @@ public class EtudiantDashboardController {
                 .map(p -> {
                     AbsencePourJustificationDTO dto = new AbsencePourJustificationDTO();
                     dto.setId(p.getId());
+                    dto.setStatut(p.getStatut());
+                    dto.setHeuresAbsentes(p.getHeuresAbsentes());
+                    dto.setHeuresPresentes(p.getHeuresPresentes());
                     if (p.getSeance() != null) {
                         dto.setDate(p.getSeance().getDate());
                         dto.setMatiere(getLibelleCours(p.getSeance()));
+                        if (p.getSeance().getHeureDebut() != null)
+                            dto.setHeureDebutSeance(p.getSeance().getHeureDebut().toString());
+                        if (p.getSeance().getHeureFin() != null)
+                            dto.setHeureFinSeance(p.getSeance().getHeureFin().toString());
                     }
                     // Renseigner le statut du justificatif pour que le frontend
                     // puisse griser l'option si un justificatif est EN_ATTENTE
@@ -284,7 +336,19 @@ public class EtudiantDashboardController {
                             .getDisplayName(TextStyle.FULL, Locale.FRENCH));
                     dto.setHeureDebut(s.getHeureDebut());
                     dto.setHeureFin(s.getHeureFin());
-                    dto.setMatiere(getLibelleCours(s));
+                    
+                    boolean isEvt = s.getCours() == null && s.getIdSeance() != null
+                                    && s.getIdSeance().startsWith("EVT-");
+                    dto.setEvent(isEvt);
+                    dto.setCouleur(s.getCouleur());
+                    if (isEvt) {
+                        String nom = cleanEventName(s.getIdSeance());
+                        dto.setNomEvenement(nom);
+                        dto.setMatiere(nom);
+                    } else {
+                        dto.setMatiere(getLibelleCours(s));
+                    }
+                    
                     if (s.getEnseignants() != null && !s.getEnseignants().isEmpty()) {
                         dto.setEnseignant(s.getEnseignants().get(0).getPrenom()
                                 + " " + s.getEnseignants().get(0).getNom());

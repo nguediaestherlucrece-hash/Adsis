@@ -1,0 +1,142 @@
+/* Styles spécifiques pour l'interface de gestion des justificatifs de l'assistant */
+body {
+    background-color: #f4f7fb;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Header */
+.main-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid #f0f0f0;
+}
+
+.header-title {
+    color: #0d3b66;
+    font-size: 1.1rem;
+}
+
+/* Card table */
+.card-timetable {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 1.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #f0f0f0;
+}
+
+/* Filtres */
+.filter-bar {
+    background: white;
+    padding: 0.75rem 1.2rem;
+    border-radius: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    border: 1px solid #f0f0f0;
+}
+
+.filter-bar input, .filter-bar select {
+    background: #f8fafc;
+    border: 1px solid #dee7f0;
+    transition: all 0.2s;
+}
+
+.filter-bar input:focus, .filter-bar select:focus {
+    background: white;
+    border-color: #4e73df;
+    box-shadow: 0 0 0 3px rgba(78,115,223,0.12);
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.35rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge.en_attente {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.status-badge.accepte {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.status-badge.rejete {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* Table styling */
+#justificatifsTable thead th {
+    background: #f8fafd;
+    color: #5a5c69;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #eaeef2;
+    padding: 0.75rem 1rem;
+}
+
+#justificatifsTable tbody tr {
+    transition: background 0.15s;
+}
+
+#justificatifsTable tbody tr:hover {
+    background-color: #f0f4ff;
+}
+
+#justificatifsTable tbody td {
+    padding: 0.8rem 1rem;
+    vertical-align: middle;
+    font-size: 0.88rem;
+    color: #1e2f4a;
+}
+
+/* Document viewer */
+.document-viewer-container {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Modals */
+.modal-content {
+    border-radius: 20px !important;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #4e73df 0%, #6366f1 100%) !important;
+    border-radius: 20px 20px 0 0;
+}
+
+/* Avatar étudiant */
+.student-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #4e73df;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* No data */
+.no-data {
+    color: #8c95a6;
+    font-style: italic;
+}

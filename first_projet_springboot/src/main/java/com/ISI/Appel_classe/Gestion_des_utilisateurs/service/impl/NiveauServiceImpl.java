@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NiveauServiceImpl implements NiveauService {
 
     private final NiveauRepository niveauRepository;
@@ -30,7 +31,7 @@ public class NiveauServiceImpl implements NiveauService {
 
     @Override
     public List<NiveauDTO> getAllNiveaux() {
-        return niveauRepository.findAll().stream().map(mapper::toDTO).collect(Collectors.toList());
+        return niveauRepository.findAllByOrderByOrdreAsc().stream().map(mapper::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -66,6 +67,9 @@ public class NiveauServiceImpl implements NiveauService {
         }
         if (dto.getNom() != null) {
             n.setNom(dto.getNom());
+        }
+        if (dto.getOrdre() != null) {
+            n.setOrdre(dto.getOrdre());
         }
         if (dto.getFiliereId() != null) {
             Filiere filiere = filiereRepository.findById(dto.getFiliereId())

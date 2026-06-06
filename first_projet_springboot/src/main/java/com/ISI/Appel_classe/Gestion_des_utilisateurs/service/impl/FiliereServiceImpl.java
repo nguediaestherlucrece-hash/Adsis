@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FiliereServiceImpl implements FiliereService {
 
     private final FiliereRepository filiereRepository;
@@ -46,6 +47,13 @@ public class FiliereServiceImpl implements FiliereService {
     @Transactional
     public FiliereDTO createFiliere(FiliereCreateDTO dto) {
         Filiere f = mapper.fromCreateDTO(dto);
+        if (f.isTroncCommun()) {
+            filiereRepository.findByIsTroncCommunTrue()
+                    .ifPresent(existing -> {
+                        existing.setTroncCommun(false);
+                        filiereRepository.save(existing);
+                    });
+        }
         // Attacher les Niveaux si niveauIds fournis
         if (dto.getCycleId() != null) {
             Cycle cycle = cycleRepository.findById(dto.getCycleId())
@@ -68,6 +76,17 @@ public class FiliereServiceImpl implements FiliereService {
             f.setNomFiliere(dto.getNomFiliere());
         if (dto.getDescription() != null)
             f.setDescription(dto.getDescription());
+
+        if (dto.getIsTroncCommun() != null) {
+            if (dto.getIsTroncCommun() && !f.isTroncCommun()) {
+                filiereRepository.findByIsTroncCommunTrue()
+                        .ifPresent(existing -> {
+                            existing.setTroncCommun(false);
+                            filiereRepository.save(existing);
+                        });
+            }
+            f.setTroncCommun(dto.getIsTroncCommun());
+        }
 
         // Mettre à jour les niveaux parents
         if (dto.getCycleId() != null) {
