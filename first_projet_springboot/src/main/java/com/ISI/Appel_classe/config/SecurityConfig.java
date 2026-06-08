@@ -102,6 +102,7 @@ public class SecurityConfig {
                                 "/api/emplois-du-temps/**",
                                 "/api/seances/**",
                                 "/api/appels/**",
+                                "/api/surveillant/**",
                                 "/api/appels-etudiant/**",
                                 "/api/justificatifs/**").authenticated()
 

@@ -1048,7 +1048,9 @@ function createCourseElement(cell, data, rowspan = 1, colspan = 1) {
             const nowMin  = new Date().getHours() * 60 + new Date().getMinutes();
             const inWindow = nowMin >= toMin(data.heureDebut) - 15 && nowMin <= toMin(data.heureFin) + 15;
             if (inWindow) {
-                content += `<a href="/enseignant/appel?seanceId=${data.dbId}"
+                const appelPage = (JSON.parse(localStorage.getItem('adsis_user') || '{}').roles || []).includes('SURVEILLANT')
+                    ? '/assistant/appel' : '/enseignant/appel';
+                content += `<a href="${appelPage}?seanceId=${data.dbId}"
                                onclick="event.stopPropagation()"
                                class="appel-link-btn"
                                title="Démarrer l'appel de cette séance">

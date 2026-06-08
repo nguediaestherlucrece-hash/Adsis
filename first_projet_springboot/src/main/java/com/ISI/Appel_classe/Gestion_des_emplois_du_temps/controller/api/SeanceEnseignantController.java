@@ -73,4 +73,33 @@ public class SeanceEnseignantController {
             .getSeancesEnseignantPeriode(enseignantId, dateDebut, dateFin);
         return ResponseEntity.ok(seances);
     }
+
+    /**
+     * Récupère les séances d'un surveillant pour une date spécifique
+     * GET /api/seances/surveillant/{surveillantId}/date/{date}
+     */
+    @GetMapping("/surveillant/{surveillantId}/date/{date}")
+    @PreAuthorize("hasAnyRole('SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE', 'ADMIN')")
+    public ResponseEntity<List<SeanceEnseignantDTO>> getSeancesSurveillantParDate(
+            @PathVariable Long surveillantId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<SeanceEnseignantDTO> seances = seanceEnseignantService
+            .getSeancesSurveillantParDate(surveillantId, date);
+        return ResponseEntity.ok(seances);
+    }
+
+    /**
+     * Récupère les séances d'un surveillant entre deux dates
+     * GET /api/seances/surveillant/{surveillantId}/periode
+     */
+    @GetMapping("/surveillant/{surveillantId}/periode")
+    @PreAuthorize("hasAnyRole('SURVEILLANT', 'ASSISTANT_PEDAGOGIQUE', 'ADMIN')")
+    public ResponseEntity<List<SeanceEnseignantDTO>> getSeancesSurveillantPeriode(
+            @PathVariable Long surveillantId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        List<SeanceEnseignantDTO> seances = seanceEnseignantService
+            .getSeancesSurveillantPeriode(surveillantId, dateDebut, dateFin);
+        return ResponseEntity.ok(seances);
+    }
 }

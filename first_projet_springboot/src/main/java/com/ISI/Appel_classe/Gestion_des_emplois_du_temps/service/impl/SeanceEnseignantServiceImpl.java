@@ -9,7 +9,11 @@ import com.ISI.Appel_classe.Gestion_des_emplois_du_temps.service.serviceInterfac
 import com.ISI.Appel_classe.Gestion_des_etudiants.model.Classe;
 import com.ISI.Appel_classe.Gestion_des_etudiants.repository.EtudiantRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Appel;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Filiere;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundException;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SurveillantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,7 @@ public class SeanceEnseignantServiceImpl implements SeanceEnseignantService {
     private final SeanceRepository seanceRepository;
     private final PresenceRepository presenceRepository;
     private final EtudiantRepository etudiantRepository;
+    private final SurveillantRepository surveillantRepository;
     
     @Override
     public List<SeanceEnseignantDTO> getSeancesEnseignantParDate(Long enseignantId, LocalDate date) {
@@ -53,6 +58,37 @@ public class SeanceEnseignantServiceImpl implements SeanceEnseignantService {
         return seances.stream()
             .map(this::convertToDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SeanceEnseignantDTO> getSeancesSurveillantParDate(Long surveillantId, LocalDate date) {
+        return getSeancesSurveillant(surveillantId, date, date).stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SeanceEnseignantDTO> getSeancesSurveillantPeriode(Long surveillantId, LocalDate dateDebut, LocalDate dateFin) {
+        return getSeancesSurveillant(surveillantId, dateDebut, dateFin).stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    private List<Seance> getSeancesSurveillant(Long surveillantId, LocalDate dateDebut, LocalDate dateFin) {
+        Surveillant surveillant = surveillantRepository.findById(surveillantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé: " + surveillantId));
+
+        Map<Long, Seance> seances = new LinkedHashMap<>();
+        seanceRepository.findBySurveillantIdAndDateBetween(surveillantId, dateDebut, dateFin)
+            .forEach(s -> seances.put(s.getId(), s));
+
+        Filiere filiere = surveillant.getFiliere();
+        if (filiere != null) {
+            seanceRepository.findByFiliereIdAndDateBetween(filiere.getId(), dateDebut, dateFin)
+                .forEach(s -> seances.put(s.getId(), s));
+        }
+
+        return new ArrayList<>(seances.values());
     }
 
     @Override

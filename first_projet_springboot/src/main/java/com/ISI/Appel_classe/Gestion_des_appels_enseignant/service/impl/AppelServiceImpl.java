@@ -23,9 +23,13 @@ import com.ISI.Appel_classe.Gestion_des_utilisateurs.exception.ResourceNotFoundE
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Appel;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Presence;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.PresenceHoraire;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.model.Surveillant;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceHoraireRepository;
 import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.PresenceRepository;
+import com.ISI.Appel_classe.Gestion_des_utilisateurs.repository.SurveillantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +50,7 @@ public class AppelServiceImpl implements AppelService {
     private final PresenceRepository presenceRepository;
     private final PresenceHoraireRepository presenceHoraireRepository;
     private final EtudiantRepository etudiantRepository;
+    private final SurveillantRepository surveillantRepository;
     private final QRCodeService qrCodeService;
     private final CodePresenceRepository codePresenceRepository;
 
@@ -60,6 +65,65 @@ public class AppelServiceImpl implements AppelService {
     /** Minutes après le début de séance au-delà desquelles le 1er créneau est absent */
     private static final int SEUIL_ABSENT_MIN = 45;
 
+    private boolean isCurrentUserSurveillant() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_SURVEILLANT"));
+    }
+
+    private void verifierAccesSurveillant(Seance seance) {
+        if (!isCurrentUserSurveillant()) {
+            return;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new BadRequestException("Utilisateur non authentifié");
+        }
+
+        String email = authentication.getName();
+        Surveillant surveillant = surveillantRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Surveillant non trouvé pour l'email: " + email));
+
+        boolean aAccesDirect = seance.getSurveillants().stream()
+                .anyMatch(s -> s.getId().equals(surveillant.getId()));
+
+        boolean aAccesFiliere = false;
+        if (surveillant.getFiliere() != null && seance.getEmploiDuTemps() != null
+                && seance.getEmploiDuTemps().getClasse() != null
+                && seance.getEmploiDuTemps().getClasse().getSpecialite() != null
+                && seance.getEmploiDuTemps().getClasse().getSpecialite().getNiveau() != null
+                && seance.getEmploiDuTemps().getClasse().getSpecialite().getNiveau().getFiliere() != null) {
+            aAccesFiliere = surveillant.getFiliere().getId()
+                    .equals(seance.getEmploiDuTemps().getClasse().getSpecialite().getNiveau().getFiliere().getId());
+        }
+
+        if (!aAccesDirect && !aAccesFiliere) {
+            throw new BadRequestException("Vous n'êtes pas autorisé à gérer l'appel de cette séance");
+        }
+    }
+
+    private Seance getSeanceOrThrow(Long seanceId) {
+        return seanceRepository.findById(seanceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Séance non trouvée"));
+    }
+
+    private Appel getAppelOrThrow(Long appelId) {
+        return appelRepository.findById(appelId)
+            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+    }
+
+    private void verifierAccesSurveillantParSeance(Long seanceId) {
+        verifierAccesSurveillant(getSeanceOrThrow(seanceId));
+    }
+
+    private void verifierAccesSurveillantParAppel(Long appelId) {
+        verifierAccesSurveillant(getAppelOrThrow(appelId).getSeance());
+    }
+
     // =========================================================================
     // DÉMARRER / CLÔTURER
     // =========================================================================
@@ -67,8 +131,8 @@ public class AppelServiceImpl implements AppelService {
     @Override
     public AppelDTO demarrerAppel(DemarrerAppelRequest request) {
         // Vérifier que la séance existe
-        Seance seance = seanceRepository.findById(request.getSeanceId())
-            .orElseThrow(() -> new ResourceNotFoundException("Séance non trouvée"));
+        Seance seance = getSeanceOrThrow(request.getSeanceId());
+        verifierAccesSurveillant(seance);
 
         // Vérifier qu'il n'y a pas d'appel ACTUELLEMENT ouvert (un appel clôturé ne bloque pas)
         Optional<Appel> appelOuvert = appelRepository.findAppelOuvertBySeanceId(request.getSeanceId());
@@ -109,8 +173,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public AppelDTO cloturerAppel(Long appelId) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
 
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Cet appel est déjà clôturé");
@@ -136,8 +200,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public PresenceDTO enregistrerPresence(Long appelId, EnregistrerPresenceRequest request) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
 
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Cet appel est clôturé");
@@ -240,14 +304,15 @@ public class AppelServiceImpl implements AppelService {
     @Override
     @Transactional(readOnly = true)
     public AppelDTO getAppelById(Long appelId) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         return convertToDTO(appel);
     }
 
     @Override
     @Transactional(readOnly = true)
     public AppelDTO getAppelOuvertBySeance(Long seanceId) {
+        verifierAccesSurveillantParSeance(seanceId);
         Optional<Appel> appel = appelRepository.findAppelOuvertBySeanceId(seanceId);
         return appel.map(this::convertToDTO).orElse(null);
     }
@@ -255,6 +320,7 @@ public class AppelServiceImpl implements AppelService {
     @Override
     @Transactional(readOnly = true)
     public List<AppelDTO> getHistoriqueAppels(Long seanceId) {
+        verifierAccesSurveillantParSeance(seanceId);
         List<Appel> appels = appelRepository.findAllBySeanceIdOrderByDateHeureDebutAsc(seanceId);
         return appels.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -262,8 +328,8 @@ public class AppelServiceImpl implements AppelService {
     @Override
     @Transactional(readOnly = true)
     public List<EtudiantSeanceDTO> getEtudiantsSeanceAvecStatut(Long seanceId, Long appelId) {
-        Seance seance = seanceRepository.findById(seanceId)
-            .orElseThrow(() -> new ResourceNotFoundException("Séance non trouvée"));
+        Seance seance = getSeanceOrThrow(seanceId);
+        verifierAccesSurveillant(seance);
 
         EmploiDuTemps emploiDuTemps = seance.getEmploiDuTemps();
         if (emploiDuTemps == null || emploiDuTemps.getClasse() == null) {
@@ -356,8 +422,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public AppelDTO regenererQRCode(Long appelId) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Impossible de régénérer le QR code pour un appel clôturé");
         }
@@ -369,8 +435,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public AppelDTO genererPINPourAppel(Long appelId, Integer dureeMinutes) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Impossible de générer un PIN pour un appel clôturé");
         }
@@ -386,8 +452,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public AppelDTO validerQRCode(Long appelId, String qrToken) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Cet appel est clôturé");
         }
@@ -417,8 +483,7 @@ public class AppelServiceImpl implements AppelService {
     @Override
     @Transactional(readOnly = true)
     public List<PresenceDTO> getPresencesByAppelId(Long appelId) {
-        appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        verifierAccesSurveillantParAppel(appelId);
         return presenceRepository.findByAppelId(appelId).stream()
             .map(this::convertPresenceToDTO)
             .collect(Collectors.toList());
@@ -426,8 +491,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public PresenceDTO validerCodePINEtudiant(Long appelId, String codePIN) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Cet appel est clôturé");
         }
@@ -468,8 +533,8 @@ public class AppelServiceImpl implements AppelService {
 
     @Override
     public PresenceDTO validerQRCodeEtudiant(Long appelId, String qrToken) {
-        Appel appel = appelRepository.findById(appelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Appel non trouvé"));
+        Appel appel = getAppelOrThrow(appelId);
+        verifierAccesSurveillant(appel.getSeance());
         if (!"ouvert".equals(appel.getStatut())) {
             throw new BadRequestException("Cet appel est clôturé");
         }

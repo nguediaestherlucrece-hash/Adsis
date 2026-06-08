@@ -27,4 +27,14 @@ public interface SeanceEnseignantService {
      * Récupère les données du tableau de bord de l'enseignant
      */
     DashboardEnseignantDTO getDashboardData(Long enseignantId);
+
+    /**
+     * Récupère les séances assignées à un surveillant entre deux dates
+     */
+    List<SeanceEnseignantDTO> getSeancesSurveillantParDate(Long surveillantId, LocalDate date);
+
+    /**
+     * Récupère les séances assignées à un surveillant entre deux dates
+     */
+    List<SeanceEnseignantDTO> getSeancesSurveillantPeriode(Long surveillantId, LocalDate dateDebut, LocalDate dateFin);
 }

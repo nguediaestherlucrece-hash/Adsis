@@ -43,4 +43,34 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findByClasseIdAndDateBetween(@Param("classeId") Long classeId,
                                               @Param("dateDebut") LocalDate dateDebut,
                                               @Param("dateFin") LocalDate dateFin);
+
+    @Query("SELECT DISTINCT s FROM Seance s " +
+           "JOIN s.surveillants sur " +
+           "WHERE sur.id = :surveillantId " +
+           "AND s.date = :date " +
+           "ORDER BY s.heureDebut")
+    List<Seance> findBySurveillantIdAndDate(@Param("surveillantId") Long surveillantId,
+                                             @Param("date") LocalDate date);
+
+    @Query("SELECT DISTINCT s FROM Seance s " +
+           "JOIN s.surveillants sur " +
+           "WHERE sur.id = :surveillantId " +
+           "AND s.date BETWEEN :dateDebut AND :dateFin " +
+           "ORDER BY s.date, s.heureDebut")
+    List<Seance> findBySurveillantIdAndDateBetween(@Param("surveillantId") Long surveillantId,
+                                                    @Param("dateDebut") LocalDate dateDebut,
+                                                    @Param("dateFin") LocalDate dateFin);
+
+    @Query("SELECT DISTINCT s FROM Seance s " +
+           "JOIN s.emploiDuTemps edt " +
+           "JOIN edt.classe c " +
+           "JOIN c.specialite sp " +
+           "JOIN sp.niveau n " +
+           "JOIN n.filiere f " +
+           "WHERE f.id = :filiereId " +
+           "AND s.date BETWEEN :dateDebut AND :dateFin " +
+           "ORDER BY s.date, s.heureDebut")
+    List<Seance> findByFiliereIdAndDateBetween(@Param("filiereId") Long filiereId,
+                                               @Param("dateDebut") LocalDate dateDebut,
+                                               @Param("dateFin") LocalDate dateFin);
 }

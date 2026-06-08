@@ -1,12 +1,16 @@
 /* ===== ADSIS – appel.js — Séance d'appel dynamique ===== */
 import { requireRole, requirePermission, getLoginPath, authFetch, getUser } from './auth.js';
 
-// Guard : enseignants uniquement avec permission ATTENDANCE_MANAGE
-if (!requireRole(['ENSEIGNANT'])) { throw new Error('Unauthorized'); }
+// Guard : enseignants et surveillants avec permission ATTENDANCE_MANAGE
+const isSurveillant = requireRole(['SURVEILLANT']);
+if (!requireRole(['ENSEIGNANT', 'SURVEILLANT'])) { throw new Error('Unauthorized'); }
 if (!requirePermission('ATTENDANCE_MANAGE')) {
     window.location.href = getLoginPath();
     throw new Error('Permission refusée');
 }
+
+const API_APPELS_BASE = isSurveillant ? '/api/surveillant/appels' : '/api/appels';
+const EMPLOI_PATH = isSurveillant ? '/assistant/emploidutemps' : '/enseignant/emploi';
 
 // ── État global ──────────────────────────────────────────────────────────────
 let seanceId = null;
@@ -59,7 +63,7 @@ if (!seanceId) {
                         Pour démarrer un appel, cliquez sur une séance <strong>en cours</strong>
                         depuis votre emploi du temps.
                     </p>
-                    <a href="/enseignant/emploi"
+                    <a href="${EMPLOI_PATH}"
                        style="background:#007AFF;color:white;border:none;padding:12px 32px;
                               border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer;
                               text-decoration:none;display:inline-block;transition:transform 0.15s;">
@@ -110,7 +114,10 @@ async function loadSeances() {
         dateFin.setDate(now.getDate() + 28);
 
         const fmt = d => d.toISOString().split('T')[0];
-        const res = await authFetch(`/api/seances/enseignant/${user.id}/periode?dateDebut=${fmt(dateDebut)}&dateFin=${fmt(dateFin)}`);
+        const seanceApi = isSurveillant
+            ? `/api/seances/surveillant/${user.id}/periode`
+            : `/api/seances/enseignant/${user.id}/periode`;
+        const res = await authFetch(`${seanceApi}?dateDebut=${fmt(dateDebut)}&dateFin=${fmt(dateFin)}`);
         if (!res || !res.ok) return;
 
         const seances = await res.json();
@@ -282,7 +289,7 @@ function updateBanner(appelInfo) {
 
 async function checkAppelOuvert() {
     try {
-        const res = await authFetch(`/api/appels/seance/${seanceId}/ouvert`);
+        const res = await authFetch(`${API_APPELS_BASE}/seance/${seanceId}/ouvert`);
         if (res && res.ok && res.status !== 204) {
             const data = await res.json();
             appelId = data.id;
@@ -327,7 +334,7 @@ function stopAutoRefresh() {
  */
 async function chargerDernierEtatAppel() {
     try {
-        const res = await authFetch(`/api/appels/seance/${seanceId}/historique`);
+        const res = await authFetch(`${API_APPELS_BASE}/seance/${seanceId}/historique`);
         if (!res || !res.ok) return;
         const historique = await res.json();
         if (!historique || historique.length === 0) return;
@@ -409,7 +416,7 @@ async function demarrerAppel(mode = 'manuel') {
         return null;
     }
     try {
-        const res = await authFetch('/api/appels', {
+        const res = await authFetch(API_APPELS_BASE, {
             method: 'POST',
             body: JSON.stringify({ seanceId, modeAppel: mode })
         });
@@ -442,7 +449,7 @@ async function loadEtudiants() {
     if (!seanceId) return;
 
     try {
-        let url = `/api/appels/seance/${seanceId}/etudiants`;
+        let url = `${API_APPELS_BASE}/seance/${seanceId}/etudiants`;
         if (appelId) url += `?appelId=${appelId}`;
 
         const res = await authFetch(url);
@@ -615,7 +622,7 @@ async function savePresence(studentId) {
     else if (!allAbsent) statut = 'présent_partiel';
 
     try {
-        await authFetch(`/api/appels/${appelId}/presences`, {
+        await authFetch(`${API_APPELS_BASE}/${appelId}/presences`, {
             method: 'POST',
             body: JSON.stringify({
                 etudiantId: studentId,
@@ -813,7 +820,7 @@ async function onQrSuccess(decodedText) {
     }
 
     try {
-        const res = await authFetch(`/api/appels/${appelId}/valider-qr-etudiant`, {
+        const res = await authFetch(`${API_APPELS_BASE}/${appelId}/valider-qr-etudiant`, {
             method: 'POST',
             body: JSON.stringify({ qrToken: decodedText })
         });
@@ -860,7 +867,7 @@ async function generateSessionQR() {
     }
 
     try {
-        const res = await authFetch(`/api/appels/${appelId}/regenerer-qr`, { method: 'POST' });
+        const res = await authFetch(`${API_APPELS_BASE}/${appelId}/regenerer-qr`, { method: 'POST' });
         if (!res || !res.ok) {
             showToast('Erreur génération QR', 'error');
             return;
@@ -1065,7 +1072,7 @@ async function generatePIN() {
     }
 
     try {
-        const res = await authFetch(`/api/appels/${appelId}/generer-pin`, {
+        const res = await authFetch(`${API_APPELS_BASE}/${appelId}/generer-pin`, {
             method: 'POST',
             body: JSON.stringify({ dureeMinutes: 5 })
         });
@@ -1184,7 +1191,7 @@ async function clotureAppel() {
     }
 
     try {
-        const res = await authFetch(`/api/appels/${appelId}/cloturer`, { method: 'PUT' });
+        const res = await authFetch(`${API_APPELS_BASE}/${appelId}/cloturer`, { method: 'PUT' });
         if (res && res.ok) {
             showToast('Appel clôturé avec succès !', 'success', 4000);
             updateSessionStatus(false);

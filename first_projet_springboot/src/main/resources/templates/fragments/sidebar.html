@@ -45,6 +45,8 @@
            href="/assistant/gestionetudiant"><i class="bi bi-person-badge"></i>Étudiants</a>
         <a class="nav-link" th:classappend="${activePage == 'emploi'} ? ' active'"
            href="/assistant/emploidutemps"><i class="bi bi-calendar3"></i>Emploi du temps</a>
+        <a class="nav-link nav-surveillant-appel" th:classappend="${activePage == 'appel'} ? ' active'"
+           href="/assistant/appel"><i class="bi bi-clipboard-check"></i>Appel</a>
         <a class="nav-link" th:classappend="${activePage == 'justificatifs'} ? ' active'"
            href="/assistant/justificatifs"><i class="bi bi-file-earmark-check"></i>Justificatifs</a>
       </div>
@@ -92,6 +94,17 @@
     </th:block>
     
   </nav>
+
+  <script th:if="${role == 'ASSISTANT'}">
+    document.addEventListener("DOMContentLoaded", () => {
+      const userStr = localStorage.getItem('adsis_user');
+      if (!userStr) return;
+      const roles = JSON.parse(userStr).roles || [];
+      if (!roles.includes('SURVEILLANT')) {
+        document.querySelectorAll('.nav-surveillant-appel').forEach(el => el.style.display = 'none');
+      }
+    });
+  </script>
 
   <!-- ROLE INDICATOR -->
   <hr class="mx-2 mt-4 d-none d-md-block"/>
